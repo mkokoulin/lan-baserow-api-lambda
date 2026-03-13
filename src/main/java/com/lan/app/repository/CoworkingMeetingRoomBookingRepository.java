@@ -1,15 +1,13 @@
 package com.lan.app.repository;
 
 import com.lan.app.domain.model.CoworkingMeetingRoomBooking;
-import com.lan.app.infrastructure.baserow.dto.CreateCoworkingMeetingRoomBookingRowRequest;
-import com.lan.app.infrastructure.baserow.dto.UpdateCoworkingMeetingRoomBookingRowRequest;
+import com.lan.app.service.command.CreateCoworkingMeetingRoomBookingCommand;
+import com.lan.app.service.command.UpdateCoworkingMeetingRoomBookingCommand;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface CoworkingMeetingRoomBookingRepository {
-    List<CoworkingMeetingRoomBooking> list();
     CoworkingMeetingRoomBooking get(UUID id);
-    CoworkingMeetingRoomBooking create(CreateCoworkingMeetingRoomBookingRowRequest request);
-    CoworkingMeetingRoomBooking update(UUID externalId, UpdateCoworkingMeetingRoomBookingRowRequest patch);
+    CoworkingMeetingRoomBooking create(CreateCoworkingMeetingRoomBookingCommand request);
+    CoworkingMeetingRoomBooking update(UUID externalId, UpdateCoworkingMeetingRoomBookingCommand patch);
 }

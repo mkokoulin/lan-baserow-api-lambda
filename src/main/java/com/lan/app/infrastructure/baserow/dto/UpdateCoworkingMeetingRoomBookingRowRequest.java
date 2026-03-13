@@ -1,13 +1,14 @@
 package com.lan.app.infrastructure.baserow.dto;
 
-import com.aayushatharva.brotli4j.common.annotations.Internal;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Instant;
+
 public record UpdateCoworkingMeetingRoomBookingRowRequest(
-    @NotNull Internal dateStart,
-    @NotNull Internal dateEnd,
-    @NotNull @Min(1) Internal persons,
+    @NotNull Instant dateStart,
+    @NotNull Instant dateEnd,
+    @NotNull @Min(1) Integer persons,
     String comment
 ) {
 }
