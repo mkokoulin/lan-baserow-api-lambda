@@ -1,27 +1,47 @@
 package com.lan.app.infrastructure.security.jwt;
-
-import java.util.Arrays;
-import java.util.HashSet;
-
-import org.eclipse.microprofile.jwt.Claims;
 import io.smallrye.jwt.build.Jwt;
 
-/**
- * A utility class to generate and print a JWT token string to stdout.
- */
+import java.util.Set;
+
 public class GenerateToken {
 
-    /**
-     * Generates and prints a JWT token.
-     */
+    private static final String ISSUER = "lan-auth";
+
     public static void main(String[] args) {
-        String token = Jwt.issuer("https://example.com/issuer")
-            .upn("jdoe@quarkus.io")
-            .groups(new HashSet<>(Arrays.asList("User", "Admin")))
-            .claim(Claims.birthdate.name(), "2001-07-13")
-            .sign();
+
+        if (args.length == 0) {
+            throw new IllegalArgumentException(
+                    "Usage: GenerateToken <lan-site | lan-bot | admin>"
+            );
+        }
+
+        String type = args[0];
+
+        String token = switch (type) {
+
+            case "lan-site" -> Jwt.issuer(ISSUER)
+                    .upn("lan-site")
+                    .groups(Set.of("web-users"))
+                    .claim("client_id", "lan-site")
+                    .sign();
+
+            case "lan-bot" -> Jwt.issuer(ISSUER)
+                    .upn("lan-bot")
+                    .groups(Set.of("web-users"))
+                    .claim("client_id", "lan-bot")
+                    .sign();
+
+            case "admin" -> Jwt.issuer(ISSUER)
+                    .upn("admin")
+                    .groups(Set.of("admin"))
+                    .claim("client_id", "admin")
+                    .sign();
+
+            default -> throw new IllegalArgumentException(
+                    "Unknown token type: " + type
+            );
+        };
 
         System.out.println(token);
-        System.exit(0);
     }
 }

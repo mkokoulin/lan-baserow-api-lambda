@@ -5,6 +5,7 @@ import com.lan.app.api.dto.request.UpdateCoworkingMeetingRoomBookingRequest;
 import com.lan.app.api.dto.response.CoworkingMeetingRoomBookingResponse;
 import com.lan.app.api.mapper.ApiCoworkingMeetingRoomBookingMapper;
 import com.lan.app.service.CoworkingMeetingRoomBookingService;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @Path("/coworking/meeting-room-booking")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@RolesAllowed({"admin", "web-users"})
 public class CoworkingMeetingRoomBookingResource {
 
     private final CoworkingMeetingRoomBookingService service;

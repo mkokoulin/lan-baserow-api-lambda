@@ -47,3 +47,17 @@ tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.compilerArgs.add("-parameters")
 }
+tasks.register<JavaExec>("generateToken") {
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.lan.app.infrastructure.security.jwt.GenerateToken")
+
+    systemProperty(
+        "smallrye.jwt.sign.key.location",
+        "${System.getProperty("user.home")}\\.keys\\lan\\privateKey.pem"
+    )
+
+    val tokenType = project.findProperty("tokenType")?.toString()
+    if (tokenType != null) {
+        args(tokenType)
+    }
+}

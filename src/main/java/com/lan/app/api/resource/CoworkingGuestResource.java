@@ -5,6 +5,7 @@ import com.lan.app.api.dto.request.CreateCoworkingGuestRequest;
 import com.lan.app.api.dto.request.UpdateCoworkingGuestRequest;
 import com.lan.app.api.mapper.ApiCoworkingGuestMapper;
 import com.lan.app.service.CoworkingGuestService;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -16,6 +17,7 @@ import java.util.UUID;
 @Path("/coworking/guests")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
+@RolesAllowed({"admin", "web-users"})
 public class CoworkingGuestResource {
 
     private final CoworkingGuestService service;
