@@ -52,7 +52,7 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ## Generating auth token 
 
 ```shell script
-./gradlew generateToken -PtokenType=test-site
+./gradlew generateToken -PtokenType=admin
 ```
 
 You can then execute your native executable with: `./build/lan-baserow-service-1.0-SNAPSHOT-runner`
