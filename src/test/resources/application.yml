@@ -1,0 +1,4 @@
+telegram:
+  bot-token: ${TELEGRAM_BOT_TOKEN}
+  api-base-url: https://api.telegram.org
+  webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}

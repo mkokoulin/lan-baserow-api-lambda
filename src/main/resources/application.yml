@@ -1,0 +1,16 @@
+quarkus:
+  http:
+    port: 3000
+  rest-client:
+    telegram-api:
+      url: https://api.telegram.org
+
+  default-locale: en
+  locales:
+    - en
+    - ru
+
+telegram:
+  bot-token: ${TELEGRAM_BOT_TOKEN}
+  api-base-url: https://api.telegram.org
+  webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
