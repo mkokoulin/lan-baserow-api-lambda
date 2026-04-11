@@ -1,0 +1,28 @@
+package com.lan.app.flows.meetingroom;
+
+import com.lan.app.domain.UpdateContext;
+import com.lan.app.engine.StepHandler;
+import com.lan.app.engine.StepResult;
+import com.lan.app.i18n.I18n;
+import com.lan.app.session.Session;
+import com.lan.app.telegram.TelegramClient;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+@ApplicationScoped
+public class MeetingPromptHandler implements StepHandler {
+
+    @Inject TelegramClient telegramClient;
+    @Inject I18n i18n;
+
+    @Override
+    public StepResult handle(UpdateContext ctx, Session session) {
+        String lang = session.getLang();
+        telegramClient.sendHtml(
+                session.getChatId(),
+                i18n.t(lang, "meeting_pick_date"),
+                MeetingSlots.calendarKeyboard()
+        );
+        return StepResult.stay(MeetingFlowDef.FLOW, MeetingFlowDef.STEP_WAIT_DATE);
+    }
+}

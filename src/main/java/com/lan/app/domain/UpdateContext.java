@@ -1,7 +1,15 @@
 package com.lan.app.domain;
 
-public record UpdateContext(Long chatId, Long userId, Integer messageId, String messageText, String callbackData,
-                            boolean callback) {
+
+public record UpdateContext(
+    Long chatId,
+    Long userId,
+    Integer messageId,
+    String messageText,
+    String callbackData,
+    boolean callback,
+    String username
+) {
 
     public static UpdateContext fromIncomingUpdate(IncomingUpdate update) {
         return new UpdateContext(
@@ -10,7 +18,8 @@ public record UpdateContext(Long chatId, Long userId, Integer messageId, String 
                 null,
                 update.getText(),
                 update.getCallbackData(),
-                update.getCallbackData() != null && !update.getCallbackData().isBlank()
+                update.getCallbackData() != null && !update.getCallbackData().isBlank(),
+                update.getUsername()   // ← новое поле
         );
     }
 
@@ -45,5 +54,10 @@ public record UpdateContext(Long chatId, Long userId, Integer messageId, String 
 
         String[] parts = messageText.split("\\s+", 2);
         return parts.length > 1 ? parts[1] : "";
+    }
+
+    public String callbackPayload() {
+        if (callbackData == null) return null;
+        return callbackData.startsWith("/") ? callbackData.substring(1) : callbackData;
     }
 }

@@ -4,7 +4,6 @@ quarkus:
   rest-client:
     telegram-api:
       url: https://api.telegram.org
-
   default-locale: en
   locales:
     - en
@@ -12,5 +11,20 @@ quarkus:
 
 telegram:
   bot-token: ${TELEGRAM_BOT_TOKEN}
+  admin-chat-id: ${TELEGRAM_ADMIN_CHAT_ID}
   api-base-url: https://api.telegram.org
   webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:}
+
+app:
+  mode: ${APP_MODE:polling}
+
+"%prod":
+  app:
+    mode: webhook
+
+"%dev":
+  quarkus:
+    devservices:
+      enabled: false
+  telegram:
+    webhook-secret: ${TELEGRAM_WEBHOOK_SECRET:dummy-secret}

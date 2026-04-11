@@ -16,14 +16,12 @@ public class KotologFlowRegistrar {
         registry.registerStep(KotologFlowDef.FLOW, KotologFlowDef.STEP_HOME, homeHandler);
         registry.registerStep(KotologFlowDef.FLOW, KotologFlowDef.STEP_HELP, helpHandler);
 
-        registry.registerStep(KotologFlowDef.FLOW, KotologFlowDef.CB_HELP, helpHandler);
-        registry.registerStep(KotologFlowDef.FLOW, KotologFlowDef.CB_HOME, homeHandler);
-
         FlowEntry home = new FlowEntry(KotologFlowDef.FLOW, KotologFlowDef.STEP_HOME);
         FlowEntry help = new FlowEntry(KotologFlowDef.FLOW, KotologFlowDef.STEP_HELP);
 
-        registry.registerCommand("kotolog",      home);
-        registry.registerCommand("cats",         home);
+        registry.registerCommand("kotolog", home);
         registry.registerCommand("kotolog_help", help);
+        registry.registerCommand("kotolog:help", help);
+        registry.registerCommand("kotolog:home", home);
     }
 }
