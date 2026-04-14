@@ -36,9 +36,9 @@ public class KotologHelpHandler implements StepHandler {
             + i18n.t(lang, "kotolog_donate_note");
 
     var kb = KeyboardBuilder.inline(List.of(
-            KeyboardBuilder.row(
-                    KeyboardBuilder.cbCmd(i18n.t(lang, "kotolog_btn_back"), KotologFlowDef.CB_HOME)
-            )
+        KeyboardBuilder.row(
+                KeyboardBuilder.cbCmd(i18n.t(lang, "kotolog_btn_back"), KotologFlowDef.CB_HOME)
+        )
     ));
 
     telegramClient.sendHtml(session.getChatId(), text, kb);

@@ -13,13 +13,13 @@ public record UpdateContext(
 
     public static UpdateContext fromIncomingUpdate(IncomingUpdate update) {
         return new UpdateContext(
-                update.getChatId(),
-                update.getUserId(),
+                update.chatId(),
+                update.userId(),
                 null,
-                update.getText(),
-                update.getCallbackData(),
-                update.getCallbackData() != null && !update.getCallbackData().isBlank(),
-                update.getUsername()   // ← новое поле
+                update.text(),
+                update.callbackData(),
+                update.callbackData() != null && !update.callbackData().isBlank(),
+                update.username()
         );
     }
 

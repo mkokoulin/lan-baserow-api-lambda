@@ -8,6 +8,11 @@ quarkus:
   locales:
     - en
     - ru
+  log:
+    console:
+      json: false
+      color: true
+      format: "%d{HH:mm:ss} %-5p [%c{2.}] %s%e%n"
 
 telegram:
   bot-token: ${TELEGRAM_BOT_TOKEN}

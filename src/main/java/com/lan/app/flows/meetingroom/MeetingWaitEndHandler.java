@@ -15,24 +15,24 @@ public class MeetingWaitEndHandler implements StepHandler {
 
     private final TelegramClient telegramClient;
     private final I18n i18n;
+    private final Long adminChatId;
 
     @Inject
     public MeetingWaitEndHandler(
         TelegramClient telegramClient,
-        I18n i18n
+        I18n i18n,
+        @ConfigProperty(name = "telegram.admin-chat-id") Long adminChatId
     ) {
         this.telegramClient = telegramClient;
         this.i18n = i18n;
+        this.adminChatId = adminChatId;
     }
-
-    @ConfigProperty(name = "telegram.admin-chat-id")
-    Long adminChatId;
 
     @Override
     public StepResult handle(UpdateContext ctx, Session session) {
         String lang = session.getLang();
-        String payload = ctx.callbackPayload(); // "meet:end:12:00"
-
+        String payload = ctx.callbackPayload();
+        
         if (!ctx.hasCallback() || payload == null || !payload.startsWith(MeetingFlowDef.CB_END_PFX)) {
             return StepResult.stay(MeetingFlowDef.FLOW, MeetingFlowDef.STEP_WAIT_END);
         }
@@ -63,10 +63,13 @@ public class MeetingWaitEndHandler implements StepHandler {
         String username = ctx.username();
         if (username != null && !username.isBlank()) {
             telegramClient.sendHtml(adminChatId,
-                    i18n.t(lang, "meeting_request_admin").formatted(intervalHuman, "@" + username), null);
+                i18n.t(lang, "meeting_request_admin").formatted(intervalHuman, "@" + username), null);
+            
             telegramClient.sendHtml(session.getChatId(),
-                    i18n.t(lang, "meeting_confirm_interval").formatted(intervalHuman), null);
+                i18n.t(lang, "meeting_confirm_interval").formatted(intervalHuman), null);
+            
             MeetingSession.clear(session);
+            
             return StepResult.stay(MeetingFlowDef.FLOW, MeetingFlowDef.STEP_DONE);
         }
 

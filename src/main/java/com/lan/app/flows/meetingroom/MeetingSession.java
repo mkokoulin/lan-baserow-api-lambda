@@ -7,9 +7,6 @@ import com.lan.app.session.Session;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Typed accessors for meeting-related data stored in session.payloadJson.
- */
 final class MeetingSession {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();

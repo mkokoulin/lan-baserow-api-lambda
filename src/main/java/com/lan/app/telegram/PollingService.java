@@ -14,8 +14,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import org.jboss.logging.Logger;
+
 @ApplicationScoped
 public class PollingService {
+
+    private static final Logger log = Logger.getLogger(PollingService.class);
 
     // @ConfigProperty(name = "telegram.mode", defaultValue = "polling")
     @ConfigProperty(name = "app.mode", defaultValue = "polling")
@@ -82,7 +86,7 @@ public class PollingService {
                 System.out.println("Polling interrupted");
                 break;
             } catch (Exception e) {
-                System.out.println("Polling error: " + e.getMessage());
+                log.error("Polling error", e);
                 try {
                     Thread.sleep(3000); // пауза перед повтором при ошибке
                 } catch (InterruptedException ie) {
