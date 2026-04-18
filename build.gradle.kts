@@ -30,6 +30,7 @@ dependencies {
     implementation("io.quarkus:quarkus-hibernate-validator")
     implementation("io.quarkus:quarkus-cache")
     implementation("io.quarkus:quarkus-amazon-lambda-http")
+    implementation("io.quarkus:quarkus-smallrye-openapi")
 }
 
 group = "com.lan"

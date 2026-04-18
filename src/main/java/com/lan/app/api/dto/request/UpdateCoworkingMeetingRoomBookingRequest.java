@@ -1,6 +1,5 @@
 package com.lan.app.api.dto.request;
 
-import com.aayushatharva.brotli4j.common.annotations.Internal;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
