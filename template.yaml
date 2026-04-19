@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: lan-baserow-api-lambda
+
+Parameters:
+  BaserowToken:
+    Type: String
+    NoEcho: true
+
+globals:
+  Function:
+    Timeout: 30
+    MemorySize: 512
+
+Resources:
+  LanBaserowApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: lan-baserow-api
+      CodeUri: build/function.zip
+      Handler: not.used.in.provided.runtime
+      Runtime: provided.al2023
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          QUARKUS_REST_CLIENT_BASEROW_URL: https://api.baserow.io
+          BASEROW_TOKEN: !Ref BaserowToken
+          BASEROW_EVENTS_EVENTS_TABLE_ID: "824717"
+          BASEROW_EVENTS_REGISTRATIONS_TABLE_ID: "824726"
+          BASEROW_EVENTS_GUESTS_TABLE_ID: "824727"
+          BASEROW_EVENTS_NOTIFICATIONS_TABLE_ID: "831451"
+          BASEROW_COWORKING_GUESTS_TABLE_ID: "824729"
+          BASEROW_COWORKING_NOTIFICATIONS_TABLE_ID: "831434"
+          BASEROW_COWORKING_TARIFFS_TABLE_ID: "824730"
+          BASEROW_COWORKING_ACTIVE_TARIFFS_TABLE_ID: "831438"
+          BASEROW_COWORKING_MEETING_ROOM_BOOKINGS_TABLE_ID: "824738"
+          MP_JWT_VERIFY_ISSUER: lan-auth
+      Events:
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessHttpApi}.execute-api.${AWS::Region}.amazonaws.com/"
