@@ -35,6 +35,9 @@ jobs:
       - name: Install AWS SAM CLI
         uses: aws-actions/setup-sam@v2
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       # Quarkus Lambda requires native build via Docker
       - name: Build native executable
         run: ./gradlew build -Dquarkus.package.type=native -Dquarkus.native.container-build=true
