@@ -7,11 +7,6 @@ Parameters:
     Type: String
     NoEcho: true
 
-globals:
-  Function:
-    Timeout: 30
-    MemorySize: 512
-
 Resources:
   LanBaserowApiFunction:
     Type: AWS::Serverless::Function
@@ -20,6 +15,8 @@ Resources:
       CodeUri: build/function.zip
       Handler: not.used.in.provided.runtime
       Runtime: provided.al2023
+      Timeout: 30
+      MemorySize: 512
       Architectures:
         - x86_64
       Environment:
