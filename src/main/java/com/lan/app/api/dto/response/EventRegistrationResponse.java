@@ -10,35 +10,35 @@ public record EventRegistrationResponse(
 
     @Schema(
         description = "Unique identifier of the event registration",
-        example = "reg-123",
+        examples = "reg-123",
         required = true
     )
     String id,
 
     @Schema(
         description = "Identifier of the event the guest is registered for",
-        example = "event-456",
+        examples = "event-456",
         required = true
     )
     String eventId,
 
     @Schema(
         description = "Identifier of the guest who registered for the event",
-        example = "guest-789",
+        examples = "guest-789",
         required = true
     )
     String guestId,
 
     @Schema(
         description = "Optional free-text comment from the guest (e.g. dietary restrictions, accessibility needs, questions)",
-        example = "Vegetarian meal preferred",
+        examples = "Vegetarian meal preferred",
         nullable = true
     )
     String guestComment,
 
     @Schema(
         description = "Total number of people attending under this registration, including the guest themselves",
-        example = "2",
+        examples = "2",
         required = true,
         minimum = "1"
     )

@@ -16,7 +16,7 @@ public record EventRegistrationCreateRequest(
 
     @Schema(
         description = "External unique identifier of the event to register for",
-        example = "550e8400-e29b-41d4-a716-446655440000",
+        examples = "550e8400-e29b-41d4-a716-446655440000",
         required = true,
         format = "uuid"
     )
@@ -24,7 +24,7 @@ public record EventRegistrationCreateRequest(
 
     @Schema(
         description = "External unique identifier of the guest being registered",
-        example = "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        examples = "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
         required = true,
         format = "uuid"
     )
@@ -32,7 +32,7 @@ public record EventRegistrationCreateRequest(
 
     @Schema(
         description = "Optional free-text comment from the guest (e.g. dietary restrictions, accessibility needs, questions)",
-        example = "Vegetarian meal preferred",
+        examples = "Vegetarian meal preferred",
         nullable = true
     )
     @JsonProperty("guestComment") String guestComment,
@@ -40,7 +40,7 @@ public record EventRegistrationCreateRequest(
     @Schema(
         description = "Total number of people attending under this registration, including the guest themselves. " +
             "Must be at least 1.",
-        example = "2",
+        examples = "2",
         required = true,
         minimum = "1"
     )
@@ -49,7 +49,7 @@ public record EventRegistrationCreateRequest(
     @Schema(
         description = "Optional source channel that initiated the registration " +
             "(e.g. 'website', 'mobile-app', 'telegram-bot'). Used for analytics and attribution.",
-        example = "website",
+        examples = "website",
         nullable = true
     )
     @JsonProperty("source") String source

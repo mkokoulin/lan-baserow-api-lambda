@@ -13,7 +13,7 @@ public record CoworkingNotificationResponse(
 
     @Schema(
         description = "External unique identifier of the notification",
-        example = "550e8400-e29b-41d4-a716-446655440000",
+        examples = "550e8400-e29b-41d4-a716-446655440000",
         required = true,
         format = "uuid"
     )
@@ -21,14 +21,14 @@ public record CoworkingNotificationResponse(
 
     @Schema(
         description = "Notification message text",
-        example = "Your booking for meeting room A at 10:00 starts in 15 minutes",
+        examples = "Your booking for meeting room A at 10:00 starts in 15 minutes",
         required = true
     )
     String message,
 
     @Schema(
         description = "Date and time when the notification was sent (ISO-8601, UTC)",
-        example = "2026-04-18T09:45:00Z",
+        examples = "2026-04-18T09:45:00Z",
         required = true,
         format = "date-time"
     )

@@ -13,7 +13,7 @@ public record CoworkingActiveTariffListItemResponse(
 
     @Schema(
         description = "External unique identifier of the active tariff",
-        example = "550e8400-e29b-41d4-a716-446655440000",
+        examples = "550e8400-e29b-41d4-a716-446655440000",
         required = true,
         format = "uuid"
     )
@@ -21,7 +21,7 @@ public record CoworkingActiveTariffListItemResponse(
 
     @Schema(
         description = "Number of days the tariff has already been used",
-        example = "5",
+        examples = "5",
         required = true,
         minimum = "0"
     )
@@ -29,7 +29,7 @@ public record CoworkingActiveTariffListItemResponse(
 
     @Schema(
         description = "Date and time when the tariff became active (ISO-8601, UTC)",
-        example = "2026-01-15T10:00:00Z",
+        examples = "2026-01-15T10:00:00Z",
         required = true,
         format = "date-time"
     )
@@ -37,7 +37,7 @@ public record CoworkingActiveTariffListItemResponse(
 
     @Schema(
         description = "Date and time when the tariff expires (ISO-8601, UTC)",
-        example = "2026-12-31T23:59:59Z",
+        examples = "2026-12-31T23:59:59Z",
         required = true,
         format = "date-time"
     )

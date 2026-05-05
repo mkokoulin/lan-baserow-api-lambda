@@ -10,14 +10,14 @@ public record EventNotificationResponse(
 
     @Schema(
         description = "Unique identifier of the event notification",
-        example = "notif-123",
+        examples = "notif-123",
         required = true
     )
     String id,
 
     @Schema(
         description = "Number of hours before the event at which the notification should be sent",
-        example = "24",
+        examples = "24",
         required = true,
         minimum = "0"
     )
@@ -25,7 +25,7 @@ public record EventNotificationResponse(
 
     @Schema(
         description = "Notification message text to be delivered to the recipient",
-        example = "Reminder: your coworking tariff expires tomorrow",
+        examples = "Reminder: your coworking tariff expires tomorrow",
         required = true
     )
     String message,
@@ -33,7 +33,7 @@ public record EventNotificationResponse(
     @Schema(
         description = "Whether this notification configuration is currently active. " +
             "Inactive notifications are kept for history but will not be sent.",
-        example = "true",
+        examples = "true",
         required = true
     )
     boolean active

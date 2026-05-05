@@ -1,9 +1,9 @@
 package com.lan.app.repository;
 
-import com.lan.app.domain.model.CoworkingTariff;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.lan.app.domain.model.CoworkingTariff;
 
 public interface CoworkingTariffRepository {
     List<CoworkingTariff> list();

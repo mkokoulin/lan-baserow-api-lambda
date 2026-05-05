@@ -88,7 +88,7 @@ public class CoworkingGuestResource {
             example = "550e8400-e29b-41d4-a716-446655440000",
             schema = @Schema(type = SchemaType.STRING, format = "uuid")
         )
-        @PathParam("externalId") UUID externalId
+        @PathParam("externalId") final UUID externalId
     ) {
         var result = service.get(externalId);
         return mapper.toResponse(result);
@@ -200,7 +200,7 @@ public class CoworkingGuestResource {
     public CoworkingGuestResponse update(
         @Parameter(
             name = "externalId",
-            description = "External unique identifier of the guest to update (UUID)",
+            description = "External unique identifier of the guest (UUID)",
             required = true,
             in = ParameterIn.PATH,
             example = "550e8400-e29b-41d4-a716-446655440000",

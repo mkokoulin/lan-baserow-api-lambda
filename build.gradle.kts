@@ -52,12 +52,11 @@ tasks.withType<JavaCompile> {
 tasks.register<JavaExec>("generateToken") {
     classpath = sourceSets["test"].runtimeClasspath
     mainClass.set("com.lan.app.infrastructure.security.jwt.GenerateToken")
-
     systemProperty(
         "smallrye.jwt.sign.key.location",
-        "${System.getProperty("user.home")}\\.keys\\lan\\privateKey.pem"
+        // Use File() for cross-platform path building
+        File(System.getProperty("user.home"), ".keys/lan/privateKey.pem").absolutePath
     )
-
     val tokenType = project.findProperty("tokenType")?.toString()
     if (tokenType != null) {
         args(tokenType)

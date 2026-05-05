@@ -43,7 +43,7 @@ public class SecuredResource {
             description = "Service is reachable",
             content = @Content(
                 mediaType = MediaType.TEXT_PLAIN,
-                schema = @Schema(type = SchemaType.STRING, example = "public ok")
+                schema = @Schema(type = SchemaType.STRING, examples = "public ok")
             )
         ),
         @APIResponse(
@@ -74,7 +74,7 @@ public class SecuredResource {
                 mediaType = MediaType.TEXT_PLAIN,
                 schema = @Schema(
                     type = SchemaType.STRING,
-                    example = "hello ivan.petrov, groups=[admin, web-users]"
+                    examples = "hello ivan.petrov, groups=[admin, web-users]"
                 )
             )
         ),

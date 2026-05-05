@@ -13,7 +13,7 @@ public record CreateCoworkingGuestRequest(
 
     @Schema(
         description = "Guest's first name. Must be a non-blank string.",
-        example = "Ivan",
+        examples = "Ivan",
         required = true,
         minLength = 1
     )
@@ -21,7 +21,7 @@ public record CreateCoworkingGuestRequest(
 
     @Schema(
         description = "Guest's last name. Must be a non-blank string.",
-        example = "Petrov",
+        examples = "Petrov",
         required = true,
         minLength = 1
     )
@@ -29,7 +29,7 @@ public record CreateCoworkingGuestRequest(
 
     @Schema(
         description = "Guest's Telegram username (without the @ prefix). Must be a non-blank string.",
-        example = "ivan_petrov",
+        examples = "ivan_petrov",
         required = true,
         minLength = 1
     )
@@ -37,7 +37,7 @@ public record CreateCoworkingGuestRequest(
 
     @Schema(
         description = "Guest's phone number in international format. Must be a non-blank string.",
-        example = "+79161234567",
+        examples = "+79161234567",
         required = true,
         minLength = 1
     )

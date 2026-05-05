@@ -13,7 +13,7 @@ public record CoworkingMeetingRoomBookingResponse(
 
     @Schema(
         description = "External unique identifier of the meeting room booking",
-        example = "550e8400-e29b-41d4-a716-446655440000",
+        examples = "550e8400-e29b-41d4-a716-446655440000",
         required = true,
         format = "uuid"
     )
@@ -21,7 +21,7 @@ public record CoworkingMeetingRoomBookingResponse(
 
     @Schema(
         description = "External unique identifier of the guest who made the booking",
-        example = "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
+        examples = "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
         required = true,
         format = "uuid"
     )
@@ -29,7 +29,7 @@ public record CoworkingMeetingRoomBookingResponse(
 
     @Schema(
         description = "Date and time when the booking starts (ISO-8601, UTC)",
-        example = "2026-04-20T09:00:00Z",
+        examples = "2026-04-20T09:00:00Z",
         required = true,
         format = "date-time"
     )
@@ -37,7 +37,7 @@ public record CoworkingMeetingRoomBookingResponse(
 
     @Schema(
         description = "Date and time when the booking ends (ISO-8601, UTC). Must be later than dateStart.",
-        example = "2026-04-20T11:00:00Z",
+        examples = "2026-04-20T11:00:00Z",
         required = true,
         format = "date-time"
     )
@@ -45,7 +45,7 @@ public record CoworkingMeetingRoomBookingResponse(
 
     @Schema(
         description = "Number of people expected to attend the meeting",
-        example = "4",
+        examples = "4",
         required = true,
         minimum = "1"
     )
@@ -53,7 +53,7 @@ public record CoworkingMeetingRoomBookingResponse(
 
     @Schema(
         description = "Optional free-text comment or note about the booking (e.g. agenda, special requirements)",
-        example = "Client presentation, projector required",
+        examples = "Client presentation, projector required",
         nullable = true
     )
     String comment
