@@ -13,40 +13,41 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class BaserowEventMapper {
     
-    public Event toDomain(BaserowEventRow row) {
+    public Event toDomain(BaserowEventRow event) {
         var notificationTime =
-            row.notificationTime()
+            event.notificationTime()
                 .stream()
                 .map(nt -> nt.value())
                 .toList();
 
         var showEvent =
-            row.showEvent()
+            event.showEvent()
                 .stream()
-                .map(se -> EventClient.fromBaserow(se.value()))
+                .map(e -> EventClient.fromBaserow(e.value()))
                 .toList();
 
 
-        if (row.image().isEmpty()) {
-            throw new IllegalStateException("Event id=%d has no image".formatted(row.id()));
+        if (event.image().isEmpty()) {
+            throw new IllegalStateException("Event id=%d has no image".formatted(event.id()));
         }
        
-        EventImage image = new EventImage(row.image().getFirst().url());
+        EventImage image = new EventImage(event.image().getFirst().url());
 
         return new Event(
-            row.externalId(),
-            row.name(),
-            row.dateStart(),
-            row.dateEnd(),
-            row.description(),
+            event.externalId(),
+            event.parentId(),
+            event.name(),
+            event.dateStart(),
+            event.dateEnd(),
+            event.description(),
             image,
-            parseUri(row.externalRegistrationUrl()),
-            row.registrationUrl(),
-            parseUri(row.instagramUrl()),
-            EventType.fromBaserow(row.type().value()),
-            row.showForm(),
+            parseUri(event.externalRegistrationUrl()),
+            event.registrationUrl(),
+            parseUri(event.instagramUrl()),
+            EventType.fromBaserow(event.type().value()),
+            event.showForm(),
             notificationTime,
-            row.comment(),
+            event.comment(),
             showEvent
         );
     }

@@ -8,21 +8,22 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class EventResponseMapper {
 
-    public EventResponse toResponse(Event e) {
+    public EventResponse toResponse(Event event) {
         return new EventResponse(
-            e.id(),
-            e.name(),
-            e.dateStart(),
-            e.dateEnd(),
-            e.description(),
-            e.externalRegistrationUrl(),
-            e.registrationUrl(),
-            e.instagramUrl(),
-            e.type().toString().toLowerCase(),
-            e.showForm(),
-            e.notificationTime(),
-            e.comment(),
-            e.showEvent()
+            event.id(),
+            event.parentId(),
+            event.name(),
+            event.dateStart(),
+            event.dateEnd(),
+            event.description(),
+            event.externalRegistrationUrl(),
+            event.registrationUrl(),
+            event.instagramUrl(),
+            event.type().toString().toLowerCase(),
+            event.showForm(),
+            event.notificationTime(),
+            event.comment(),
+            event.showEvent()
         );
     }
 }

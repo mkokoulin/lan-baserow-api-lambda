@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public record Event(
     UUID id,
+    UUID parentId,
     String name,
     Instant dateStart,
     Instant dateEnd,

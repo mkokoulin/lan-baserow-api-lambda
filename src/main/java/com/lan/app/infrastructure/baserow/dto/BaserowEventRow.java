@@ -12,6 +12,7 @@ import java.util.UUID;
 public record BaserowEventRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
+    @JsonProperty("parent_id") UUID parentId,
     @NotBlank @JsonProperty("name") String name,
     @NotNull @JsonProperty("date_start") Instant dateStart,
     @NotNull @JsonProperty("date_end") Instant dateEnd,

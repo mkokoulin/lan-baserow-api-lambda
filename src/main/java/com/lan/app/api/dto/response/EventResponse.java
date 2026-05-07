@@ -25,6 +25,14 @@ public record EventResponse(
     UUID id,
 
     @Schema(
+        description = "Parent unique identifier of the event",
+        examples = "550e8400-e29b-41d4-a716-446655440000",
+        required = true,
+        format = "uuid"
+    )
+    UUID parentId,
+
+    @Schema(
         description = "Event name",
         examples = "Startup Pitch Night",
         required = true
