@@ -23,7 +23,8 @@ public class ApiEventMapper {
             event.showForm(),
             event.notificationTime(),
             event.comment(),
-            event.showEvent()
+            event.showEvent(),
+            event.isPin()
         );
     }
 }

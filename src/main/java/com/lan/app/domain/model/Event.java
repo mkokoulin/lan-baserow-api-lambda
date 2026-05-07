@@ -20,6 +20,7 @@ public record Event(
     boolean showForm,
     List<String> notificationTime,
     String comment,
-    List<EventClient> showEvent
+    List<EventClient> showEvent,
+    Boolean isPin
 ) {
 }

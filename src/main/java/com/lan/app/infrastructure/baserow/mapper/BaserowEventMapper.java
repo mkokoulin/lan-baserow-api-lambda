@@ -48,7 +48,8 @@ public class BaserowEventMapper {
             event.showForm(),
             notificationTime,
             event.comment(),
-            showEvent
+            showEvent,
+            event.isPin()
         );
     }
 

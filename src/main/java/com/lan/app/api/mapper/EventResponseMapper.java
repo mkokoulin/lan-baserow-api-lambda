@@ -23,7 +23,8 @@ public class EventResponseMapper {
             event.showForm(),
             event.notificationTime(),
             event.comment(),
-            event.showEvent()
+            event.showEvent(),
+            event.isPin()
         );
     }
 }

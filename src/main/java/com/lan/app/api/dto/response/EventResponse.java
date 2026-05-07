@@ -127,6 +127,13 @@ public record EventResponse(
         type = SchemaType.ARRAY,
         implementation = String.class
     )
-    List<EventClient> showEvent
+    List<EventClient> showEvent,
+
+    @Schema(
+        description = "",
+        examples = "true",
+        required = true
+    )
+    boolean isPin
 ) {
 }

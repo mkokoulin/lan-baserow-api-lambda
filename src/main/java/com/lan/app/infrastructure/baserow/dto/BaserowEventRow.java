@@ -25,7 +25,8 @@ public record BaserowEventRow(
     @JsonProperty("show_form") boolean showForm,
     @JsonProperty("notification_time") List<BaserowSelectOption> notificationTime,
     @JsonProperty("comment") String comment,
-    @JsonProperty("show_event") List<BaserowSelectOption> showEvent
+    @JsonProperty("show_event") List<BaserowSelectOption> showEvent,
+    @JsonProperty("is_pin") boolean isPin
 ) {
     public BaserowEventRow {
         image = image != null ? image : List.of();
