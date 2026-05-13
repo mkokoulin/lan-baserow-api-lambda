@@ -3,10 +3,8 @@ package com.lan.app.infrastructure.baserow.mapper;
 import com.lan.app.domain.model.CoworkingMeetingRoomBooking;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingMeetingRoomBookingRow;
 import com.lan.app.infrastructure.baserow.dto.CreateCoworkingMeetingRoomBookingRowRequest;
-import com.lan.app.infrastructure.baserow.dto.UpdateCoworkingGuestRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateCoworkingMeetingRoomBookingRowRequest;
 import com.lan.app.service.command.CreateCoworkingMeetingRoomBookingCommand;
-import com.lan.app.service.command.UpdateCoworkingGuestCommand;
 import com.lan.app.service.command.UpdateCoworkingMeetingRoomBookingCommand;
 import jakarta.enterprise.context.ApplicationScoped;
 

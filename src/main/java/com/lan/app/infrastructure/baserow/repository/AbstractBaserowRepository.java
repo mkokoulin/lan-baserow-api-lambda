@@ -3,6 +3,7 @@ package com.lan.app.infrastructure.baserow.repository;
 import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
 import com.lan.app.infrastructure.baserow.exception.BaserowUnavailableException;
 import jakarta.ws.rs.WebApplicationException;
+import org.jboss.logging.Logger;
 
 import java.net.SocketTimeoutException;
 import java.util.UUID;
@@ -10,15 +11,19 @@ import java.util.function.Supplier;
 
 public abstract class AbstractBaserowRepository {
 
+    private static final Logger LOG = Logger.getLogger(AbstractBaserowRepository.class);
+
     protected <T> T execute(Supplier<T> action) {
         try {
             return action.get();
         } catch (BaserowNotFoundException e) {
             throw e;
         } catch (WebApplicationException e) {
+            LOG.errorf("Baserow request failed: HTTP %d", e.getResponse().getStatus());
             throw new BaserowUnavailableException("Baserow request failed.", e);
         } catch (Exception e) {
             if (hasTimeoutCause(e)) {
+                LOG.error("Baserow request timed out", e);
                 throw new BaserowUnavailableException("Baserow is unavailable.", e);
             }
             throw e;
@@ -38,9 +43,11 @@ public abstract class AbstractBaserowRepository {
             if (isNotFound(e)) {
                 throw new BaserowNotFoundException(entityName, externalId);
             }
+            LOG.errorf("Baserow request failed: HTTP %d", e.getResponse().getStatus());
             throw new BaserowUnavailableException("Baserow request failed.", e);
         } catch (Exception e) {
             if (hasTimeoutCause(e)) {
+                LOG.error("Baserow request timed out", e);
                 throw new BaserowUnavailableException("Baserow is unavailable.", e);
             }
             throw e;

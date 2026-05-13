@@ -9,6 +9,7 @@ public record CreateEventGuestRowRequest(
     @JsonProperty("last_name") String lastName,
     @NotNull @NotBlank @JsonProperty("phone") String phone,
     @JsonProperty("telegram") String telegram,
-    @JsonProperty("source") String source
+    @JsonProperty("source") String source,
+    @JsonProperty("telegram_chat_id") Long chatId
 ) {
 }

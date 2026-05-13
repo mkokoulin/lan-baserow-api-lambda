@@ -54,14 +54,13 @@ public interface BaserowEventGuestClient {
         @NotNull @Valid CreateEventGuestRowRequest body
     );
 
-    // filter__telegram_chat_id__equal works when user_field_names=true
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
     @ClientQueryParam(name = "size", value = "1")
     BaserowListResponse<BaserowEventGuestRow> findByChatIdRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__telegram_chat_id__equal") Long chatId
+        @QueryParam("filter__field_telegram_chat_id__equal") Long chatId
     );
 
     @PATCH

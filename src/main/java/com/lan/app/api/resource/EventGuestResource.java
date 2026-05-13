@@ -82,7 +82,8 @@ public class EventGuestResource {
             req.lastName(),
             req.phone(),
             req.telegram(),
-            req.source()
+            req.source(),
+            req.chatId()
         );
         return Response.created(URI.create("/events/guests/" + created.id().externalId()))
             .entity(mapper.toResponse(created))

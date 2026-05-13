@@ -7,7 +7,7 @@ import java.util.UUID;
 
 public interface EventGuestRepository {
     EventGuest get(UUID externalId);
-    EventGuest create(String firstName, String lastName, String phone, String telegram, String source);
+    EventGuest create(String firstName, String lastName, String phone, String telegram, String source, Long chatId);
     Optional<EventGuest> findByTelegramChatId(Long chatId);
     void storeTelegramChatId(int guestRowId, Long chatId);
 }

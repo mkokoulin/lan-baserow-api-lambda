@@ -19,7 +19,7 @@ public class EventGuestService {
         return repo.get(externalId);
     }
 
-    public EventGuest create(String firstName, String lastName, String phone, String telegram, String source) {
-        return repo.create(firstName, lastName, phone, telegram, source);
+    public EventGuest create(String firstName, String lastName, String phone, String telegram, String source, Long chatId) {
+        return repo.create(firstName, lastName, phone, telegram, source, chatId);
     }
 }

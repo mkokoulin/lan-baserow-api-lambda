@@ -15,7 +15,8 @@ public class BaserowEventGuestMapper {
             row.lastName(),
             row.telegram(),
             row.phone(),
-            row.source() != null ? row.source().value() : null
+            row.source() != null ? row.source().value() : null,
+            row.chatId() != null ? row.chatId() : -1
         );
     }
 }

@@ -13,7 +13,8 @@ public class ApiEventGuestMapper {
             guest.firstName(),
             guest.lastName(),
             guest.telegram(),
-            guest.phone()
+            guest.phone(),
+            guest.chatId()
         );
     }
 }

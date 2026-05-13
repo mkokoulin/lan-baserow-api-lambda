@@ -21,6 +21,9 @@ public record EventGuestResponse(
     String telegram,
 
     @Schema(description = "Guest's phone number", required = true)
-    String phone
+    String phone,
+
+    @Schema(description = "")
+    Long chatId
 ) {
 }

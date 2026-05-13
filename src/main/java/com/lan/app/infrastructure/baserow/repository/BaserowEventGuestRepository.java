@@ -43,8 +43,8 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
     }
 
     @Override
-    public EventGuest create(String firstName, String lastName, String phone, String telegram, String source) {
-        var body = new CreateEventGuestRowRequest(firstName, lastName, phone, telegram, source);
+    public EventGuest create(String firstName, String lastName, String phone, String telegram, String source, Long chatId) {
+        var body = new CreateEventGuestRowRequest(firstName, lastName, phone, telegram, source, chatId);
         var created = execute(() -> client.create(guestsTableId, body));
         return mapper.toDomain(created);
     }

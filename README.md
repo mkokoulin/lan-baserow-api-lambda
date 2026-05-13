@@ -20,6 +20,12 @@ The application can be packaged using:
 
 ```shell script
 ./gradlew build
+
+./gradlew quarkusDev -Dsuspend=true
+
+./gradlew quarkusDev -Ddebug=5006
+
+./gradlew quarkusDev -Ddebug=false
 ```
 
 It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.

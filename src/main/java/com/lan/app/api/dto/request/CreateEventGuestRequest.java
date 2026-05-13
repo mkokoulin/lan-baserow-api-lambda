@@ -12,10 +12,10 @@ import org.eclipse.microprofile.openapi.annotations.media.Schema;
 public record CreateEventGuestRequest(
 
     @Schema(description = "Guest's first name", required = true)
-    @NotNull @NotBlank @JsonProperty("firstName") String firstName,
+    @NotNull @NotBlank @JsonProperty("first_name") String firstName,
 
     @Schema(description = "Guest's last name (optional)", nullable = true)
-    @JsonProperty("lastName") String lastName,
+    @JsonProperty("last_name") String lastName,
 
     @Schema(description = "Guest's phone number", required = true)
     @NotNull @NotBlank @JsonProperty("phone") String phone,
@@ -24,6 +24,9 @@ public record CreateEventGuestRequest(
     @JsonProperty("telegram") String telegram,
 
     @Schema(description = "Source channel, e.g. 'website'", nullable = true)
-    @JsonProperty("source") String source
+    @JsonProperty("source") String source,
+
+    @Schema(description = "")
+    @NotNull @JsonProperty("chat_id") Long chatId
 ) {
 }

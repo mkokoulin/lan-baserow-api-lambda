@@ -1,7 +1,6 @@
 package com.lan.app.api.mapper;
 
 import com.lan.app.api.dto.request.CreateCoworkingMeetingRoomBookingRequest;
-import com.lan.app.api.dto.request.UpdateCoworkingGuestRequest;
 import com.lan.app.api.dto.request.UpdateCoworkingMeetingRoomBookingRequest;
 import com.lan.app.api.dto.response.CoworkingMeetingRoomBookingResponse;
 import com.lan.app.domain.model.CoworkingMeetingRoomBooking;

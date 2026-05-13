@@ -6,6 +6,7 @@ public record EventGuest(
     String lastName,
     String telegram,
     String phone,
-    String source
+    String source,
+    Long chatId
 ) {
 }
