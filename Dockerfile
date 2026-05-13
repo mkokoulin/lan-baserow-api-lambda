@@ -4,18 +4,23 @@ WORKDIR /app
 
 COPY gradle/ gradle/
 COPY gradlew gradlew.bat gradle.properties settings.gradle.kts build.gradle.kts ./
-RUN chmod +x gradlew && ./gradlew dependencies --no-daemon -q 2>/dev/null || true
+RUN chmod +x gradlew && ./gradlew dependencies --no-daemon -q -PskipLambda 2>/dev/null || true
 
 COPY src/ src/
-RUN ./gradlew build -x test --no-daemon
+RUN ./gradlew build -x test --no-daemon -PskipLambda
 
-FROM eclipse-temurin:21-jre-alpine
+FROM registry.access.redhat.com/ubi9/openjdk-21:1.23
 
-WORKDIR /deployments
+ENV LANGUAGE='en_US:en'
 
-COPY --from=build /app/build/lib/ ./lib/
-COPY --from=build /app/build/lan-baserow-service-1.0-SNAPSHOT-runner.jar ./
+COPY --from=build --chown=185 /app/build/quarkus-app/lib/ /deployments/lib/
+COPY --from=build --chown=185 /app/build/quarkus-app/*.jar /deployments/
+COPY --from=build --chown=185 /app/build/quarkus-app/app/ /deployments/app/
+COPY --from=build --chown=185 /app/build/quarkus-app/quarkus/ /deployments/quarkus/
 
 EXPOSE 8080
+USER 185
 ENV JAVA_OPTS_APPEND="-Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
-ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS_APPEND -jar /deployments/lan-baserow-service-1.0-SNAPSHOT-runner.jar"]
+ENV JAVA_APP_JAR="/deployments/quarkus-run.jar"
+
+ENTRYPOINT ["/opt/jboss/container/java/run/run-java.sh"]

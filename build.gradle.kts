@@ -29,7 +29,10 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter")
     implementation("io.quarkus:quarkus-hibernate-validator")
     implementation("io.quarkus:quarkus-cache")
-    implementation("io.quarkus:quarkus-amazon-lambda-http")
+    implementation("io.quarkus:quarkus-smallrye-health")
+    if (!project.hasProperty("skipLambda")) {
+        implementation("io.quarkus:quarkus-amazon-lambda-http")
+    }
     implementation("io.quarkus:quarkus-smallrye-openapi")
 }
 
