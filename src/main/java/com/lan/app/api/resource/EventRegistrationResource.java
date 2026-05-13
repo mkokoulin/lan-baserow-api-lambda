@@ -4,6 +4,7 @@ import com.lan.app.api.dto.request.EventRegistrationCreateRequest;
 import com.lan.app.api.dto.response.EventRegistrationResponse;
 import com.lan.app.api.mapper.EventRegistrationMapper;
 import com.lan.app.service.EventRegistrationService;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -35,10 +36,13 @@ public class EventRegistrationResource {
 
     private final EventRegistrationService service;
     private final EventRegistrationMapper mapper;
+    private final RegistrationConfirmStore confirmStore;
 
-    public EventRegistrationResource(EventRegistrationService service, EventRegistrationMapper mapper) {
+    public EventRegistrationResource(EventRegistrationService service, EventRegistrationMapper mapper,
+                                     RegistrationConfirmStore confirmStore) {
         this.service = service;
         this.mapper = mapper;
+        this.confirmStore = confirmStore;
     }
 
     @POST
@@ -99,5 +103,22 @@ public class EventRegistrationResource {
         return Response.created(URI.create("/events/registrations/" + created.id().externalId()))
             .entity(mapper.toResponse(created))
             .build();
+    }
+
+    @POST
+    @Path("/{regId}/confirm")
+    @PermitAll
+    @Operation(operationId = "confirmRegistration", summary = "Mark a site registration as bot-confirmed")
+    public Response confirm(@PathParam("regId") String regId) {
+        confirmStore.confirm(regId);
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/{regId}/confirmed")
+    @PermitAll
+    @Operation(operationId = "isRegistrationConfirmed", summary = "Check if a registration has been bot-confirmed")
+    public Response isConfirmed(@PathParam("regId") String regId) {
+        return Response.ok(java.util.Map.of("confirmed", confirmStore.isConfirmed(regId))).build();
     }
 }
