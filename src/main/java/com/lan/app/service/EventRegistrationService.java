@@ -50,6 +50,14 @@ public class EventRegistrationService {
                 .orElse(List.of());
     }
 
+    public void storeTelegramChatIdForGuest(int guestRowId, Long chatId) {
+        try {
+            guestRepo.storeTelegramChatId(guestRowId, chatId);
+        } catch (Exception e) {
+            log.warnf("Failed to store chatId=%d for guestRowId=%d: %s", chatId, guestRowId, e.getMessage());
+        }
+    }
+
     public void storeTelegramChatId(UUID regExternalId, Long chatId) {
         try {
             registrationRepo.getGuestRowIdByExternalId(regExternalId)

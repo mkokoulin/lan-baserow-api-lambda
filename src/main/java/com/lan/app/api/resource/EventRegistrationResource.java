@@ -100,6 +100,7 @@ public class EventRegistrationResource {
     ) {
         var command = mapper.toCommand(req);
         var created = service.create(command);
+        confirmStore.storeGuestRowId(created.id().externalId().toString(), created.guestId().internalId());
         return Response.created(URI.create("/events/registrations/" + created.id().externalId()))
             .entity(mapper.toResponse(created))
             .build();
@@ -115,11 +116,14 @@ public class EventRegistrationResource {
     ) {
         confirmStore.confirm(regId);
         if (chatId != null) {
-            try {
-                service.storeTelegramChatId(java.util.UUID.fromString(regId), chatId);
-            } catch (IllegalArgumentException ignored) {
-                // regId is not a valid UUID — skip chatId storage
-            }
+            confirmStore.getGuestRowId(regId).ifPresentOrElse(
+                guestRowId -> service.storeTelegramChatIdForGuest(guestRowId, chatId),
+                () -> {
+                    try {
+                        service.storeTelegramChatId(java.util.UUID.fromString(regId), chatId);
+                    } catch (IllegalArgumentException ignored) {}
+                }
+            );
         }
         return Response.ok().build();
     }
