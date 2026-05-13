@@ -3,6 +3,7 @@ package com.lan.app.infrastructure.baserow.repository;
 import com.lan.app.domain.model.EventGuest;
 import com.lan.app.infrastructure.baserow.client.BaserowEventGuestClient;
 import com.lan.app.infrastructure.baserow.dto.CreateEventGuestRowRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateGuestTelegramChatIdRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventGuestMapper;
 import com.lan.app.repository.EventGuestRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -10,10 +11,11 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
-public class BaserowEventGuestRepository implements EventGuestRepository {
+public class BaserowEventGuestRepository extends AbstractBaserowRepository implements EventGuestRepository {
 
     private final int guestsTableId;
 
@@ -40,7 +42,25 @@ public class BaserowEventGuestRepository implements EventGuestRepository {
     @Override
     public EventGuest create(String firstName, String lastName, String phone, String telegram, String source) {
         var body = new CreateEventGuestRowRequest(firstName, lastName, phone, telegram, source);
-        var created = client.create(guestsTableId, body);
+        var created = execute(() -> client.create(guestsTableId, body));
         return mapper.toDomain(created);
+    }
+
+    @Override
+    public Optional<EventGuest> findByTelegramChatId(Long chatId) {
+        var response = execute(() -> client.findByChatIdRaw(guestsTableId, chatId));
+        if (response.results().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(mapper.toDomain(response.results().getFirst()));
+    }
+
+    @Override
+    public void storeTelegramChatId(int guestRowId, Long chatId) {
+        execute(() -> client.patchTelegramChatId(
+            guestsTableId,
+            guestRowId,
+            new UpdateGuestTelegramChatIdRequest(chatId)
+        ));
     }
 }

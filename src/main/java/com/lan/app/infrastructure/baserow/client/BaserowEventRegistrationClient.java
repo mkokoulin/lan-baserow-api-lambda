@@ -3,7 +3,6 @@ package com.lan.app.infrastructure.baserow.client;
 import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
-import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationTelegramChatIdRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -29,7 +28,7 @@ public interface BaserowEventRegistrationClient {
         @NotNull @Valid CreateEventRegistrationRowRequest body
     );
 
-    // filter__external_id__equal works when user_field_names=true
+    // Finds a registration by its external UUID (used when storing chatId on confirm)
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
@@ -39,22 +38,13 @@ public interface BaserowEventRegistrationClient {
         @QueryParam("filter__external_id__equal") UUID externalId
     );
 
-    // filter__telegram_chat_id__equal works when user_field_names=true
+    // filter__guest_id__link_row_has returns registrations linked to the given guest row ID
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
     @ClientQueryParam(name = "size", value = "50")
-    BaserowListResponse<BaserowRegistrationRow> findByChatIdRaw(
+    BaserowListResponse<BaserowRegistrationRow> findByGuestRowIdRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__telegram_chat_id__equal") Long chatId
-    );
-
-    @PATCH
-    @ClientQueryParam(name = "user_field_names", value = "true")
-    @Path("/{tableId}/{rowId}/")
-    BaserowRegistrationRow patchTelegramChatId(
-        @PathParam("tableId") int tableId,
-        @PathParam("rowId") int rowId,
-        @NotNull UpdateRegistrationTelegramChatIdRequest body
+        @QueryParam("filter__guest_id__link_row_has") int guestRowId
     );
 }

@@ -3,6 +3,7 @@ package com.lan.app.infrastructure.baserow.client;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventGuestRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.CreateEventGuestRowRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateGuestTelegramChatIdRequest;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
 import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
@@ -51,5 +52,24 @@ public interface BaserowEventGuestClient {
     BaserowEventGuestRow create(
         @PathParam("tableId") int tableId,
         @NotNull @Valid CreateEventGuestRowRequest body
+    );
+
+    // filter__telegram_chat_id__equal works when user_field_names=true
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "1")
+    BaserowListResponse<BaserowEventGuestRow> findByChatIdRaw(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__telegram_chat_id__equal") Long chatId
+    );
+
+    @PATCH
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowEventGuestRow patchTelegramChatId(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull UpdateGuestTelegramChatIdRequest body
     );
 }

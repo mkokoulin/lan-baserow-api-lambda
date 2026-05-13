@@ -6,7 +6,6 @@ import com.lan.app.domain.model.Id;
 import com.lan.app.infrastructure.baserow.client.BaserowEventClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
-import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationTelegramChatIdRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventRegistrationMapper;
 import com.lan.app.repository.EventRegistrationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,6 +16,7 @@ import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -61,9 +61,23 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
     }
 
     @Override
-    public List<EventRegistrationItem> findByChatId(Long chatId) {
+    public Optional<Integer> getGuestRowIdByExternalId(UUID regExternalId) {
+        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, regExternalId));
+        if (response.results().isEmpty()) {
+            log.warnf("Registration not found in Baserow for externalId=%s", regExternalId);
+            return Optional.empty();
+        }
+        var reg = response.results().getFirst();
+        if (reg.guestId() == null || reg.guestId().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(reg.guestId().getFirst().id());
+    }
+
+    @Override
+    public List<EventRegistrationItem> findByGuestRowId(int guestRowId) {
         var registrations = execute(() ->
-            client.findByChatIdRaw(registrationsTableId, chatId).results()
+            client.findByGuestRowIdRaw(registrationsTableId, guestRowId).results()
         );
 
         var result = new ArrayList<EventRegistrationItem>();
@@ -74,26 +88,10 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
                 var eventRow = execute(() -> eventClient.getByRowId(eventTableId, eventRowId));
                 result.add(new EventRegistrationItem(eventRow.name(), eventRow.dateStart()));
             } catch (Exception e) {
-                log.warnf("Could not fetch event rowId=%d for chatId=%d: %s", eventRowId, chatId, e.getMessage());
+                log.warnf("Could not fetch event rowId=%d for guestRowId=%d: %s",
+                        eventRowId, guestRowId, e.getMessage());
             }
         }
         return result;
-    }
-
-    @Override
-    public void storeTelegramChatId(UUID regExternalId, Long chatId) {
-        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, regExternalId));
-
-        if (response.results().isEmpty()) {
-            log.warnf("Registration not found in Baserow for externalId=%s, chatId not stored", regExternalId);
-            return;
-        }
-
-        int rowId = response.results().getFirst().id();
-        execute(() -> client.patchTelegramChatId(
-            registrationsTableId,
-            rowId,
-            new UpdateRegistrationTelegramChatIdRequest(chatId)
-        ));
     }
 }

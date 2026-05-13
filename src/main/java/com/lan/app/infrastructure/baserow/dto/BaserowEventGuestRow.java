@@ -13,5 +13,6 @@ public record BaserowEventGuestRow(
     @JsonProperty("last_name") String lastName,
     @JsonProperty("telegram") String telegram,
     @NotNull @NotBlank @JsonProperty("phone") String phone,
-    @JsonProperty("source") BaserowSingleSelect source
+    @JsonProperty("source") BaserowSingleSelect source,
+    @JsonProperty("telegram_chat_id") Long telegramChatId
 ) {}

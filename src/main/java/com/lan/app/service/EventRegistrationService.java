@@ -45,12 +45,18 @@ public class EventRegistrationService {
     }
 
     public List<EventRegistrationItem> findByChatId(Long chatId) {
-        return registrationRepo.findByChatId(chatId);
+        return guestRepo.findByTelegramChatId(chatId)
+                .map(guest -> registrationRepo.findByGuestRowId(guest.id().internalId()))
+                .orElse(List.of());
     }
 
     public void storeTelegramChatId(UUID regExternalId, Long chatId) {
         try {
-            registrationRepo.storeTelegramChatId(regExternalId, chatId);
+            registrationRepo.getGuestRowIdByExternalId(regExternalId)
+                    .ifPresentOrElse(
+                            guestRowId -> guestRepo.storeTelegramChatId(guestRowId, chatId),
+                            () -> log.warnf("No guest found for reg=%s, chatId not stored", regExternalId)
+                    );
         } catch (Exception e) {
             log.warnf("Failed to store chatId=%d for reg=%s: %s", chatId, regExternalId, e.getMessage());
         }
