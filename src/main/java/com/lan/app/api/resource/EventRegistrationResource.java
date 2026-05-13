@@ -109,8 +109,18 @@ public class EventRegistrationResource {
     @Path("/{regId}/confirm")
     @PermitAll
     @Operation(operationId = "confirmRegistration", summary = "Mark a site registration as bot-confirmed")
-    public Response confirm(@PathParam("regId") String regId) {
+    public Response confirm(
+            @PathParam("regId") String regId,
+            @QueryParam("chatId") Long chatId
+    ) {
         confirmStore.confirm(regId);
+        if (chatId != null) {
+            try {
+                service.storeTelegramChatId(java.util.UUID.fromString(regId), chatId);
+            } catch (IllegalArgumentException ignored) {
+                // regId is not a valid UUID — skip chatId storage
+            }
+        }
         return Response.ok().build();
     }
 
