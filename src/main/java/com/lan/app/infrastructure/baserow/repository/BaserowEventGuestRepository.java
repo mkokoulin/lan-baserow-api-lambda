@@ -10,12 +10,15 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
 public class BaserowEventGuestRepository extends AbstractBaserowRepository implements EventGuestRepository {
+
+    private static final Logger log = Logger.getLogger(BaserowEventGuestRepository.class);
 
     private final int guestsTableId;
 
@@ -57,10 +60,17 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
 
     @Override
     public void storeTelegramChatId(int guestRowId, Long chatId) {
-        execute(() -> client.patchTelegramChatId(
-            guestsTableId,
-            guestRowId,
-            new UpdateGuestTelegramChatIdRequest(chatId)
-        ));
+        log.infof("PATCH telegram_chat_id=%d for guestRowId=%d tableId=%d", chatId, guestRowId, guestsTableId);
+        try {
+            execute(() -> client.patchTelegramChatId(
+                guestsTableId,
+                guestRowId,
+                new UpdateGuestTelegramChatIdRequest(chatId)
+            ));
+            log.infof("PATCH telegram_chat_id OK for guestRowId=%d", guestRowId);
+        } catch (Exception e) {
+            log.errorf(e, "PATCH telegram_chat_id FAILED for guestRowId=%d: %s", guestRowId, e.getMessage());
+            throw e;
+        }
     }
 }

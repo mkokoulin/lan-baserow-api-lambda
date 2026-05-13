@@ -21,6 +21,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import org.jboss.logging.Logger;
+
 import java.net.URI;
 
 @Path("/events/registrations")
@@ -33,6 +35,8 @@ import java.net.URI;
 )
 @SecurityRequirement(name = "bearerAuth")
 public class EventRegistrationResource {
+
+    private static final Logger log = Logger.getLogger(EventRegistrationResource.class);
 
     private final EventRegistrationService service;
     private final EventRegistrationMapper mapper;
@@ -116,7 +120,9 @@ public class EventRegistrationResource {
     ) {
         confirmStore.confirm(regId);
         if (chatId != null) {
-            confirmStore.getGuestRowId(regId).ifPresentOrElse(
+            var cached = confirmStore.getGuestRowId(regId);
+            log.infof("confirm regId=%s chatId=%d cacheHit=%b", regId, chatId, cached.isPresent());
+            cached.ifPresentOrElse(
                 guestRowId -> service.storeTelegramChatIdForGuest(guestRowId, chatId),
                 () -> {
                     try {
