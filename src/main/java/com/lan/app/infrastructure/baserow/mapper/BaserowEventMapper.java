@@ -6,6 +6,7 @@ import com.lan.app.domain.model.Event;
 import com.lan.app.domain.model.EventClient;
 import com.lan.app.domain.model.EventImage;
 import com.lan.app.domain.model.EventType;
+import com.lan.app.domain.model.Id;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventRow;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -34,7 +35,7 @@ public class BaserowEventMapper {
         EventImage image = new EventImage(event.image().getFirst().url());
 
         return new Event(
-            event.externalId(),
+            new Id(event.id(), event.externalId()),
             event.parentId(),
             event.name(),
             event.dateStart(),

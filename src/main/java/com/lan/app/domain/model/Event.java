@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record Event(
-    UUID id,
+    Id id,
     UUID parentId,
     String name,
     Instant dateStart,

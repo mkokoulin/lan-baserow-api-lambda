@@ -21,6 +21,6 @@ public record BaserowRegistrationRow(
     @JsonProperty("created_at") String createdAt,
     @NotNull @JsonProperty("guest_count") Integer guestCount,
     @JsonProperty("guest_comment") String guestComment,
-    @JsonProperty("source") String source
+    @JsonProperty("source") BaserowSingleSelect source
 ) {
 }

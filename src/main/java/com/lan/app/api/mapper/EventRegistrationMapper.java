@@ -20,10 +20,16 @@ public class EventRegistrationMapper {
     }
 
     public EventRegistrationResponse toResponse(EventRegistration registration) {
+        var eventIdStr = registration.eventId().externalId() != null
+            ? registration.eventId().externalId().toString()
+            : String.valueOf(registration.eventId().internalId());
+        var guestIdStr = registration.guestId().externalId() != null
+            ? registration.guestId().externalId().toString()
+            : String.valueOf(registration.guestId().internalId());
         return new EventRegistrationResponse(
             registration.id().externalId().toString(),
-            registration.eventId().externalId().toString(),
-            registration.guestId().externalId().toString(),
+            eventIdStr,
+            guestIdStr,
             registration.comment(),
             registration.guestCount()
         );

@@ -10,7 +10,7 @@ public class EventResponseMapper {
 
     public EventResponse toResponse(Event event) {
         return new EventResponse(
-            event.id(),
+            event.id().externalId(),
             event.parentId(),
             event.name(),
             event.dateStart(),

@@ -1,6 +1,8 @@
 package com.lan.app.infrastructure.baserow.client;
 
-import com.lan.app.infrastructure.baserow.dto.*;
+import com.lan.app.infrastructure.baserow.dto.BaserowEventGuestRow;
+import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
+import com.lan.app.infrastructure.baserow.dto.CreateEventGuestRowRequest;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
 import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
@@ -18,34 +20,26 @@ import java.util.UUID;
 @Path("/api/database/rows/table")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public interface BaserowCoworkingGuestClient {
+public interface BaserowEventGuestClient {
 
     @GET
-    @Path("/{tableId}/{rowId}/")
-    @ClientQueryParam(name = "user_field_names", value = "true")
-    BaserowCoworkingGuestRow getByRowId(
-        @PathParam("tableId") int tableId,
-        @PathParam("rowId") int rowId
-    );
-
-    @GET
+    @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
     @ClientQueryParam(name = "size", value = "1")
-    @Path("/{tableId}/")
-    BaserowListResponse<BaserowCoworkingGuestRow> findByExternalIdRaw(
+    BaserowListResponse<BaserowEventGuestRow> findByExternalIdRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_7464331__equal") UUID externalId
+        @QueryParam("filter__field_7099814__equal") UUID externalId
     );
 
-    default BaserowCoworkingGuestRow findUniqueByExternalId(int tableId, UUID externalId) {
+    default BaserowEventGuestRow findUniqueByExternalId(int tableId, UUID externalId) {
         var resp = findByExternalIdRaw(tableId, externalId);
 
         if (resp.count() == 0 || resp.results().isEmpty()) {
-            throw new BaserowNotFoundException("Coworking guest", externalId);
+            throw new BaserowNotFoundException("Event guest", externalId);
         }
 
         if (resp.results().size() > 1) {
-            throw new BaserowDataIntegrityException("Coworking guest", externalId);
+            throw new BaserowDataIntegrityException("Event guest", externalId);
         }
 
         return resp.results().getFirst();
@@ -54,17 +48,8 @@ public interface BaserowCoworkingGuestClient {
     @POST
     @ClientQueryParam(name = "user_field_names", value = "true")
     @Path("/{tableId}/")
-    BaserowCoworkingGuestRow create(
+    BaserowEventGuestRow create(
         @PathParam("tableId") int tableId,
-        @NotNull @Valid CreateCoworkingGuestRowRequest body
-    );
-
-    @PATCH
-    @ClientQueryParam(name = "user_field_names", value = "true")
-    @Path("/{tableId}/{rowId}/")
-    BaserowCoworkingGuestRow update(
-        @PathParam("tableId") int tableId,
-        @PathParam("rowId") int rowId,
-        @NotNull @Valid UpdateCoworkingGuestRowRequest body
+        @NotNull @Valid CreateEventGuestRowRequest body
     );
 }

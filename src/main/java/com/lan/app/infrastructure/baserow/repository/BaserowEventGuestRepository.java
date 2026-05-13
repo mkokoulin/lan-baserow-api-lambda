@@ -1,0 +1,46 @@
+package com.lan.app.infrastructure.baserow.repository;
+
+import com.lan.app.domain.model.EventGuest;
+import com.lan.app.infrastructure.baserow.client.BaserowEventGuestClient;
+import com.lan.app.infrastructure.baserow.dto.CreateEventGuestRowRequest;
+import com.lan.app.infrastructure.baserow.mapper.BaserowEventGuestMapper;
+import com.lan.app.repository.EventGuestRepository;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import java.util.UUID;
+
+@ApplicationScoped
+public class BaserowEventGuestRepository implements EventGuestRepository {
+
+    private final int guestsTableId;
+
+    private final BaserowEventGuestClient client;
+    private final BaserowEventGuestMapper mapper;
+
+    @Inject
+    public BaserowEventGuestRepository(
+        @ConfigProperty(name = "baserow.events.guests-table-id") int guestsTableId,
+        @RestClient BaserowEventGuestClient client,
+        BaserowEventGuestMapper mapper
+    ) {
+        this.guestsTableId = guestsTableId;
+        this.client = client;
+        this.mapper = mapper;
+    }
+
+    @Override
+    public EventGuest get(UUID externalId) {
+        var row = client.findUniqueByExternalId(guestsTableId, externalId);
+        return mapper.toDomain(row);
+    }
+
+    @Override
+    public EventGuest create(String firstName, String lastName, String phone, String telegram, String source) {
+        var body = new CreateEventGuestRowRequest(firstName, lastName, phone, telegram, source);
+        var created = client.create(guestsTableId, body);
+        return mapper.toDomain(created);
+    }
+}

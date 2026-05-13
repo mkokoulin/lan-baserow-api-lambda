@@ -48,7 +48,7 @@ public interface BaserowEventClient {
     @ClientQueryParam(name = "user_field_names", value = "true")
     BaserowListResponse<BaserowEventRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_externalId__equal") UUID externalId
+        @QueryParam("filter__field_7091201__equal") UUID externalId
     );
 
     default BaserowEventRow findUniqueByExternalId(int tableId, UUID externalId) {
