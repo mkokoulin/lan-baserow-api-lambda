@@ -11,7 +11,6 @@ public class EventResponseMapper {
     public EventResponse toResponse(Event event) {
         return new EventResponse(
             event.id().externalId(),
-            event.parentId(),
             event.name(),
             event.dateStart(),
             event.dateEnd(),
@@ -19,11 +18,9 @@ public class EventResponseMapper {
             event.externalRegistrationUrl(),
             event.registrationUrl(),
             event.instagramUrl(),
-            event.type().toString().toLowerCase(),
             event.showForm(),
-            event.notificationTime(),
+            event.notifications(),
             event.comment(),
-            event.showEvent(),
             event.isPin()
         );
     }

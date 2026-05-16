@@ -33,10 +33,7 @@ public class BaserowEventRepository implements EventRepository {
 
     public List<Event> list() {
         var row = eventClient.list(eventTableId);
-        return row.results()
-            .stream()
-            .filter(event -> event.image() != null && !event.image().isEmpty())
-            .map(mapper::toDomain).toList();
+        return row.results().stream().map(mapper::toDomain).toList();
     }
 
     public Event get(UUID externalId) {

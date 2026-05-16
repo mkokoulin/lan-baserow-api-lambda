@@ -3,7 +3,7 @@ package com.lan.app.api.dto.response;
 import org.eclipse.microprofile.openapi.annotations.enums.SchemaType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
-import com.lan.app.domain.model.EventClient;
+import com.lan.app.domain.model.EventPlatform;
 
 import java.net.URI;
 import java.time.Instant;
@@ -23,14 +23,6 @@ public record EventResponse(
         format = "uuid"
     )
     UUID id,
-
-    @Schema(
-        description = "Parent unique identifier of the event",
-        examples = "550e8400-e29b-41d4-a716-446655440000",
-        required = true,
-        format = "uuid"
-    )
-    UUID parentId,
 
     @Schema(
         description = "Event name",
@@ -88,13 +80,6 @@ public record EventResponse(
     URI instagramUrl,
 
     @Schema(
-        description = "Event type or category (e.g. 'meetup', 'workshop', 'conference')",
-        examples = "meetup",
-        nullable = true
-    )
-    String type,
-
-    @Schema(
         description = "Whether the internal registration form should be shown to users. " +
             "When false, users are expected to register via externalRegistrationUrl.",
         examples = "true",
@@ -110,7 +95,7 @@ public record EventResponse(
         type = SchemaType.ARRAY,
         implementation = String.class
     )
-    List<String> notificationTime,
+    List<String> notifications,
 
     @Schema(
         description = "Internal comment or note about the event, not intended for public display",
@@ -118,16 +103,6 @@ public record EventResponse(
         nullable = true
     )
     String comment,
-
-    @Schema(
-        description = "List of channels or contexts where this event should be displayed " +
-            "(e.g. 'website', 'mobile-app', 'telegram-bot')",
-        examples = "[\"website\", \"mobile-app\"]",
-        nullable = true,
-        type = SchemaType.ARRAY,
-        implementation = String.class
-    )
-    List<EventClient> showEvent,
 
     @Schema(
         description = "",

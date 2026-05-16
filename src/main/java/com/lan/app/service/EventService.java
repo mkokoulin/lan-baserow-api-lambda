@@ -6,7 +6,6 @@ import java.util.UUID;
 import com.lan.app.domain.model.Event;
 import com.lan.app.repository.EventRepository;
 
-import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
@@ -18,7 +17,6 @@ public class EventService {
         this.repo = repo;
     }
 
-    @CacheResult(cacheName = "events")
     public List<Event> list() {
         return repo.list();
     }

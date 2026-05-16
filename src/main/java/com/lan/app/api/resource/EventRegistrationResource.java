@@ -115,8 +115,8 @@ public class EventRegistrationResource {
     @PermitAll
     @Operation(operationId = "confirmRegistration", summary = "Mark a site registration as bot-confirmed")
     public Response confirm(
-            @PathParam("regId") String regId,
-            @QueryParam("chatId") Long chatId
+        @PathParam("regId") String regId,
+        @QueryParam("chatId") Long chatId
     ) {
         confirmStore.confirm(regId);
         if (chatId != null) {
