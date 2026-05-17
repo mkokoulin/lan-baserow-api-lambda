@@ -4,8 +4,6 @@ import java.net.URI;
 import java.util.List;
 
 import com.lan.app.domain.model.Event;
-import com.lan.app.domain.model.EventPlatform;
-import com.lan.app.domain.model.EventType;
 import com.lan.app.domain.model.Id;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventRow;
 

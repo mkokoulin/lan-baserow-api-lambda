@@ -3,7 +3,6 @@ package com.lan.app.domain.model;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public record Event(
     Id id,
