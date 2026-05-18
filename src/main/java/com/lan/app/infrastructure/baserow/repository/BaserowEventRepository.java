@@ -22,7 +22,7 @@ public class BaserowEventRepository implements EventRepository {
     private final BaserowEventMapper mapper;
 
     BaserowEventRepository(
-        @ConfigProperty(name = "baserow.event.events-table-id") int eventTableId,
+        @ConfigProperty(name = "baserow.events.events-table-id") int eventTableId,
         @RestClient BaserowEventClient eventClient,
         BaserowEventMapper mapper
     ) {

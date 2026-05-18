@@ -22,7 +22,7 @@ public class BaserowFestivaleRepository implements FestivaleRepository {
     private final BaserowFestivaleMapper mapper;
 
     BaserowFestivaleRepository(
-        @ConfigProperty(name = "baserow.festivale.festivale-table-id") int festivaleTableId,
+        @ConfigProperty(name = "baserow.events.festivales-table-id") int festivaleTableId,
         @RestClient BaserowFestivaleClient festivaleClient,
         BaserowFestivaleMapper mapper
     ) {

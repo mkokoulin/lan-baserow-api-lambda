@@ -35,7 +35,7 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
     @Inject
     public BaserowEventRegistrationRepository(
         @ConfigProperty(name = "baserow.events.registrations-table-id") int registrationsTableId,
-        @ConfigProperty(name = "baserow.event.events-table-id") int eventTableId,
+        @ConfigProperty(name = "baserow.events.events-table-id") int eventTableId,
         @RestClient BaserowEventRegistrationClient client,
         @RestClient BaserowEventClient eventClient,
         BaserowEventRegistrationMapper mapper
