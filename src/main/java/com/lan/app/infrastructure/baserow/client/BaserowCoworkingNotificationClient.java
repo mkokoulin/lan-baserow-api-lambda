@@ -5,7 +5,6 @@ import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.rest.client.annotation.ClientHeaderParam;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -14,7 +13,6 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @Path("/api/database/rows/table")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-@ClientHeaderParam(name = "Authorization", value = "Token ${baserow.token}")
 public interface BaserowCoworkingNotificationClient {
 
     @GET
@@ -24,6 +22,6 @@ public interface BaserowCoworkingNotificationClient {
     @ClientQueryParam(name = "filter__active__equal", value = "true")
     @ClientQueryParam(name = "filter__status__single_select_equal", value = "5541178")
     BaserowListResponse<BaserowCoworkingNotificationRow> list(
-        @PathParam("tableId") int tableId
+            @PathParam("tableId") int tableId
     );
 }
