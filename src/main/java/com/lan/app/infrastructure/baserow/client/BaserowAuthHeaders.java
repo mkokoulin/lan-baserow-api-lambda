@@ -20,7 +20,7 @@ public class BaserowAuthHeaders implements ClientHeadersFactory {
         MultivaluedMap<String, String> incoming,
         MultivaluedMap<String, String> outgoing
     ) {
-        outgoing.putSingle("Authorization", "Token " + config.token());
+        outgoing.putSingle("Authorization", "Bearer " + config.token());
         return outgoing;
     }
 }
