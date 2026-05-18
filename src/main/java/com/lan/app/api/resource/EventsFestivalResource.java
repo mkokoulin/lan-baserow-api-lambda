@@ -5,47 +5,47 @@ import java.util.UUID;
 
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 
-import com.lan.app.api.dto.response.FestivaleResponse;
-import com.lan.app.api.mapper.ApiFestivaleMapper;
-import com.lan.app.service.FestivaleService;
+import com.lan.app.api.dto.response.FestivalResponse;
+import com.lan.app.api.mapper.ApiEventsFestivalMapper;
+import com.lan.app.service.EventsFestivalService;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
 
-@Path("/festivales")
+@Path("/festivals")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed({"admin", "web-users"})
 @SecurityRequirement(name = "bearerAuth")
-public class FestivaleResource {
+public class EventsFestivalResource {
 
-    private final FestivaleService service;
-    private final ApiFestivaleMapper mapper;
+    private final EventsFestivalService service;
+    private final ApiEventsFestivalMapper mapper;
 
-    public FestivaleResource(
-        FestivaleService service,
-        ApiFestivaleMapper mapper
+    public EventsFestivalResource(
+        EventsFestivalService service,
+        ApiEventsFestivalMapper mapper
     ) {
         this.service = service;
         this.mapper = mapper;
     }
 
     @GET
-    public List<FestivaleResponse> list() {
-        var events = service.list();
-        return events.stream()
+    public List<FestivalResponse> list() {
+        var festivals = service.list();
+        return festivals.stream()
             .map(mapper::toResponse)
             .toList();
     }
 
     @GET
     @Path("/{externalId}")
-    public FestivaleResponse get(
+    public FestivalResponse get(
         @PathParam("externalId") UUID externalId
     ) {
-        var festivale = service.get(externalId);
-        return mapper.toResponse(festivale);
+        var festival = service.get(externalId);
+        return mapper.toResponse(festival);
     }
 }

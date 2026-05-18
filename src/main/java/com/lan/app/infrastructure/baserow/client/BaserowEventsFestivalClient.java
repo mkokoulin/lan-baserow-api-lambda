@@ -5,7 +5,7 @@ import java.util.UUID;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
-import com.lan.app.infrastructure.baserow.dto.BaserowFestivaleRow;
+import com.lan.app.infrastructure.baserow.dto.BaserowEventsFestivalRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
 import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
@@ -24,16 +24,16 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/api/database/rows/table")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public interface BaserowFestivaleClient {
+public interface BaserowEventsFestivalClient {
     
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    BaserowListResponse<BaserowFestivaleRow> listAll(
+    BaserowListResponse<BaserowEventsFestivalRow> listAll(
         @PathParam("tableId") int tableId
     );
 
-    default BaserowListResponse<BaserowFestivaleRow> list(int tableId) {
+    default BaserowListResponse<BaserowEventsFestivalRow> list(int tableId) {
         var resp = listAll(tableId);
         var filtered = resp.results().stream()
             .filter(row -> row.name() != null && !row.name().isBlank())
@@ -45,7 +45,7 @@ public interface BaserowFestivaleClient {
     @Path("/{tableId}/{rowId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    BaserowFestivaleRow getByRowId(
+    BaserowEventsFestivalRow getByRowId(
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId
     );
@@ -54,12 +54,12 @@ public interface BaserowFestivaleClient {
     @Path("/{tableId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    BaserowListResponse<BaserowFestivaleRow> findAllByExternalId(
+    BaserowListResponse<BaserowEventsFestivalRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
         @QueryParam("filter__field_externalId__equal") UUID externalId
     );
 
-    default BaserowFestivaleRow findUniqueByExternalId(int tableId, UUID externalId) {
+    default BaserowEventsFestivalRow findUniqueByExternalId(int tableId, UUID externalId) {
         var resp = findAllByExternalId(tableId, externalId);
 
         if (resp.count() == 0 || resp.results().isEmpty()) {

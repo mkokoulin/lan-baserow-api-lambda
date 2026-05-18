@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record BaserowFestivaleRow(
+public record BaserowEventsFestivalRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
     @NotBlank @JsonProperty("name") String name,

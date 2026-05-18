@@ -2,18 +2,18 @@ package com.lan.app.infrastructure.baserow.mapper;
 
 import java.net.URI;
 
-import com.lan.app.domain.model.Festivale;
+import com.lan.app.domain.model.Festival;
 import com.lan.app.domain.model.Id;
-import com.lan.app.infrastructure.baserow.dto.BaserowFestivaleRow;
+import com.lan.app.infrastructure.baserow.dto.BaserowEventsFestivalRow;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class BaserowFestivaleMapper {
+public class BaserowEventsFestivalMapper {
     
-    public Festivale toDomain(BaserowFestivaleRow festivale) {
+    public Festival toDomain(BaserowEventsFestivalRow festivale) {
 
-        return new Festivale(
+        return new Festival(
             new Id(festivale.id(), festivale.externalId()),
             festivale.name(),
             festivale.description(),

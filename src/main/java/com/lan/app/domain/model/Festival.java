@@ -2,7 +2,7 @@ package com.lan.app.domain.model;
 
 import java.time.Instant;
 
-public record Festivale(
+public record Festival(
     Id id,
     String name,
     String description,
