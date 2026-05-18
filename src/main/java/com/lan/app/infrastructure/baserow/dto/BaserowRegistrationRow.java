@@ -12,10 +12,10 @@ public record BaserowRegistrationRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
 
-    @NotNull @NotEmpty @Valid
+    @NotNull @NotEmpty
     @JsonProperty("event_id") List<@Valid BaserowLinkToTable> eventId,
 
-    @NotNull @NotEmpty @Valid
+    @NotNull @NotEmpty
     @JsonProperty("guest_id") List<@Valid BaserowLinkToTable> guestId,
 
     @JsonProperty("created_at") String createdAt,
