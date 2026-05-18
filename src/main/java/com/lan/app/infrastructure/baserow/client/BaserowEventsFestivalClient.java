@@ -2,7 +2,8 @@ package com.lan.app.infrastructure.baserow.client;
 
 import java.util.UUID;
 
-import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
+
+import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import com.lan.app.infrastructure.baserow.dto.BaserowEventsFestivalRow;
@@ -20,7 +21,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 @RegisterRestClient(configKey = "baserow")
-@RegisterClientHeaders(BaserowAuthHeaders.class)
+@RegisterProvider(BaserowAuthHeaders.class)
 @Path("/api/database/rows/table")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
@@ -36,7 +37,7 @@ public interface BaserowEventsFestivalClient {
     default BaserowListResponse<BaserowEventsFestivalRow> list(int tableId) {
         var resp = listAll(tableId);
         var filtered = resp.results().stream()
-            .filter(row -> row.name() != null && !row.name().isBlank())
+            // .filter(row -> row.name() != null && !row.name().isBlank())
             .toList();
         return new BaserowListResponse<>(resp.count(), resp.next(), resp.previous(), filtered);
     }

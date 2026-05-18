@@ -14,14 +14,14 @@ import com.lan.app.repository.EventRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-public class BaserowEventRepository implements EventRepository {
+public class BaserowEventsEventRepository implements EventRepository {
 
     private final int eventTableId;
 
     private final BaserowEventClient eventClient;
     private final BaserowEventMapper mapper;
 
-    BaserowEventRepository(
+    BaserowEventsEventRepository(
         @ConfigProperty(name = "baserow.events.events-table-id") int eventTableId,
         @RestClient BaserowEventClient eventClient,
         BaserowEventMapper mapper

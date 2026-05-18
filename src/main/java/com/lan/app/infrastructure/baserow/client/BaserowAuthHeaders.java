@@ -1,13 +1,13 @@
 package com.lan.app.infrastructure.baserow.client;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.ws.rs.core.MultivaluedMap;
-import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory;
+import jakarta.ws.rs.client.ClientRequestContext;
+import jakarta.ws.rs.client.ClientRequestFilter;
 
 import com.lan.app.api.config.BaserowConfig;
 
 @ApplicationScoped
-public class BaserowAuthHeaders implements ClientHeadersFactory {
+public class BaserowAuthHeaders implements ClientRequestFilter {
 
     private final BaserowConfig config;
 
@@ -16,11 +16,7 @@ public class BaserowAuthHeaders implements ClientHeadersFactory {
     }
 
     @Override
-    public MultivaluedMap<String, String> update(
-        MultivaluedMap<String, String> incoming,
-        MultivaluedMap<String, String> outgoing
-    ) {
-        outgoing.putSingle("Authorization", "Bearer " + config.token());
-        return outgoing;
+    public void filter(ClientRequestContext requestContext) {
+        requestContext.getHeaders().putSingle("Authorization", "Token " + config.token());
     }
 }

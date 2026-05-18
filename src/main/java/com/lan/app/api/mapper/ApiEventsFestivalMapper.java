@@ -12,7 +12,12 @@ public class ApiEventsFestivalMapper {
         return new FestivalResponse(
             festival.id().externalId(),
             festival.name(),
-            festival.description()
+            festival.description(),
+            festival.eventsIds(),
+            festival.dateStart(),
+            festival.dateEnd(),
+            festival.isVisible(),
+            festival.isPin()
         );
     }
 }

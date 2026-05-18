@@ -1,6 +1,7 @@
 package com.lan.app.infrastructure.baserow.mapper;
 
 import java.net.URI;
+import java.util.UUID;
 
 import com.lan.app.domain.model.Festival;
 import com.lan.app.domain.model.Id;
@@ -12,11 +13,17 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class BaserowEventsFestivalMapper {
     
     public Festival toDomain(BaserowEventsFestivalRow festivale) {
+        var eventsIds
+            = festivale.eventsIds()
+                .stream()
+                .map(ei -> UUID.fromString(ei.value()))
+                .toList();
 
         return new Festival(
             new Id(festivale.id(), festivale.externalId()),
             festivale.name(),
             festivale.description(),
+            eventsIds,
             festivale.dateStart(),
             festivale.dateEnd(),
             festivale.isVisible(),
