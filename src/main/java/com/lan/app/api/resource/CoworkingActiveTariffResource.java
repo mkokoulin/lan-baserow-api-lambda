@@ -22,7 +22,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.util.List;
 import java.util.UUID;
 
-@Path("/coworking/active-tariffs")
+@Path("/coworking/v1/active-tariffs")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed({"admin", "web-users"})

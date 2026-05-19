@@ -19,7 +19,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
 
-@Path("/bot")
+@Path("/events/v1/bot")
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll
 @Tag(name = "Bot", description = "Internal endpoints for the Telegram bot")

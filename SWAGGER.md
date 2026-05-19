@@ -6,16 +6,16 @@
 
 | Описание | URL |
 |---|---|
-| Swagger UI | http://localhost:8080/events/v1/q/swagger-ui |
-| OpenAPI YAML | http://localhost:8080/events/v1/q/openapi |
-| OpenAPI JSON | http://localhost:8080/events/v1/q/openapi?format=json |
+| Swagger UI | http://localhost:8080/q/swagger-ui |
+| OpenAPI YAML | http://localhost:8080/q/openapi |
+| OpenAPI JSON | http://localhost:8080/q/openapi?format=json |
 
 ## Скачать схему
 
 ```bash
 # YAML
-curl http://localhost:8080/events/v1/q/openapi -o openapi.yaml
+curl http://localhost:8080/q/openapi -o openapi.yaml
 
 # JSON
-curl http://localhost:8080/events/v1/q/openapi?format=json -o openapi.json
+curl http://localhost:8080/q/openapi?format=json -o openapi.json
 ```

@@ -57,17 +57,25 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 
 ## JWT Keys
 
-JWT authentication requires an RSA key pair. `*.pem` files are listed in `.gitignore` and must not be committed.
+JWT authentication requires an RSA key pair.
 
-### Generating keys (once per dev environment)
+- **Private key** — `~/.keys/lan/privateKey.pem`, stored outside the project, never committed
+- **Public key** — embedded in `application.properties` as `mp.jwt.verify.publickey`
+
+### Setup (once per dev environment)
+
+**1. Generate the private key:**
 
 ```shell script
-openssl genrsa -out src/main/resources/privateKey.pem 2048
-openssl rsa -in src/main/resources/privateKey.pem -pubout -out src/main/resources/publicKey.pem
+mkdir -p ~/.keys/lan
+openssl genrsa -out ~/.keys/lan/privateKey.pem 2048
 ```
 
-- `publicKey.pem` — used by Quarkus to verify incoming JWTs (`mp.jwt.verify.publickey.location`)
-- `privateKey.pem` — used to sign tokens (tests, `generateToken` utility)
+**2. Export the public key as an environment variable (add to `~/.bashrc` or `~/.zshrc`):**
+
+```shell script
+export JWT_PUBLIC_KEY=$(openssl rsa -in ~/.keys/lan/privateKey.pem -pubout 2>/dev/null | grep -v "BEGIN\|END" | tr -d '\n')
+```
 
 ### Generating an auth token
 

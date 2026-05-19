@@ -7,4 +7,5 @@ public enum ErrorCode {
     BASEROW_UNAVAILABLE,
     INTERNAL_SERVER_ERROR,
     ROUTE_NOT_FOUND,
+    UNAUTHORIZED,
 }

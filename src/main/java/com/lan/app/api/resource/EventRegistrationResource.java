@@ -25,7 +25,7 @@ import org.jboss.logging.Logger;
 
 import java.net.URI;
 
-@Path("/events/registrations")
+@Path("/events/v1/registrations")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed({"admin", "web-users"})
