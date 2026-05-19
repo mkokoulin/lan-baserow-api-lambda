@@ -12,6 +12,7 @@ public class BaserowCoworkingGuestMapper {
     public CoworkingGuest toDomain(BaserowCoworkingGuestRow coworkingGuest) {
         return new CoworkingGuest(
             coworkingGuest.externalId(),
+            coworkingGuest.telegramChatId(),
             coworkingGuest.firstName(),
             coworkingGuest.lastName(),
             coworkingGuest.telegram(),

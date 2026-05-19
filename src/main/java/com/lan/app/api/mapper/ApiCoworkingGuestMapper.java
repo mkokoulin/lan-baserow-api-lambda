@@ -12,6 +12,7 @@ public class ApiCoworkingGuestMapper {
     public CoworkingGuestResponse toResponse(CoworkingGuest r) {
         return new CoworkingGuestResponse(
             r.externalId(),
+            r.telegramChatId(),
             r.firstName(),
             r.lastName(),
             r.telegram(),

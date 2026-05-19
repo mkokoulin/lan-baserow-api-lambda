@@ -19,6 +19,13 @@ public record CoworkingGuestResponse(
     UUID id,
 
     @Schema(
+        description = "Telegram chat id of the guest",
+        examples = "1000000",
+        required = true
+    )
+    Long telegramChatId,
+
+    @Schema(
         description = "Guest's first name",
         examples = "Ivan",
         required = true
