@@ -55,7 +55,21 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
 ```
 
-## Generating auth token 
+## JWT Keys
+
+JWT authentication requires an RSA key pair. `*.pem` files are listed in `.gitignore` and must not be committed.
+
+### Generating keys (once per dev environment)
+
+```shell script
+openssl genrsa -out src/main/resources/privateKey.pem 2048
+openssl rsa -in src/main/resources/privateKey.pem -pubout -out src/main/resources/publicKey.pem
+```
+
+- `publicKey.pem` — used by Quarkus to verify incoming JWTs (`mp.jwt.verify.publickey.location`)
+- `privateKey.pem` — used to sign tokens (tests, `generateToken` utility)
+
+### Generating an auth token
 
 ```shell script
 ./gradlew generateToken -PtokenType=admin
