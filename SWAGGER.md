@@ -2,7 +2,7 @@
 
 Доступно только в dev-режиме (`quarkusDev`).
 
-## Ссылки
+## Links
 
 | Описание | URL |
 |---|---|
@@ -10,7 +10,7 @@
 | OpenAPI YAML | http://localhost:8080/q/openapi |
 | OpenAPI JSON | http://localhost:8080/q/openapi?format=json |
 
-## Скачать схему
+## Download scheme
 
 ```bash
 # YAML

@@ -41,6 +41,14 @@ public record CreateCoworkingGuestRequest(
         required = true,
         minLength = 1
     )
-    @NotNull @NotBlank @JsonProperty("phone") String phone
+    @NotNull @NotBlank @JsonProperty("phone") String phone,
+
+    @Schema(
+        description = "",
+        examples = "111111111111111",
+        required = false,
+        minLength = 1
+    )
+    @JsonProperty("telegram_chat_id") String telegramChatId
 ) {
 }
