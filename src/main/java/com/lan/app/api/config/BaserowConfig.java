@@ -28,5 +28,6 @@ public interface BaserowConfig {
         int activeTariffsTableId();
         int meetingRoomBookingsTableId();
         int guestTariffsTableId();
+        int newsTableId();
     }
 }
