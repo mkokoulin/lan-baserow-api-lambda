@@ -11,6 +11,9 @@ import com.lan.app.infrastructure.baserow.client.BaserowCoworkingNewClient;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingNewMapper;
 import com.lan.app.repository.CoworkingNewRepository;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
+@ApplicationScoped
 public class BaserowCoworkingNewRepository implements CoworkingNewRepository {
     
     private final int tableId;
