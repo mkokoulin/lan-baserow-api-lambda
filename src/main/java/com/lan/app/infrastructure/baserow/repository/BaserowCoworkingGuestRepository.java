@@ -51,6 +51,22 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
     }
 
     @Override
+    public Optional<CoworkingGuest> findByPhone(String phone) {
+        var resp = client.findByPhoneRaw(coworkingGuestsTableId, phone);
+        if (resp.count() == 0 || resp.results().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(mapper.toDomain(resp.results().getFirst()));
+    }
+
+    @Override
+    public CoworkingGuest linkChatIdById(UUID externalId, Long chatId) {
+        var row = client.findUniqueByExternalId(coworkingGuestsTableId, externalId);
+        var updated = client.patchChatId(coworkingGuestsTableId, row.id(), new LinkChatIdRowRequest(chatId));
+        return mapper.toDomain(updated);
+    }
+
+    @Override
     public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
         var resp = client.findByPhoneRaw(coworkingGuestsTableId, phone);
         if (resp.count() == 0 || resp.results().isEmpty()) {

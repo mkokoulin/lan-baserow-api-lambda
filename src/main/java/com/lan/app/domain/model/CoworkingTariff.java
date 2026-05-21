@@ -10,6 +10,7 @@ public record CoworkingTariff(
     boolean fixedDesk,
     boolean filterCoffeeAndTea,
     boolean printoutScan,
-    boolean luggageStorage
+    boolean luggageStorage,
+    CoworkingTariffType type
 ) {
 }

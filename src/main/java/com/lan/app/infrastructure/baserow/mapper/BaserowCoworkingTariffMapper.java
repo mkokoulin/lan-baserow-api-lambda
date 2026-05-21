@@ -1,6 +1,7 @@
 package com.lan.app.infrastructure.baserow.mapper;
 
 import com.lan.app.domain.model.CoworkingTariff;
+import com.lan.app.domain.model.CoworkingTariffType;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingTariffRow;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -16,7 +17,8 @@ public class BaserowCoworkingTariffMapper {
             row.fixedDesc(),
             row.filterCoffeeOrTea(),
             row.printoutScan(),
-            row.luggageStorage()
+            row.luggageStorage(),
+            CoworkingTariffType.fromBaserow(row.type())
         );
     }
 }

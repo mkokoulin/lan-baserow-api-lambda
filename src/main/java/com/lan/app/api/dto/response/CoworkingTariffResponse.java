@@ -1,5 +1,6 @@
 package com.lan.app.api.dto.response;
 
+import com.lan.app.domain.model.CoworkingTariffType;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 import java.util.UUID;
@@ -66,6 +67,14 @@ public record CoworkingTariffResponse(
         examples = "true",
         required = true
     )
-    boolean luggageStorage
+    boolean luggageStorage,
+
+    @Schema(
+        description = "Tariff type: long-term or short-term",
+        examples = "long",
+        required = true,
+        enumeration = {"long", "short"}
+    )
+    CoworkingTariffType type
 ) {
 }

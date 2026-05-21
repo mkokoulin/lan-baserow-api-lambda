@@ -2,6 +2,7 @@ package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.response.CoworkingGuestResponse;
 import com.lan.app.api.dto.request.CreateCoworkingGuestRequest;
+import com.lan.app.api.dto.request.LinkCoworkingGuestChatByIdRequest;
 import com.lan.app.api.dto.request.LinkCoworkingGuestChatRequest;
 import com.lan.app.api.dto.request.UpdateCoworkingGuestRequest;
 import com.lan.app.api.mapper.ApiCoworkingGuestMapper;
@@ -190,6 +191,66 @@ public class CoworkingGuestResource {
         return Response.created(URI.create("/coworking/guests/" + created.externalId()))
             .entity(mapper.toResponse(created))
             .build();
+    }
+
+    @GET
+    @Path("/by-phone")
+    @Operation(
+        operationId = "getCoworkingGuestByPhone",
+        summary = "Find a coworking guest by phone number",
+        description = "Returns the coworking guest whose phone matches the given value. Returns 404 if no such guest exists."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Guest found",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = CoworkingGuestResponse.class))),
+        @APIResponse(responseCode = "400", description = "phone query parameter is missing"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response getByPhone(
+        @Parameter(name = "phone", description = "Phone number of the guest", in = ParameterIn.QUERY)
+        @QueryParam("phone") String phone
+    ) {
+        if (phone == null || phone.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"phone is required\"}")
+                .build();
+        }
+        return service.findByPhone(phone)
+            .map(g -> Response.ok(mapper.toResponse(g)).build())
+            .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    }
+
+    @PATCH
+    @Path("/{externalId}/link-chat")
+    @Operation(
+        operationId = "linkCoworkingGuestChatById",
+        summary = "Link a Telegram chat ID to a guest by UUID",
+        description = "Sets the given Telegram chat ID on the guest identified by their external UUID."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Chat ID linked successfully",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = CoworkingGuestResponse.class))),
+        @APIResponse(responseCode = "400", description = "Validation failed"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public CoworkingGuestResponse linkChatById(
+        @Parameter(name = "externalId", description = "External UUID of the guest",
+            required = true, in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid"))
+        @PathParam("externalId") UUID externalId,
+        @RequestBody(required = true, content = @Content(mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = LinkCoworkingGuestChatByIdRequest.class)))
+        @Valid LinkCoworkingGuestChatByIdRequest req
+    ) {
+        return mapper.toResponse(service.linkChatIdById(externalId, req.chatId()));
     }
 
     @POST

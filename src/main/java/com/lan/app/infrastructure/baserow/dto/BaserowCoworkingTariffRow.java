@@ -16,6 +16,7 @@ public record BaserowCoworkingTariffRow(
     @NotNull @JsonProperty("fixed_desc") boolean fixedDesc,
     @NotNull @JsonProperty("filter_coffee_or_tea") boolean filterCoffeeOrTea,
     @NotNull @JsonProperty("printout_scan") boolean printoutScan,
-    @NotNull @JsonProperty("luggage_storage") boolean luggageStorage
+    @NotNull @JsonProperty("luggage_storage") boolean luggageStorage,
+    @Nullable @JsonProperty("type") BaserowSingleSelect type
 ) {
 }

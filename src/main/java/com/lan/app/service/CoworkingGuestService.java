@@ -25,6 +25,14 @@ public class CoworkingGuestService {
         return repo.findByChatId(chatId);
     }
 
+    public Optional<CoworkingGuest> findByPhone(String phone) {
+        return repo.findByPhone(phone);
+    }
+
+    public CoworkingGuest linkChatIdById(UUID externalId, Long chatId) {
+        return repo.linkChatIdById(externalId, chatId);
+    }
+
     public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
         return repo.linkChatIdByPhone(phone, chatId);
     }
