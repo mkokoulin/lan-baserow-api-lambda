@@ -10,7 +10,12 @@ public class BaserowCoworkingNewMapper {
 
     public CoworkingNew toDomain(BaserowCoworkingNewRow row) {
         return new CoworkingNew(
-            row.externalId()
+            row.externalId(),
+            row.titleEn(),
+            row.titleRu(),
+            row.bodyEn(),
+            row.bodyRu(),
+            row.link()
         );
     }
 }

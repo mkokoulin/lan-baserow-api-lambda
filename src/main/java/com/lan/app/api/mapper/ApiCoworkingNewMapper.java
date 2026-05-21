@@ -10,7 +10,12 @@ public class ApiCoworkingNewMapper {
 
     public CoworkingNewResponse toResponse(CoworkingNew r) {
         return new CoworkingNewResponse(
-            r.id()
+            r.id(),
+            r.titleEn(),
+            r.titleRu(),
+            r.bodyEn(),
+            r.bodyRu(),
+            r.link()
         );
     }
 }
