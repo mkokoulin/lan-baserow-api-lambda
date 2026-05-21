@@ -8,6 +8,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import com.lan.app.domain.model.CoworkingGuestTariff;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingGuestTariffClient;
+import com.lan.app.infrastructure.baserow.dto.UpdateGuestTariffDaysUsedRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingGuestTariffMapper;
 import com.lan.app.repository.CoworkingGuestTariffRepository;
 
@@ -39,5 +40,12 @@ public class BaserowCoworkingGuestTariffRepositort implements CoworkingGuestTari
     public CoworkingGuestTariff get(UUID externalId) {
         var row = client.findUniqueByExternalId(tableId, externalId);
         return mapper.toDomain(row);
+    }
+
+    public CoworkingGuestTariff deductDay(UUID externalId) {
+        var row = client.findUniqueByExternalId(tableId, externalId);
+        int newDaysUsed = (row.daysUsed() != null ? row.daysUsed() : 0) + 1;
+        var updated = client.patchDaysUsed(tableId, row.id(), new UpdateGuestTariffDaysUsedRequest(newDaysUsed));
+        return mapper.toDomain(updated);
     }
 }

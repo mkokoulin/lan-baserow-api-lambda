@@ -2,6 +2,7 @@ package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.response.CoworkingGuestResponse;
 import com.lan.app.api.dto.request.CreateCoworkingGuestRequest;
+import com.lan.app.api.dto.request.LinkCoworkingGuestChatRequest;
 import com.lan.app.api.dto.request.UpdateCoworkingGuestRequest;
 import com.lan.app.api.mapper.ApiCoworkingGuestMapper;
 import com.lan.app.service.CoworkingGuestService;
@@ -25,6 +26,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.UUID;
+import java.util.Optional;
 
 @Path("/coworking/v1/guests")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -43,6 +45,42 @@ public class CoworkingGuestResource {
     public CoworkingGuestResource(CoworkingGuestService service, ApiCoworkingGuestMapper mapper) {
         this.service = service;
         this.mapper = mapper;
+    }
+
+    @GET
+    @Operation(
+        operationId = "getCoworkingGuestByChatId",
+        summary = "Find a coworking guest by Telegram chat ID",
+        description = "Returns the coworking guest whose telegramChatId matches the given value. " +
+            "Returns 404 if no such guest exists."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Guest found",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = CoworkingGuestResponse.class)
+            )
+        ),
+        @APIResponse(responseCode = "400", description = "chatId query parameter is missing"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response getByChatId(
+        @Parameter(name = "chatId", description = "Telegram chat ID of the guest", in = ParameterIn.QUERY)
+        @QueryParam("chatId") Long chatId
+    ) {
+        if (chatId == null) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"chatId is required\"}")
+                .build();
+        }
+        return service.findByChatId(chatId)
+            .map(g -> Response.ok(mapper.toResponse(g)).build())
+            .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @GET
@@ -152,6 +190,41 @@ public class CoworkingGuestResource {
         return Response.created(URI.create("/coworking/guests/" + created.externalId()))
             .entity(mapper.toResponse(created))
             .build();
+    }
+
+    @POST
+    @Path("/link-chat")
+    @Operation(
+        operationId = "linkCoworkingGuestChat",
+        summary = "Link a Telegram chat ID to a guest by phone number",
+        description = "Finds a coworking guest by their phone number and sets the given Telegram chat ID on their record. " +
+            "Returns 404 if no guest with that phone is found."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Chat ID linked successfully",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = CoworkingGuestResponse.class)
+            )
+        ),
+        @APIResponse(responseCode = "400", description = "Request body validation failed"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest with the given phone not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response linkChat(
+        @RequestBody(required = true, content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = LinkCoworkingGuestChatRequest.class)
+        ))
+        @Valid LinkCoworkingGuestChatRequest req
+    ) {
+        return service.linkChatIdByPhone(req.phone(), req.chatId())
+            .map(g -> Response.ok(mapper.toResponse(g)).build())
+            .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @PATCH

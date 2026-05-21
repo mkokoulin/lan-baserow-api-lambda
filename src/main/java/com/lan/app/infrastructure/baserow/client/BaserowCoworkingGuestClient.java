@@ -60,6 +60,15 @@ public interface BaserowCoworkingGuestClient {
         @NotNull @Valid CreateCoworkingGuestRowRequest body
     );
 
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "1")
+    BaserowListResponse<BaserowCoworkingGuestRow> findByChatIdRaw(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__field_telegram_chat_id__equal") Long chatId
+    );
+
     @PATCH
     @ClientQueryParam(name = "user_field_names", value = "true")
     @Path("/{tableId}/{rowId}/")
@@ -67,5 +76,23 @@ public interface BaserowCoworkingGuestClient {
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId,
         @NotNull @Valid UpdateCoworkingGuestRowRequest body
+    );
+
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "1")
+    BaserowListResponse<BaserowCoworkingGuestRow> findByPhoneRaw(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__field_phone__equal") String phone
+    );
+
+    @PATCH
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowCoworkingGuestRow patchChatId(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull LinkChatIdRowRequest body
     );
 }

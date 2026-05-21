@@ -5,6 +5,7 @@ import com.lan.app.repository.CoworkingGuestRepository;
 import com.lan.app.service.command.UpdateCoworkingGuestCommand;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -18,6 +19,14 @@ public class CoworkingGuestService {
 
     public CoworkingGuest get(UUID externalId) {
         return repo.get(externalId);
+    }
+
+    public Optional<CoworkingGuest> findByChatId(Long chatId) {
+        return repo.findByChatId(chatId);
+    }
+
+    public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
+        return repo.linkChatIdByPhone(phone, chatId);
     }
 
     public CoworkingGuest create(String firstName, String lastName, String phone, String telegram) {
