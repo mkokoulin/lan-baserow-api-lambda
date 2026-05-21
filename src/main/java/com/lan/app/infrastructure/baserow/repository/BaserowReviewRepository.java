@@ -20,7 +20,7 @@ public class BaserowReviewRepository implements ReviewRepository {
     private final BaserowReviewMapper mapper;
 
     BaserowReviewRepository(
-        @ConfigProperty(name = "baserow.reviews-table-id") int reviewsTableId,
+        @ConfigProperty(name = "baserow.coworking.reviews-table-id") int reviewsTableId,
         @RestClient BaserowReviewClient client,
         BaserowReviewMapper mapper
     ) {
