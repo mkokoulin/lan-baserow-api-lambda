@@ -25,19 +25,19 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import java.net.URI;
 import java.util.List;
 
-@Path("/v1/reviews")
+@Path("/coworking/v1/reviews")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(
     name = "Reviews",
     description = "Submit and retrieve reviews"
 )
-public class ReviewResource {
+public class CoworkingReviewResource {
 
     private final ReviewService service;
     private final ApiReviewMapper mapper;
 
-    public ReviewResource(ReviewService service, ApiReviewMapper mapper) {
+    public CoworkingReviewResource(ReviewService service, ApiReviewMapper mapper) {
         this.service = service;
         this.mapper = mapper;
     }
