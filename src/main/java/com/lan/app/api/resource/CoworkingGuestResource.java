@@ -319,7 +319,10 @@ public class CoworkingGuestResource {
             schema = @Schema(type = SchemaType.STRING, format = "uuid"))
         @PathParam("externalId") UUID externalId
     ) {
-        service.get(externalId);
+        var guest = service.get(externalId);
+        if (guest.telegramChatId() != null) {
+            return Response.ok(new LinkStatusResponse(true, false)).build();
+        }
         var status = linkSessionService.getStatus(externalId);
         return Response.ok(new LinkStatusResponse(
             status == LinkSessionService.LinkStatus.CONFIRMED,
