@@ -1,12 +1,14 @@
 package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.response.CoworkingGuestResponse;
+import com.lan.app.api.dto.response.LinkStatusResponse;
 import com.lan.app.api.dto.request.CreateCoworkingGuestRequest;
 import com.lan.app.api.dto.request.LinkCoworkingGuestChatByIdRequest;
 import com.lan.app.api.dto.request.LinkCoworkingGuestChatRequest;
 import com.lan.app.api.dto.request.UpdateCoworkingGuestRequest;
 import com.lan.app.api.mapper.ApiCoworkingGuestMapper;
 import com.lan.app.service.CoworkingGuestService;
+import com.lan.app.service.LinkSessionService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -42,10 +44,12 @@ public class CoworkingGuestResource {
 
     private final CoworkingGuestService service;
     private final ApiCoworkingGuestMapper mapper;
+    private final LinkSessionService linkSessionService;
 
-    public CoworkingGuestResource(CoworkingGuestService service, ApiCoworkingGuestMapper mapper) {
+    public CoworkingGuestResource(CoworkingGuestService service, ApiCoworkingGuestMapper mapper, LinkSessionService linkSessionService) {
         this.service = service;
         this.mapper = mapper;
+        this.linkSessionService = linkSessionService;
     }
 
     @GET
@@ -287,6 +291,118 @@ public class CoworkingGuestResource {
         return service.linkChatIdByPhone(req.phone(), req.chatId())
             .map(g -> Response.ok(mapper.toResponse(g)).build())
             .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    }
+
+    @GET
+    @Path("/{externalId}/link-status")
+    @Operation(
+        operationId = "getCoworkingGuestLinkStatus",
+        summary = "Get the Telegram link session status for a guest",
+        description = "Returns whether the current link session is confirmed, rejected, or still pending. " +
+            "Used by the frontend to poll until the guest confirms their Telegram account."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Link status returned",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = LinkStatusResponse.class))
+        ),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response getLinkStatus(
+        @Parameter(name = "externalId", description = "External UUID of the guest",
+            required = true, in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid"))
+        @PathParam("externalId") UUID externalId
+    ) {
+        service.get(externalId);
+        var status = linkSessionService.getStatus(externalId);
+        return Response.ok(new LinkStatusResponse(
+            status == LinkSessionService.LinkStatus.CONFIRMED,
+            status == LinkSessionService.LinkStatus.REJECTED
+        )).build();
+    }
+
+    @POST
+    @Path("/{externalId}/link-init")
+    @Operation(
+        operationId = "initCoworkingGuestLinkSession",
+        summary = "Initialize a Telegram link session for a guest",
+        description = "Resets the link session to PENDING. Call this when signup or login is initiated " +
+            "so the guest must re-confirm via Telegram."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "204", description = "Session initialized"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response initLinkSession(
+        @Parameter(name = "externalId", description = "External UUID of the guest",
+            required = true, in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid"))
+        @PathParam("externalId") UUID externalId
+    ) {
+        service.get(externalId);
+        linkSessionService.init(externalId);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{externalId}/link-confirm")
+    @Operation(
+        operationId = "confirmCoworkingGuestLink",
+        summary = "Confirm the Telegram link session for a guest",
+        description = "Marks the current link session as CONFIRMED. Called by the Telegram bot webhook " +
+            "when the guest opens the bot and their account is verified."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "204", description = "Session confirmed"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response confirmLink(
+        @Parameter(name = "externalId", description = "External UUID of the guest",
+            required = true, in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid"))
+        @PathParam("externalId") UUID externalId
+    ) {
+        service.get(externalId);
+        linkSessionService.confirm(externalId);
+        return Response.noContent().build();
+    }
+
+    @POST
+    @Path("/{externalId}/link-reject")
+    @Operation(
+        operationId = "rejectCoworkingGuestLink",
+        summary = "Reject the Telegram link session for a guest",
+        description = "Marks the current link session as REJECTED. Called by the Telegram bot webhook " +
+            "when a different Telegram account attempts to log in as this guest."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "204", description = "Session rejected"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response rejectLink(
+        @Parameter(name = "externalId", description = "External UUID of the guest",
+            required = true, in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid"))
+        @PathParam("externalId") UUID externalId
+    ) {
+        service.get(externalId);
+        linkSessionService.reject(externalId);
+        return Response.noContent().build();
     }
 
     @PATCH
