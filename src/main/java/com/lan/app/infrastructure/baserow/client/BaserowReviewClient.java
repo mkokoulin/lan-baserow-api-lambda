@@ -22,7 +22,7 @@ public interface BaserowReviewClient {
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
     @ClientQueryParam(name = "order_by", value = "-created_at")
-    @ClientQueryParam(name = "filter__is_published__equal", value = "true")
+    @ClientQueryParam(name = "filter__is_published__boolean", value = "true")
     BaserowListResponse<BaserowReviewRow> list(
         @PathParam("tableId") int tableId
     );
