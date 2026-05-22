@@ -1,5 +1,6 @@
 package com.lan.app.service;
 
+import com.lan.app.domain.exception.BusinessConflictException;
 import com.lan.app.domain.model.CoworkingGuest;
 import com.lan.app.repository.CoworkingGuestRepository;
 import com.lan.app.service.command.UpdateCoworkingGuestCommand;
@@ -37,7 +38,19 @@ public class CoworkingGuestService {
         return repo.linkChatIdByPhone(phone, chatId);
     }
 
-    public CoworkingGuest create(String firstName, String lastName, String phone, String telegram) {
+    public CoworkingGuest create(String firstName, String lastName, String phone, String telegram, Long telegramChatId) {
+        if (repo.findByPhone(phone).isPresent()) {
+            throw new BusinessConflictException(
+                "Guest with phone " + phone + " already exists.",
+                java.util.Map.of("phone", phone)
+            );
+        }
+        if (telegramChatId != null && repo.findByChatId(telegramChatId).isPresent()) {
+            throw new BusinessConflictException(
+                "Guest with Telegram chat ID " + telegramChatId + " already exists.",
+                java.util.Map.of("telegramChatId", telegramChatId)
+            );
+        }
         return repo.create(firstName, lastName, phone, telegram);
     }
 

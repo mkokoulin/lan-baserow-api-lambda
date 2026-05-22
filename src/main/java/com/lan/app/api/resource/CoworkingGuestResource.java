@@ -187,7 +187,8 @@ public class CoworkingGuestResource {
         )
         @Valid CreateCoworkingGuestRequest req
     ) {
-        var created = service.create(req.firstName(), req.lastName(), req.phone(), req.telegram());
+        Long chatId = req.telegramChatId() != null ? Long.parseLong(req.telegramChatId()) : null;
+        var created = service.create(req.firstName(), req.lastName(), req.phone(), req.telegram(), chatId);
         return Response.created(URI.create("/coworking/guests/" + created.externalId()))
             .entity(mapper.toResponse(created))
             .build();
