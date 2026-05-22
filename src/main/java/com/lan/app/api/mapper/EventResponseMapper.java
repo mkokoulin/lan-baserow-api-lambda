@@ -21,7 +21,9 @@ public class EventResponseMapper {
             event.showForm(),
             event.notifications(),
             event.comment(),
-            event.isPin()
+            event.isPin(),
+            event.requiresPrepayment(),
+            event.price()
         );
     }
 }

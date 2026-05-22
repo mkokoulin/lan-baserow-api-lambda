@@ -16,6 +16,8 @@ public record Event(
     boolean showForm,
     List<String> notifications,
     String comment,
-    Boolean isPin
+    Boolean isPin,
+    boolean requiresPrepayment,
+    java.math.BigDecimal price
 ) {
 }

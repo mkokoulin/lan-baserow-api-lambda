@@ -31,7 +31,8 @@ public class EventRegistrationMapper {
             eventIdStr,
             guestIdStr,
             registration.comment(),
-            registration.guestCount()
+            registration.guestCount(),
+            registration.isPaid()
         );
     }
 }

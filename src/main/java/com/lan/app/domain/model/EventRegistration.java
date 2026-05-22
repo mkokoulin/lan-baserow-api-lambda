@@ -9,6 +9,7 @@ public record EventRegistration(
     Id guestId,
     Integer guestCount,
     String comment,
-    String source
+    String source,
+    boolean isPaid
 ) {
 }

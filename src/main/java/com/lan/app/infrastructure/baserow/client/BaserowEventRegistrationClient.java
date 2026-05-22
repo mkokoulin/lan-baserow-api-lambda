@@ -3,6 +3,7 @@ package com.lan.app.infrastructure.baserow.client;
 import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -47,5 +48,14 @@ public interface BaserowEventRegistrationClient {
     BaserowListResponse<BaserowRegistrationRow> findByGuestRowIdRaw(
         @PathParam("tableId") int tableId,
         @QueryParam("filter__guest_id__link_row_has") int guestRowId
+    );
+
+    @PATCH
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowRegistrationRow updateIsPaid(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull UpdateRegistrationIsPaidRequest body
     );
 }

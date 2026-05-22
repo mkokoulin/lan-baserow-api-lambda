@@ -42,6 +42,12 @@ public record EventRegistrationResponse(
         required = true,
         minimum = "1"
     )
-    int guestCount
+    int guestCount,
+
+    @Schema(
+        description = "Whether this registration has been marked as paid",
+        examples = "false"
+    )
+    boolean isPaid
 ) {
 }

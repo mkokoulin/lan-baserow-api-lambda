@@ -22,7 +22,8 @@ public class BaserowEventRegistrationMapper {
             new Id(guestLink.id(), guestExternalId),
             row.guestCount(),
             row.guestComment(),
-            row.source() != null ? row.source().value() : null
+            row.source() != null ? row.source().value() : null,
+            row.isPaid()
         );
     }
 

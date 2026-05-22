@@ -10,6 +10,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -56,6 +57,10 @@ public class EventRegistrationService {
         } catch (Exception e) {
             log.warnf("Failed to store chatId=%d for guestRowId=%d: %s", chatId, guestRowId, e.getMessage());
         }
+    }
+
+    public Optional<Long> markPaid(UUID regExternalId) {
+        return registrationRepo.markPaid(regExternalId);
     }
 
     public void storeTelegramChatId(UUID regExternalId, Long chatId) {

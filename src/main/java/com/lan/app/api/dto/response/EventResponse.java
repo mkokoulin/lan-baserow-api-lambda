@@ -109,6 +109,20 @@ public record EventResponse(
         examples = "true",
         required = true
     )
-    boolean isPin
+    boolean isPin,
+
+    @Schema(
+        description = "Whether this event requires prepayment before registration is confirmed",
+        examples = "false",
+        nullable = true
+    )
+    boolean requiresPrepayment,
+
+    @Schema(
+        description = "Event price in AMD. Relevant when requiresPrepayment is true.",
+        examples = "5000",
+        nullable = true
+    )
+    java.math.BigDecimal price
 ) {
 }

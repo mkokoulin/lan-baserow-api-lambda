@@ -41,12 +41,15 @@ public class EventRegistrationResource {
     private final EventRegistrationService service;
     private final EventRegistrationMapper mapper;
     private final RegistrationConfirmStore confirmStore;
+    private final RegistrationPaidStore paidStore;
 
     public EventRegistrationResource(EventRegistrationService service, EventRegistrationMapper mapper,
-                                     RegistrationConfirmStore confirmStore) {
+                                     RegistrationConfirmStore confirmStore,
+                                     RegistrationPaidStore paidStore) {
         this.service = service;
         this.mapper = mapper;
         this.confirmStore = confirmStore;
+        this.paidStore = paidStore;
     }
 
     @POST
@@ -140,5 +143,29 @@ public class EventRegistrationResource {
     @Operation(operationId = "isRegistrationConfirmed", summary = "Check if a registration has been bot-confirmed")
     public Response isConfirmed(@PathParam("regId") String regId) {
         return Response.ok(java.util.Map.of("confirmed", confirmStore.isConfirmed(regId))).build();
+    }
+
+    @POST
+    @Path("/{regId}/mark-paid")
+    @PermitAll
+    @Operation(operationId = "markRegistrationPaid", summary = "Mark a registration as paid after admin verification")
+    public Response markPaid(@PathParam("regId") String regId) {
+        java.util.UUID uuid;
+        try {
+            uuid = java.util.UUID.fromString(regId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).build();
+        }
+        var chatId = service.markPaid(uuid);
+        paidStore.markPaid(regId);
+        return Response.ok(java.util.Map.of("chatId", chatId.isPresent() ? chatId.get() : null)).build();
+    }
+
+    @GET
+    @Path("/{regId}/paid")
+    @PermitAll
+    @Operation(operationId = "isRegistrationPaid", summary = "Check if a registration has been paid")
+    public Response isPaid(@PathParam("regId") String regId) {
+        return Response.ok(java.util.Map.of("paid", paidStore.isPaid(regId))).build();
     }
 }

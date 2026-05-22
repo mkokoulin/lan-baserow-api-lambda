@@ -21,5 +21,7 @@ public record BaserowEventRow(
     @JsonProperty("show_form") boolean showForm,
     @JsonProperty("notifications") String notifications,
     @JsonProperty("comment") String comment,
-    @JsonProperty("is_pin") boolean isPin
+    @JsonProperty("is_pin") boolean isPin,
+    @JsonProperty("requires_prepayment") Boolean requiresPrepayment,
+    @JsonProperty("price") java.math.BigDecimal price
 ) {}

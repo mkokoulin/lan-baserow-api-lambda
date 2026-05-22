@@ -72,4 +72,12 @@ public interface BaserowEventGuestClient {
         @PathParam("rowId") int rowId,
         @NotNull UpdateGuestTelegramChatIdRequest body
     );
+
+    @GET
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowEventGuestRow getByRowId(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId
+    );
 }

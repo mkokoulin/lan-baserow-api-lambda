@@ -12,4 +12,5 @@ public interface EventRegistrationRepository {
     EventRegistration create(Id eventId, Id guestId, int guestCount, String comment, String source);
     Optional<Integer> getGuestRowIdByExternalId(UUID regExternalId);
     List<EventRegistrationItem> findByGuestRowId(int guestRowId);
+    Optional<Long> markPaid(UUID externalId);
 }
