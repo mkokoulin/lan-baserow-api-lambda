@@ -32,6 +32,7 @@ public class BaserowReviewRepository implements ReviewRepository {
     @Override
     public List<Review> list() {
         return client.list(reviewsTableId).results().stream()
+            .filter(row -> Boolean.TRUE.equals(row.isPublished()))
             .map(mapper::toDomain)
             .toList();
     }

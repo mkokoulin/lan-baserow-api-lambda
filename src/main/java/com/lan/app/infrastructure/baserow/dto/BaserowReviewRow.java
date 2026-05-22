@@ -13,6 +13,7 @@ public record BaserowReviewRow(
     @NotNull @NotBlank @JsonProperty("author_name") String authorName,
     @NotNull @JsonProperty("rating") Integer rating,
     @Nullable @JsonProperty("text") String text,
-    @Nullable @JsonProperty("created_at") String createdAt
+    @Nullable @JsonProperty("created_at") String createdAt,
+    @Nullable @JsonProperty("is_published") Boolean isPublished
 ) {
 }
