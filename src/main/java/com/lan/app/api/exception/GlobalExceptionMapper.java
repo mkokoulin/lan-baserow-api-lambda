@@ -7,6 +7,7 @@ import com.lan.app.domain.exception.ResourceNotFoundException;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
 import com.lan.app.infrastructure.baserow.exception.BaserowUnavailableException;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
@@ -76,6 +77,19 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
                 ErrorCode.INTERNAL_SERVER_ERROR,
                 e.getMessage(),
                 e.details()
+            );
+        }
+
+        // JAX-RS HTTP exceptions (405, 406, 415, etc.) must pass through with their
+        // own status code — they are framework-level responses, not application bugs.
+        if (exception instanceof WebApplicationException e) {
+            int status = e.getResponse().getStatus();
+            LOG.warnf("JAX-RS HTTP %d: %s", status, e.getMessage());
+            return buildResponse(
+                Response.Status.fromStatusCode(status),
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                e.getMessage() != null ? e.getMessage() : "HTTP " + status,
+                Map.of()
             );
         }
 
