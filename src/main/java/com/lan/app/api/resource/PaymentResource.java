@@ -48,13 +48,17 @@ public class PaymentResource {
                 fileBytes = Files.readAllBytes(file.filePath());
                 filename = file.fileName() != null ? file.fileName() : filename;
             } catch (IOException e) {
-                log.warnf("Could not read uploaded file: %s", e.getMessage());
+                log.errorf(e, "Could not read uploaded payment file filename=%s: %s", filename, e.getMessage());
             }
         }
 
         BigDecimal amountDecimal = null;
         if (amount != null && !amount.isBlank()) {
-            try { amountDecimal = new BigDecimal(amount); } catch (NumberFormatException ignored) {}
+            try {
+                amountDecimal = new BigDecimal(amount);
+            } catch (NumberFormatException e) {
+                log.warnf("Invalid amount value '%s', ignoring", amount);
+            }
         }
 
         UUID paymentId = service.createPayment(
@@ -69,15 +73,23 @@ public class PaymentResource {
     @PermitAll
     public Response approve(@PathParam("paymentId") String paymentId) {
         UUID uuid;
-        try { uuid = UUID.fromString(paymentId); }
-        catch (IllegalArgumentException e) { return Response.status(400).build(); }
+        try {
+            uuid = UUID.fromString(paymentId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).entity(Map.of("error", "invalid paymentId")).build();
+        }
 
         var result = service.approve(uuid);
 
-        if (result.registrationId() != null && !result.registrationId().isBlank()) {
+        if (result.registrationId() == null) {
+            log.warnf("Payment not found for approve: paymentId=%s", paymentId);
+            return Response.status(404).entity(Map.of("error", "payment not found")).build();
+        }
+
+        if (!result.registrationId().isBlank()) {
             paidStore.markPaid(result.registrationId());
         }
-        result.chatId().ifPresent(id -> log.infof("Payment %s approved, chatId=%d", paymentId, id));
+        result.chatId().ifPresent(id -> log.infof("Payment %s approved, notifying chatId=%d", paymentId, id));
 
         return Response.ok(Map.of("chatId", result.chatId().orElse(null))).build();
     }
@@ -87,10 +99,20 @@ public class PaymentResource {
     @PermitAll
     public Response reject(@PathParam("paymentId") String paymentId) {
         UUID uuid;
-        try { uuid = UUID.fromString(paymentId); }
-        catch (IllegalArgumentException e) { return Response.status(400).build(); }
+        try {
+            uuid = UUID.fromString(paymentId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).entity(Map.of("error", "invalid paymentId")).build();
+        }
 
-        var chatId = service.reject(uuid);
-        return Response.ok(Map.of("chatId", chatId.orElse(null))).build();
+        var result = service.reject(uuid);
+
+        if (!result.found()) {
+            log.warnf("Payment not found for reject: paymentId=%s", paymentId);
+            return Response.status(404).entity(Map.of("error", "payment not found")).build();
+        }
+
+        result.chatId().ifPresent(id -> log.infof("Payment %s rejected, notifying chatId=%d", paymentId, id));
+        return Response.ok(Map.of("chatId", result.chatId().orElse(null))).build();
     }
 }

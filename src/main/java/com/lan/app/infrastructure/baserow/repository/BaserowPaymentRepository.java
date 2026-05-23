@@ -8,6 +8,7 @@ import com.lan.app.infrastructure.baserow.dto.BaserowFile;
 import com.lan.app.infrastructure.baserow.dto.BaserowPaymentRow;
 import com.lan.app.infrastructure.baserow.dto.CreatePaymentRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdatePaymentRow;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
 import com.lan.app.repository.PaymentRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -41,7 +42,7 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
     private final BaserowEventRegistrationClient registrationClient;
     private final BaserowEventGuestClient guestClient;
     private final HttpClient httpClient = HttpClient.newHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper;
 
     @Inject
     public BaserowPaymentRepository(
@@ -51,7 +52,8 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
         @ConfigProperty(name = "baserow.token") String baserowToken,
         @RestClient BaserowPaymentClient client,
         @RestClient BaserowEventRegistrationClient registrationClient,
-        @RestClient BaserowEventGuestClient guestClient
+        @RestClient BaserowEventGuestClient guestClient,
+        ObjectMapper mapper
     ) {
         this.paymentsTableId = paymentsTableId;
         this.registrationsTableId = registrationsTableId;
@@ -60,6 +62,7 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
         this.client = client;
         this.registrationClient = registrationClient;
         this.guestClient = guestClient;
+        this.mapper = mapper;
     }
 
     @Override
@@ -74,8 +77,10 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
                 BaserowFile uploaded = uploadFileToBaserow(fileBytes, filename);
                 proofRef = List.of(Map.of("name", uploaded.name()));
                 proofUrl = uploaded.url();
+                log.infof("Uploaded payment proof for payment=%s: url=%s", externalId, proofUrl);
             } catch (Exception e) {
-                log.warnf("Failed to upload payment proof to Baserow: %s", e.getMessage());
+                log.errorf(e, "Failed to upload payment proof for payment=%s filename=%s: %s",
+                    externalId, filename, e.getMessage());
             }
         }
 
@@ -91,16 +96,23 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
         );
 
         execute(() -> client.create(paymentsTableId, req));
+        log.infof("Created payment row externalId=%s registrationId=%s proofUploaded=%b",
+            externalId, registrationId, proofUrl != null);
         return new PaymentRepository.CreateResult(externalId, proofUrl);
     }
 
     @Override
     public PaymentRepository.ApproveResult approve(UUID paymentExternalId) {
         var results = execute(() -> client.findByExternalId(paymentsTableId, paymentExternalId)).results();
-        if (results.isEmpty()) return new PaymentRepository.ApproveResult(Optional.empty(), null);
+        if (results.isEmpty()) {
+            log.warnf("Payment not found for approve: externalId=%s", paymentExternalId);
+            return new PaymentRepository.ApproveResult(Optional.empty(), null);
+        }
 
         var payment = results.getFirst();
         execute(() -> client.updateStatus(paymentsTableId, payment.id(), new UpdatePaymentRow("approved")));
+        log.infof("Payment approved: externalId=%s rowId=%d registrationId=%s",
+            paymentExternalId, payment.id(), payment.registrationId());
 
         String registrationId = payment.registrationId();
         Optional<Long> chatId = markRegistrationPaidAndGetChatId(registrationId, payment);
@@ -108,57 +120,97 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
     }
 
     @Override
-    public Optional<Long> reject(UUID paymentExternalId) {
+    public PaymentRepository.RejectResult reject(UUID paymentExternalId) {
         var results = execute(() -> client.findByExternalId(paymentsTableId, paymentExternalId)).results();
-        if (results.isEmpty()) return Optional.empty();
+        if (results.isEmpty()) {
+            log.warnf("Payment not found for reject: externalId=%s", paymentExternalId);
+            return new PaymentRepository.RejectResult(false, Optional.empty());
+        }
 
         var payment = results.getFirst();
         execute(() -> client.updateStatus(paymentsTableId, payment.id(), new UpdatePaymentRow("rejected")));
+        log.infof("Payment rejected: externalId=%s rowId=%d registrationId=%s",
+            paymentExternalId, payment.id(), payment.registrationId());
 
-        return resolveGuestChatId(payment);
+        return new PaymentRepository.RejectResult(true, resolveGuestChatId(payment));
     }
 
     private Optional<Long> markRegistrationPaidAndGetChatId(String registrationId, BaserowPaymentRow payment) {
-        if (registrationId == null || registrationId.isBlank()) return Optional.empty();
+        if (registrationId == null || registrationId.isBlank()) {
+            log.warnf("Payment=%s has no registrationId, skipping is_paid update", payment.externalId());
+            return Optional.empty();
+        }
+        UUID regUuid;
         try {
-            UUID regUuid = UUID.fromString(registrationId);
+            regUuid = UUID.fromString(registrationId);
+        } catch (IllegalArgumentException e) {
+            log.errorf("Payment=%s has invalid registrationId=%s (not a UUID)", payment.externalId(), registrationId);
+            return Optional.empty();
+        }
+        try {
             var regResults = execute(() -> registrationClient.findByExternalIdRaw(registrationsTableId, regUuid)).results();
-            if (regResults.isEmpty()) return Optional.empty();
+            if (regResults.isEmpty()) {
+                log.warnf("Registration not found in Baserow for payment=%s registrationId=%s",
+                    payment.externalId(), registrationId);
+                return Optional.empty();
+            }
             var reg = regResults.getFirst();
 
             execute(() -> registrationClient.updateIsPaid(
                 registrationsTableId, reg.id(),
-                new com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest(true)
+                new UpdateRegistrationIsPaidRequest(true)
             ));
+            log.infof("Marked registration=%s as paid (rowId=%d)", registrationId, reg.id());
 
-            if (reg.guestId() == null || reg.guestId().isEmpty()) return Optional.empty();
+            if (reg.guestId() == null || reg.guestId().isEmpty()) {
+                log.warnf("Registration=%s has no guestId, cannot resolve chatId", registrationId);
+                return Optional.empty();
+            }
             var guest = execute(() -> guestClient.getByRowId(guestsTableId, reg.guestId().getFirst().id()));
             return Optional.ofNullable(guest.chatId());
         } catch (Exception e) {
-            log.warnf("Could not mark registration paid for payment=%s: %s", payment.externalId(), e.getMessage());
+            log.errorf(e, "Failed to mark registration paid for payment=%s registrationId=%s: %s",
+                payment.externalId(), registrationId, e.getMessage());
             return Optional.empty();
         }
     }
 
     private Optional<Long> resolveGuestChatId(BaserowPaymentRow payment) {
-        if (payment.registrationId() == null || payment.registrationId().isBlank()) return Optional.empty();
+        if (payment.registrationId() == null || payment.registrationId().isBlank()) {
+            log.warnf("Payment=%s has no registrationId, cannot resolve chatId", payment.externalId());
+            return Optional.empty();
+        }
+        UUID regUuid;
         try {
-            UUID regUuid = UUID.fromString(payment.registrationId());
+            regUuid = UUID.fromString(payment.registrationId());
+        } catch (IllegalArgumentException e) {
+            log.errorf("Payment=%s has invalid registrationId=%s (not a UUID)", payment.externalId(), payment.registrationId());
+            return Optional.empty();
+        }
+        try {
             var regResults = execute(() -> registrationClient.findByExternalIdRaw(registrationsTableId, regUuid)).results();
-            if (regResults.isEmpty()) return Optional.empty();
+            if (regResults.isEmpty()) {
+                log.warnf("Registration not found for payment=%s registrationId=%s",
+                    payment.externalId(), payment.registrationId());
+                return Optional.empty();
+            }
             var reg = regResults.getFirst();
-            if (reg.guestId() == null || reg.guestId().isEmpty()) return Optional.empty();
+            if (reg.guestId() == null || reg.guestId().isEmpty()) {
+                log.warnf("Registration=%s has no guestId, cannot resolve chatId for reject", payment.registrationId());
+                return Optional.empty();
+            }
             var guest = execute(() -> guestClient.getByRowId(guestsTableId, reg.guestId().getFirst().id()));
             return Optional.ofNullable(guest.chatId());
         } catch (Exception e) {
-            log.warnf("Could not resolve chatId for payment=%s: %s", payment.externalId(), e.getMessage());
+            log.errorf(e, "Failed to resolve chatId for rejected payment=%s registrationId=%s: %s",
+                payment.externalId(), payment.registrationId(), e.getMessage());
             return Optional.empty();
         }
     }
 
     private BaserowFile uploadFileToBaserow(byte[] fileBytes, String filename) throws Exception {
         String boundary = "Boundary" + System.currentTimeMillis();
-        byte[] header =("--" + boundary + "\r\n"
+        byte[] header = ("--" + boundary + "\r\n"
             + "Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"\r\n"
             + "Content-Type: application/octet-stream\r\n\r\n").getBytes(StandardCharsets.UTF_8);
         byte[] footer = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
@@ -177,7 +229,8 @@ public class BaserowPaymentRepository extends AbstractBaserowRepository implemen
 
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            throw new RuntimeException("Baserow file upload failed: " + response.statusCode() + " " + response.body());
+            throw new RuntimeException("Baserow file upload failed with HTTP " + response.statusCode()
+                + ": " + response.body());
         }
         return mapper.readValue(response.body(), BaserowFile.class);
     }

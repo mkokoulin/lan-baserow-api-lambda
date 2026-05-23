@@ -26,7 +26,7 @@ public record CreateEventGuestRequest(
     @Schema(description = "Source channel, e.g. 'website'", nullable = true)
     @JsonProperty("source") String source,
 
-    @Schema(description = "")
-    @NotNull @JsonProperty("chat_id") Long chatId
+    @Schema(description = "Telegram chat ID, optional when creating from website")
+    @JsonProperty("chat_id") Long chatId
 ) {
 }

@@ -10,7 +10,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -44,7 +43,7 @@ public class PaymentService {
         return paymentRepo.approve(paymentId);
     }
 
-    public Optional<Long> reject(UUID paymentId) {
+    public PaymentRepository.RejectResult reject(UUID paymentId) {
         return paymentRepo.reject(paymentId);
     }
 
