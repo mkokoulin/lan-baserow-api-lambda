@@ -54,7 +54,7 @@ public interface BaserowGuestClient {
     @ClientQueryParam(name = "size", value = "1")
     BaserowListResponse<BaserowGuestRow> findByChatIdRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_telegram_chat_id__equal") Long chatId
+        @QueryParam("filter__telegram_chat_id__equal") Long chatId
     );
 
     @GET
@@ -63,7 +63,7 @@ public interface BaserowGuestClient {
     @ClientQueryParam(name = "size", value = "1")
     BaserowListResponse<BaserowGuestRow> findByPhoneRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_phone__equal") String phone
+        @QueryParam("filter__phone__equal") String phone
     );
 
     @POST
