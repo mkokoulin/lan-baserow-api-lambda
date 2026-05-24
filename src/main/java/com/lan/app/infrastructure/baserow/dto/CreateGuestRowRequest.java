@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CreateCoworkingGuestRowRequest(
+public record CreateGuestRowRequest(
     @NotNull @NotBlank @JsonProperty("first_name") String firstName,
-    @NotNull @NotBlank @JsonProperty("last_name") String lastName,
+    @JsonProperty("last_name") String lastName,
     @NotNull @NotBlank @JsonProperty("phone") String phone,
-    @JsonProperty("telegram") String telegram
-) {
-}
+    @JsonProperty("telegram") String telegram,
+    @JsonProperty("source") String source,
+    @JsonProperty("telegram_chat_id") Long telegramChatId
+) {}

@@ -13,9 +13,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class BaserowEventMapper {
     
     public Event toDomain(BaserowEventRow event) {
-        var notifications = event.notifications() == null || event.notifications().isBlank()
-            ? List.<String>of()
-            : List.of(event.notifications());
+        var notifications = event.notifications() != null
+            ? event.notifications().stream().map(n -> String.valueOf(n.id())).toList()
+            : List.<String>of();
 
         return new Event(
             new Id(event.id(), event.externalId()),

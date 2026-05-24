@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record BaserowEventGuestRow(
+public record BaserowGuestRow(
     @JsonProperty("id") Integer id,
     @JsonProperty("external_id") UUID externalId,
     @JsonProperty("first_name") String firstName,
     @JsonProperty("last_name") String lastName,
-    @JsonProperty("telegram") String telegram,
     @JsonProperty("phone") String phone,
-    @JsonProperty("source") BaserowSingleSelect source,
-    @JsonProperty("telegram_chat_id") Long chatId
+    @JsonProperty("telegram") String telegram,
+    @JsonProperty("telegram_chat_id") Long telegramChatId,
+    @JsonProperty("source") BaserowSingleSelect source
 ) {}

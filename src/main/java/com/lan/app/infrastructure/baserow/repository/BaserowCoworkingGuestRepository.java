@@ -1,8 +1,8 @@
 package com.lan.app.infrastructure.baserow.repository;
 
 import com.lan.app.domain.model.CoworkingGuest;
-import com.lan.app.infrastructure.baserow.client.BaserowCoworkingGuestClient;
-import com.lan.app.infrastructure.baserow.dto.CreateCoworkingGuestRowRequest;
+import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
+import com.lan.app.infrastructure.baserow.dto.CreateGuestRowRequest;
 import com.lan.app.infrastructure.baserow.dto.LinkChatIdRowRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingGuestMapper;
 import com.lan.app.repository.CoworkingGuestRepository;
@@ -18,32 +18,30 @@ import java.util.UUID;
 @ApplicationScoped
 public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository {
 
-    private final int coworkingGuestsTableId;
+    private final int guestsTableId;
 
-    private final BaserowCoworkingGuestClient client;
+    private final BaserowGuestClient client;
     private final BaserowCoworkingGuestMapper mapper;
 
     @Inject
     public BaserowCoworkingGuestRepository(
-        @ConfigProperty(name = "baserow.coworking.guests-table-id") int coworkingGuestsTableId,
-        @RestClient BaserowCoworkingGuestClient client,
+        @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
+        @RestClient BaserowGuestClient client,
         BaserowCoworkingGuestMapper mapper
     ) {
-        this.coworkingGuestsTableId = coworkingGuestsTableId;
+        this.guestsTableId = guestsTableId;
         this.client = client;
         this.mapper = mapper;
     }
 
     @Override
     public CoworkingGuest get(UUID externalId) {
-        var created = client.findUniqueByExternalId(coworkingGuestsTableId, externalId);
-
-        return mapper.toDomain(created);
+        return mapper.toDomain(client.findUniqueByExternalId(guestsTableId, externalId));
     }
 
     @Override
     public Optional<CoworkingGuest> findByChatId(Long chatId) {
-        var resp = client.findByChatIdRaw(coworkingGuestsTableId, chatId);
+        var resp = client.findByChatIdRaw(guestsTableId, chatId);
         if (resp.count() == 0 || resp.results().isEmpty()) {
             return Optional.empty();
         }
@@ -52,7 +50,7 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
 
     @Override
     public Optional<CoworkingGuest> findByPhone(String phone) {
-        var resp = client.findByPhoneRaw(coworkingGuestsTableId, phone);
+        var resp = client.findByPhoneRaw(guestsTableId, phone);
         if (resp.count() == 0 || resp.results().isEmpty()) {
             return Optional.empty();
         }
@@ -61,37 +59,41 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
 
     @Override
     public CoworkingGuest linkChatIdById(UUID externalId, Long chatId) {
-        var row = client.findUniqueByExternalId(coworkingGuestsTableId, externalId);
-        var updated = client.patchChatId(coworkingGuestsTableId, row.id(), new LinkChatIdRowRequest(chatId));
+        var row = client.findUniqueByExternalId(guestsTableId, externalId);
+        var updated = client.patchChatId(guestsTableId, row.id(), new LinkChatIdRowRequest(chatId));
         return mapper.toDomain(updated);
     }
 
     @Override
     public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
-        var resp = client.findByPhoneRaw(coworkingGuestsTableId, phone);
+        var resp = client.findByPhoneRaw(guestsTableId, phone);
         if (resp.count() == 0 || resp.results().isEmpty()) {
             return Optional.empty();
         }
         var row = resp.results().getFirst();
-        var updated = client.patchChatId(coworkingGuestsTableId, row.id(), new LinkChatIdRowRequest(chatId));
+        var updated = client.patchChatId(guestsTableId, row.id(), new LinkChatIdRowRequest(chatId));
         return Optional.of(mapper.toDomain(updated));
     }
 
     @Override
-    public CoworkingGuest create(String firstName, String lastName, String phone, String telegram) {
-        var body = new CreateCoworkingGuestRowRequest(firstName, lastName, phone, telegram);
+    public void unlinkChatId(Long chatId) {
+        var resp = client.findByChatIdRaw(guestsTableId, chatId);
+        if (resp.count() == 0 || resp.results().isEmpty()) {
+            return;
+        }
+        client.patchChatId(guestsTableId, resp.results().getFirst().id(), new LinkChatIdRowRequest(null));
+    }
 
-        var created = client.create(coworkingGuestsTableId, body);
-        return mapper.toDomain(created);
+    @Override
+    public CoworkingGuest create(String firstName, String lastName, String phone, String telegram) {
+        var body = new CreateGuestRowRequest(firstName, lastName, phone, telegram, null, null);
+        return mapper.toDomain(client.create(guestsTableId, body));
     }
 
     @Override
     public CoworkingGuest update(UUID externalId, UpdateCoworkingGuestCommand cmd) {
-        var existing = client.findUniqueByExternalId(coworkingGuestsTableId, externalId);
-
+        var existing = client.findUniqueByExternalId(guestsTableId, externalId);
         var patch = mapper.toBaserowPatch(cmd);
-        var updated = client.update(coworkingGuestsTableId, existing.id(), patch);
-
-        return mapper.toDomain(updated);
+        return mapper.toDomain(client.update(guestsTableId, existing.id(), patch));
     }
 }

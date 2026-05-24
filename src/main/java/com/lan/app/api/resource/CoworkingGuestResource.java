@@ -1,13 +1,19 @@
 package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.response.CoworkingGuestResponse;
+import com.lan.app.api.dto.response.CoworkingGuestTariffResponse;
+import com.lan.app.api.dto.response.EventHistoryItemResponse;
 import com.lan.app.api.dto.response.LinkStatusResponse;
+import com.lan.app.api.mapper.ApiCoworkingGuestTariffMapper;
 import com.lan.app.api.dto.request.CreateCoworkingGuestRequest;
 import com.lan.app.api.dto.request.LinkCoworkingGuestChatByIdRequest;
 import com.lan.app.api.dto.request.LinkCoworkingGuestChatRequest;
+import com.lan.app.api.dto.request.UnlinkCoworkingGuestChatRequest;
 import com.lan.app.api.dto.request.UpdateCoworkingGuestRequest;
 import com.lan.app.api.mapper.ApiCoworkingGuestMapper;
 import com.lan.app.service.CoworkingGuestService;
+import com.lan.app.service.CoworkingGuestTariffService;
+import com.lan.app.service.EventRegistrationService;
 import com.lan.app.service.LinkSessionService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
@@ -28,6 +34,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 
@@ -45,11 +52,21 @@ public class CoworkingGuestResource {
     private final CoworkingGuestService service;
     private final ApiCoworkingGuestMapper mapper;
     private final LinkSessionService linkSessionService;
+    private final EventRegistrationService registrationService;
+    private final CoworkingGuestTariffService tariffService;
+    private final ApiCoworkingGuestTariffMapper tariffMapper;
 
-    public CoworkingGuestResource(CoworkingGuestService service, ApiCoworkingGuestMapper mapper, LinkSessionService linkSessionService) {
+    public CoworkingGuestResource(CoworkingGuestService service, ApiCoworkingGuestMapper mapper,
+                                   LinkSessionService linkSessionService,
+                                   EventRegistrationService registrationService,
+                                   CoworkingGuestTariffService tariffService,
+                                   ApiCoworkingGuestTariffMapper tariffMapper) {
         this.service = service;
         this.mapper = mapper;
         this.linkSessionService = linkSessionService;
+        this.registrationService = registrationService;
+        this.tariffService = tariffService;
+        this.tariffMapper = tariffMapper;
     }
 
     @GET
@@ -293,6 +310,32 @@ public class CoworkingGuestResource {
             .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
+    @POST
+    @Path("/unlink-chat")
+    @Operation(
+        operationId = "unlinkCoworkingGuestChat",
+        summary = "Remove the Telegram chat ID link from a guest",
+        description = "Clears the Telegram chat ID on the guest whose record matches the given chat ID. " +
+            "Idempotent: does nothing if no guest has that chat ID."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "204", description = "Chat ID unlinked (or was already absent)"),
+        @APIResponse(responseCode = "400", description = "Request body validation failed"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public Response unlinkChat(
+        @RequestBody(required = true, content = @Content(
+            mediaType = MediaType.APPLICATION_JSON,
+            schema = @Schema(implementation = UnlinkCoworkingGuestChatRequest.class)
+        ))
+        @Valid UnlinkCoworkingGuestChatRequest req
+    ) {
+        service.unlinkChat(req.chatId());
+        return Response.noContent().build();
+    }
+
     @GET
     @Path("/{externalId}/link-status")
     @Operation(
@@ -406,6 +449,78 @@ public class CoworkingGuestResource {
         service.get(externalId);
         linkSessionService.reject(externalId);
         return Response.noContent().build();
+    }
+
+    @GET
+    @Path("/{externalId}/event-history")
+    @Operation(
+        operationId = "getGuestEventHistory",
+        summary = "Get event registration history for a guest",
+        description = "Returns all events the guest has registered for, ordered as stored in Baserow."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Event history returned (empty list if no registrations)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = EventHistoryItemResponse.class)
+            )
+        ),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public List<EventHistoryItemResponse> getEventHistory(
+        @Parameter(
+            name = "externalId",
+            description = "External UUID of the guest",
+            required = true,
+            in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid")
+        )
+        @PathParam("externalId") UUID externalId
+    ) {
+        return registrationService.findByGuestExternalId(externalId).stream()
+            .map(item -> new EventHistoryItemResponse(item.eventName(), item.dateStart()))
+            .toList();
+    }
+
+    @GET
+    @Path("/{externalId}/tariff-history")
+    @Operation(
+        operationId = "getGuestTariffHistory",
+        summary = "Get tariff purchase history for a guest",
+        description = "Returns all tariffs (active and expired) purchased by the guest."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Tariff history returned (empty list if no tariffs)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = CoworkingGuestTariffResponse.class)
+            )
+        ),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public List<CoworkingGuestTariffResponse> getTariffHistory(
+        @Parameter(
+            name = "externalId",
+            description = "External UUID of the guest",
+            required = true,
+            in = ParameterIn.PATH,
+            schema = @Schema(type = SchemaType.STRING, format = "uuid")
+        )
+        @PathParam("externalId") UUID externalId
+    ) {
+        return tariffService.findByGuestExternalId(externalId).stream()
+            .map(tariffMapper::toResponse)
+            .toList();
     }
 
     @PATCH

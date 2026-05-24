@@ -12,6 +12,7 @@ public interface CoworkingGuestRepository {
     Optional<CoworkingGuest> findByPhone(String phone);
     Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId);
     CoworkingGuest linkChatIdById(UUID externalId, Long chatId);
+    void unlinkChatId(Long chatId);
     CoworkingGuest create(String firstName, String lastName, String phone, String telegram);
     CoworkingGuest update(UUID externalId, UpdateCoworkingGuestCommand patch);
 }

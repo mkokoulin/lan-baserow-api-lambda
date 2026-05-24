@@ -51,6 +51,11 @@ public class EventRegistrationService {
                 .orElse(List.of());
     }
 
+    public List<EventRegistrationItem> findByGuestExternalId(UUID guestExternalId) {
+        var guest = guestRepo.get(guestExternalId);
+        return registrationRepo.findByGuestRowId(guest.id().internalId());
+    }
+
     public void storeTelegramChatIdForGuest(int guestRowId, Long chatId) {
         try {
             guestRepo.storeTelegramChatId(guestRowId, chatId);

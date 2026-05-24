@@ -8,6 +8,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import com.lan.app.domain.model.CoworkingGuestTariff;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingGuestTariffClient;
+import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.dto.UpdateGuestTariffDaysUsedRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingGuestTariffMapper;
 import com.lan.app.repository.CoworkingGuestTariffRepository;
@@ -18,17 +19,23 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class BaserowCoworkingGuestTariffRepositort implements CoworkingGuestTariffRepository {
 
     private final int tableId;
+    private final int guestsTableId;
 
     private final BaserowCoworkingGuestTariffClient client;
+    private final BaserowGuestClient guestClient;
     private final BaserowCoworkingGuestTariffMapper mapper;
 
     BaserowCoworkingGuestTariffRepositort(
         @ConfigProperty(name = "baserow.coworking.guest-tariffs-table-id") int tableId,
+        @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
         @RestClient BaserowCoworkingGuestTariffClient client,
+        @RestClient BaserowGuestClient guestClient,
         BaserowCoworkingGuestTariffMapper mapper
     ) {
        this.tableId = tableId;
+       this.guestsTableId = guestsTableId;
        this.client = client;
+       this.guestClient = guestClient;
        this.mapper = mapper;
     }
 
@@ -47,5 +54,13 @@ public class BaserowCoworkingGuestTariffRepositort implements CoworkingGuestTari
         int newDaysUsed = (row.daysUsed() != null ? row.daysUsed() : 0) + 1;
         var updated = client.patchDaysUsed(tableId, row.id(), new UpdateGuestTariffDaysUsedRequest(newDaysUsed));
         return mapper.toDomain(updated);
+    }
+
+    @Override
+    public List<CoworkingGuestTariff> findByGuestExternalId(UUID guestExternalId) {
+        var guestRow = guestClient.findUniqueByExternalId(guestsTableId, guestExternalId);
+        return client.findAllByGuestRowId(tableId, guestRow.id()).results().stream()
+            .map(mapper::toDomain)
+            .toList();
     }
 }

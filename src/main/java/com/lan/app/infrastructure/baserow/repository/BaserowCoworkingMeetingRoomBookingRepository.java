@@ -1,7 +1,7 @@
 package com.lan.app.infrastructure.baserow.repository;
 
 import com.lan.app.domain.model.CoworkingMeetingRoomBooking;
-import com.lan.app.infrastructure.baserow.client.BaserowCoworkingGuestClient;
+import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingMeetingRoomBookingClient;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingMeetingRoomBookingRow;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingMeetingRoomBookingMapper;
@@ -24,14 +24,14 @@ public class BaserowCoworkingMeetingRoomBookingRepository extends AbstractBasero
     private final int coworkingGuestsTableId;
 
     private final BaserowCoworkingMeetingRoomBookingClient client;
-    private final BaserowCoworkingGuestClient guestClient;
+    private final BaserowGuestClient guestClient;
     private final BaserowCoworkingMeetingRoomBookingMapper mapper;
 
     BaserowCoworkingMeetingRoomBookingRepository(
         @ConfigProperty(name = "baserow.coworking.meeting-room-bookings-table-id") int coworkingMeetingRoomBookingTableId,
-        @ConfigProperty(name = "baserow.coworking.guests-table-id") int coworkingGuestsTableId,
+        @ConfigProperty(name = "baserow.guests.guests-table-id") int coworkingGuestsTableId,
         @RestClient BaserowCoworkingMeetingRoomBookingClient meetingRoomBookingClient,
-        @RestClient BaserowCoworkingGuestClient guestClient,
+        @RestClient BaserowGuestClient guestClient,
         BaserowCoworkingMeetingRoomBookingMapper mapper
     ) {
         this.coworkingMeetingRoomBookingTableId = coworkingMeetingRoomBookingTableId;

@@ -28,4 +28,8 @@ public class CoworkingGuestTariffService {
     public CoworkingGuestTariff deductDay(UUID externalId) {
         return repo.deductDay(externalId);
     }
+
+    public List<CoworkingGuestTariff> findByGuestExternalId(UUID guestExternalId) {
+        return repo.findByGuestExternalId(guestExternalId);
+    }
 }

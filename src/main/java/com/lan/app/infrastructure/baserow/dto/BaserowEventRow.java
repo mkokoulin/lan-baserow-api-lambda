@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public record BaserowEventRow(
@@ -19,7 +20,7 @@ public record BaserowEventRow(
     @NotNull @JsonProperty("registration_url") URI registrationUrl,
     @JsonProperty("instagram_url") String instagramUrl,
     @JsonProperty("show_form") boolean showForm,
-    @JsonProperty("notifications") String notifications,
+    @JsonProperty("notifications") List<BaserowLinkToTable> notifications,
     @JsonProperty("comment") String comment,
     @JsonProperty("is_pin") boolean isPin,
     @JsonProperty("requires_prepayment") Boolean requiresPrepayment,

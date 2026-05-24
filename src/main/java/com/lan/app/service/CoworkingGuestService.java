@@ -38,6 +38,10 @@ public class CoworkingGuestService {
         return repo.linkChatIdByPhone(phone, chatId);
     }
 
+    public void unlinkChat(Long chatId) {
+        repo.unlinkChatId(chatId);
+    }
+
     public CoworkingGuest create(String firstName, String lastName, String phone, String telegram, Long telegramChatId) {
         if (repo.findByPhone(phone).isPresent()) {
             throw new BusinessConflictException(

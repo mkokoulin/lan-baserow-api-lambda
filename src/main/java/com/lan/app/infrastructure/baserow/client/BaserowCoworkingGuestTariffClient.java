@@ -58,6 +58,14 @@ public interface BaserowCoworkingGuestTariffClient {
         @QueryParam("filter__field_externalId__equal") UUID externalId
     );
 
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    BaserowListResponse<BaserowCoworkingGuestTariffRow> findAllByGuestRowId(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__field_guest_id__link_row_has") int guestRowId
+    );
+
     @PATCH
     @Path("/{tableId}/{rowId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")

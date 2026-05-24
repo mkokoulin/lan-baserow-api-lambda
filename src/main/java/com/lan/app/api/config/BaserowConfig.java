@@ -9,20 +9,25 @@ public interface BaserowConfig {
     @NotBlank
     String token();
 
+    Guests guests();
+
     Events events();
 
     Coworking coworking();
 
+    interface Guests {
+        int guestsTableId();
+    }
+
     interface Events {
         int eventsTableId();
         int registrationsTableId();
-        int guestsTableId();
         int notificationsTableId();
         int festivalsTableId();
+        int paymentsTableId();
     }
 
     interface Coworking {
-        int guestsTableId();
         int notificationsTableId();
         int tariffsTableId();
         int activeTariffsTableId();
@@ -30,6 +35,5 @@ public interface BaserowConfig {
         int guestTariffsTableId();
         int newsTableId();
         int reviewsTableId();
-        int paymentsTableId();
     }
 }

@@ -9,4 +9,5 @@ public interface CoworkingGuestTariffRepository {
     List<CoworkingGuestTariff> list();
     CoworkingGuestTariff get(UUID externalId);
     CoworkingGuestTariff deductDay(UUID externalId);
+    List<CoworkingGuestTariff> findByGuestExternalId(UUID guestExternalId);
 }

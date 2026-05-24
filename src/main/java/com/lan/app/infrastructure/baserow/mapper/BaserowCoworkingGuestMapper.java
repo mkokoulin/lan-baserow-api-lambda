@@ -1,7 +1,7 @@
 package com.lan.app.infrastructure.baserow.mapper;
 
 import com.lan.app.domain.model.CoworkingGuest;
-import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingGuestRow;
+import com.lan.app.infrastructure.baserow.dto.BaserowGuestRow;
 import com.lan.app.infrastructure.baserow.dto.UpdateCoworkingGuestRowRequest;
 import com.lan.app.service.command.UpdateCoworkingGuestCommand;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -9,14 +9,14 @@ import jakarta.enterprise.context.ApplicationScoped;
 @ApplicationScoped
 public class BaserowCoworkingGuestMapper {
 
-    public CoworkingGuest toDomain(BaserowCoworkingGuestRow coworkingGuest) {
+    public CoworkingGuest toDomain(BaserowGuestRow row) {
         return new CoworkingGuest(
-            coworkingGuest.externalId(),
-            coworkingGuest.telegramChatId(),
-            coworkingGuest.firstName(),
-            coworkingGuest.lastName(),
-            coworkingGuest.telegram(),
-            coworkingGuest.phone()
+            row.externalId(),
+            row.telegramChatId(),
+            row.firstName(),
+            row.lastName(),
+            row.telegram(),
+            row.phone()
         );
     }
 

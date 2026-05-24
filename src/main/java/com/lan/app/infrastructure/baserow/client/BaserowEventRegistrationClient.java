@@ -50,6 +50,14 @@ public interface BaserowEventRegistrationClient {
         @QueryParam("filter__guest_id__link_row_has") int guestRowId
     );
 
+    @GET
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowRegistrationRow getByRowId(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId
+    );
+
     @PATCH
     @ClientQueryParam(name = "user_field_names", value = "true")
     @Path("/{tableId}/{rowId}/")

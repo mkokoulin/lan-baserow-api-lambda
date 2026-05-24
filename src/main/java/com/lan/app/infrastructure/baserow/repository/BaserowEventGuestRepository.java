@@ -1,9 +1,9 @@
 package com.lan.app.infrastructure.baserow.repository;
 
 import com.lan.app.domain.model.EventGuest;
-import com.lan.app.infrastructure.baserow.client.BaserowEventGuestClient;
-import com.lan.app.infrastructure.baserow.dto.CreateEventGuestRowRequest;
-import com.lan.app.infrastructure.baserow.dto.UpdateGuestTelegramChatIdRequest;
+import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
+import com.lan.app.infrastructure.baserow.dto.CreateGuestRowRequest;
+import com.lan.app.infrastructure.baserow.dto.LinkChatIdRowRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventGuestMapper;
 import com.lan.app.repository.EventGuestRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,13 +22,13 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
 
     private final int guestsTableId;
 
-    private final BaserowEventGuestClient client;
+    private final BaserowGuestClient client;
     private final BaserowEventGuestMapper mapper;
 
     @Inject
     public BaserowEventGuestRepository(
-        @ConfigProperty(name = "baserow.events.guests-table-id") int guestsTableId,
-        @RestClient BaserowEventGuestClient client,
+        @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
+        @RestClient BaserowGuestClient client,
         BaserowEventGuestMapper mapper
     ) {
         this.guestsTableId = guestsTableId;
@@ -38,15 +38,13 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
 
     @Override
     public EventGuest get(UUID externalId) {
-        var row = client.findUniqueByExternalId(guestsTableId, externalId);
-        return mapper.toDomain(row);
+        return mapper.toDomain(client.findUniqueByExternalId(guestsTableId, externalId));
     }
 
     @Override
     public EventGuest create(String firstName, String lastName, String phone, String telegram, String source, Long chatId) {
-        var body = new CreateEventGuestRowRequest(firstName, lastName, phone, telegram, source, chatId);
-        var created = execute(() -> client.create(guestsTableId, body));
-        return mapper.toDomain(created);
+        var body = new CreateGuestRowRequest(firstName, lastName, phone, telegram, source, chatId);
+        return mapper.toDomain(execute(() -> client.create(guestsTableId, body)));
     }
 
     @Override
@@ -62,11 +60,7 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
     public void storeTelegramChatId(int guestRowId, Long chatId) {
         log.infof("PATCH telegram_chat_id=%d for guestRowId=%d tableId=%d", chatId, guestRowId, guestsTableId);
         try {
-            execute(() -> client.patchTelegramChatId(
-                guestsTableId,
-                guestRowId,
-                new UpdateGuestTelegramChatIdRequest(chatId)
-            ));
+            execute(() -> client.patchChatId(guestsTableId, guestRowId, new LinkChatIdRowRequest(chatId)));
             log.infof("PATCH telegram_chat_id OK for guestRowId=%d", guestRowId);
         } catch (Exception e) {
             log.errorf(e, "PATCH telegram_chat_id FAILED for guestRowId=%d: %s", guestRowId, e.getMessage());

@@ -3,7 +3,7 @@ package com.lan.app.infrastructure.baserow.repository;
 import com.lan.app.domain.model.CoworkingActiveTariff;
 import com.lan.app.domain.model.CoworkingActiveTariffListItem;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingActiveTariffClient;
-import com.lan.app.infrastructure.baserow.client.BaserowCoworkingGuestClient;
+import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingTariffClient;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingActiveTariffRow;
 import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
@@ -28,16 +28,16 @@ public class BaserowCoworkingActiveTariffRepository implements CoworkingActiveTa
 
     private final BaserowCoworkingActiveTariffClient activeTariffClient;
     private final BaserowCoworkingTariffClient tariffClient;
-    private final BaserowCoworkingGuestClient guestClient;
+    private final BaserowGuestClient guestClient;
     private final BaserowCoworkingActiveTariffMapper mapper;
 
     BaserowCoworkingActiveTariffRepository(
         @ConfigProperty(name = "baserow.coworking.active-tariffs-table-id") int activeTariffsTableId,
         @ConfigProperty(name = "baserow.coworking.tariffs-table-id") int coworkingTariffsTableId,
-        @ConfigProperty(name = "baserow.coworking.guests-table-id") int coworkingGuestsTableId,
+        @ConfigProperty(name = "baserow.guests.guests-table-id") int coworkingGuestsTableId,
         @RestClient BaserowCoworkingActiveTariffClient activeTariffClient,
         @RestClient BaserowCoworkingTariffClient tariffClient,
-        @RestClient BaserowCoworkingGuestClient guestClient,
+        @RestClient BaserowGuestClient guestClient,
         BaserowCoworkingActiveTariffMapper mapper
     ) {
         this.coworkingActiveTariffsTableId = activeTariffsTableId;

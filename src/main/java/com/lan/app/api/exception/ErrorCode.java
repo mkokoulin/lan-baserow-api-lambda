@@ -8,4 +8,6 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR,
     ROUTE_NOT_FOUND,
     UNAUTHORIZED,
+    GUEST_NOT_FOUND,
+    CHAT_ID_MISMATCH,
 }

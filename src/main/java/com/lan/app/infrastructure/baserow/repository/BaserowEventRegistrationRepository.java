@@ -4,7 +4,7 @@ import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.Id;
 import com.lan.app.infrastructure.baserow.client.BaserowEventClient;
-import com.lan.app.infrastructure.baserow.client.BaserowEventGuestClient;
+import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
@@ -33,17 +33,17 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
 
     private final BaserowEventRegistrationClient client;
     private final BaserowEventClient eventClient;
-    private final BaserowEventGuestClient eventGuestClient;
+    private final BaserowGuestClient guestClient;
     private final BaserowEventRegistrationMapper mapper;
 
     @Inject
     public BaserowEventRegistrationRepository(
         @ConfigProperty(name = "baserow.events.registrations-table-id") int registrationsTableId,
         @ConfigProperty(name = "baserow.events.events-table-id") int eventTableId,
-        @ConfigProperty(name = "baserow.events.guests-table-id") int guestsTableId,
+        @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
         @RestClient BaserowEventRegistrationClient client,
         @RestClient BaserowEventClient eventClient,
-        @RestClient BaserowEventGuestClient eventGuestClient,
+        @RestClient BaserowGuestClient guestClient,
         BaserowEventRegistrationMapper mapper
     ) {
         this.registrationsTableId = registrationsTableId;
@@ -51,7 +51,7 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         this.guestsTableId = guestsTableId;
         this.client = client;
         this.eventClient = eventClient;
-        this.eventGuestClient = eventGuestClient;
+        this.guestClient = guestClient;
         this.mapper = mapper;
     }
 
@@ -65,7 +65,8 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
             source
         );
         var created = execute(() -> client.create(registrationsTableId, body));
-        return mapper.toDomain(created);
+        var fullRow = execute(() -> client.getByRowId(registrationsTableId, created.id()));
+        return mapper.toDomain(fullRow);
     }
 
     @Override
@@ -94,8 +95,8 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         if (reg.guestId() == null || reg.guestId().isEmpty()) return Optional.empty();
         int guestRowId = reg.guestId().getFirst().id();
         try {
-            var guest = execute(() -> eventGuestClient.getByRowId(guestsTableId, guestRowId));
-            return Optional.ofNullable(guest.chatId());
+            var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
+            return Optional.ofNullable(guest.telegramChatId());
         } catch (Exception e) {
             log.warnf("Could not fetch guest chatId for reg=%s: %s", externalId, e.getMessage());
             return Optional.empty();
