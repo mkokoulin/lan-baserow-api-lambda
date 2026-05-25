@@ -253,7 +253,8 @@ public class CoworkingGuestResource {
     @Operation(
         operationId = "linkCoworkingGuestChatById",
         summary = "Link a Telegram chat ID to a guest by UUID",
-        description = "Sets the given Telegram chat ID on the guest identified by their external UUID."
+        description = "Sets the given Telegram chat ID on the guest identified by their external UUID. " +
+            "Does NOT confirm the link session — the bot must call /link-confirm separately after the user confirms."
     )
     @APIResponses({
         @APIResponse(responseCode = "200", description = "Chat ID linked successfully",
@@ -289,7 +290,6 @@ public class CoworkingGuestResource {
                 .build();
         }
         var updated = service.linkChatIdById(externalId, req.chatId());
-        linkSessionService.confirm(externalId);
         return Response.ok(mapper.toResponse(updated)).build();
     }
 
