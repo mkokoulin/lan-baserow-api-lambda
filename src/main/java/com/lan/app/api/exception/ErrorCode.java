@@ -10,4 +10,5 @@ public enum ErrorCode {
     UNAUTHORIZED,
     GUEST_NOT_FOUND,
     CHAT_ID_MISMATCH,
+    TELEGRAM_CHAT_ID_CONFLICT,
 }

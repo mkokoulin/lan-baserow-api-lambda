@@ -2,8 +2,10 @@ package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.response.CoworkingGuestResponse;
 import com.lan.app.api.dto.response.CoworkingGuestTariffResponse;
+import com.lan.app.api.dto.response.ErrorResponse;
 import com.lan.app.api.dto.response.EventHistoryItemResponse;
 import com.lan.app.api.dto.response.LinkStatusResponse;
+import com.lan.app.api.exception.ErrorCode;
 import com.lan.app.api.mapper.ApiCoworkingGuestTariffMapper;
 import com.lan.app.api.dto.request.CreateCoworkingGuestRequest;
 import com.lan.app.api.dto.request.LinkCoworkingGuestChatByIdRequest;
@@ -35,8 +37,8 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.Optional;
 
 @Path("/coworking/v1/guests")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -261,9 +263,12 @@ public class CoworkingGuestResource {
         @APIResponse(responseCode = "401", description = "User is not authenticated"),
         @APIResponse(responseCode = "403", description = "User does not have permission"),
         @APIResponse(responseCode = "404", description = "Guest not found"),
+        @APIResponse(responseCode = "409", description = "Telegram chat ID is already registered to another account",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = ErrorResponse.class))),
         @APIResponse(responseCode = "500", description = "Internal server error")
     })
-    public CoworkingGuestResponse linkChatById(
+    public Response linkChatById(
         @Parameter(name = "externalId", description = "External UUID of the guest",
             required = true, in = ParameterIn.PATH,
             schema = @Schema(type = SchemaType.STRING, format = "uuid"))
@@ -272,7 +277,20 @@ public class CoworkingGuestResource {
             schema = @Schema(implementation = LinkCoworkingGuestChatByIdRequest.class)))
         @Valid LinkCoworkingGuestChatByIdRequest req
     ) {
-        return mapper.toResponse(service.linkChatIdById(externalId, req.chatId()));
+        var conflicting = service.findByChatId(req.chatId()).orElse(null);
+        if (conflicting != null && !conflicting.externalId().equals(externalId)) {
+            linkSessionService.chatIdConflict(externalId);
+            return Response.status(Response.Status.CONFLICT)
+                .entity(new ErrorResponse(
+                    ErrorCode.TELEGRAM_CHAT_ID_CONFLICT.name(),
+                    "Telegram chat ID is already registered to another account",
+                    Map.of("chatId", req.chatId())
+                ))
+                .build();
+        }
+        var updated = service.linkChatIdById(externalId, req.chatId());
+        linkSessionService.confirm(externalId);
+        return Response.ok(mapper.toResponse(updated)).build();
     }
 
     @POST
@@ -366,7 +384,8 @@ public class CoworkingGuestResource {
         var status = linkSessionService.getStatus(externalId);
         return Response.ok(new LinkStatusResponse(
             status == LinkSessionService.LinkStatus.CONFIRMED,
-            status == LinkSessionService.LinkStatus.REJECTED
+            status == LinkSessionService.LinkStatus.REJECTED,
+            status == LinkSessionService.LinkStatus.CHAT_ID_CONFLICT
         )).build();
     }
 

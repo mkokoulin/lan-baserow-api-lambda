@@ -12,6 +12,9 @@ public record LinkStatusResponse(
     boolean linked,
 
     @Schema(description = "True when the link was rejected (different Telegram account tried to log in)")
-    boolean rejected
+    boolean rejected,
+
+    @Schema(description = "True when the Telegram chat ID is already registered to another account")
+    boolean conflict
 ) {
 }
