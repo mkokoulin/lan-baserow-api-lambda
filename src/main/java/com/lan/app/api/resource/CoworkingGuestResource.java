@@ -382,6 +382,9 @@ public class CoworkingGuestResource {
     ) {
         service.get(externalId);
         var status = linkSessionService.getStatus(externalId);
+        if (status == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
         return Response.ok(new LinkStatusResponse(
             status == LinkSessionService.LinkStatus.CONFIRMED,
             status == LinkSessionService.LinkStatus.REJECTED,

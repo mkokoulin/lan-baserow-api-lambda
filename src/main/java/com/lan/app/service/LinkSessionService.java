@@ -29,6 +29,6 @@ public class LinkSessionService {
     }
 
     public LinkStatus getStatus(UUID guestId) {
-        return sessions.getOrDefault(guestId, LinkStatus.PENDING);
+        return sessions.get(guestId);
     }
 }
