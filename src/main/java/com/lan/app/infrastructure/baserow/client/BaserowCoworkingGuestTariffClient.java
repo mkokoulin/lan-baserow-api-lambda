@@ -8,16 +8,19 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingActiveTariffRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingGuestTariffRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
+import com.lan.app.infrastructure.baserow.dto.CreateGuestTariffRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateGuestTariffDaysUsedRequest;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
 import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
 
 import io.quarkus.rest.client.reactive.ClientQueryParam;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -64,6 +67,14 @@ public interface BaserowCoworkingGuestTariffClient {
     BaserowListResponse<BaserowCoworkingGuestTariffRow> findAllByGuestRowId(
         @PathParam("tableId") int tableId,
         @QueryParam("filter__field_guest_id__link_row_has") int guestRowId
+    );
+
+    @POST
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    BaserowCoworkingGuestTariffRow create(
+        @PathParam("tableId") int tableId,
+        @NotNull @Valid CreateGuestTariffRowRequest body
     );
 
     @PATCH

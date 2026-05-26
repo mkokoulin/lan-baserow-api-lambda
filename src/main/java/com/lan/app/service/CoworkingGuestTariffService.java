@@ -25,6 +25,10 @@ public class CoworkingGuestTariffService {
         return repo.get(externalId);
     }
 
+    public CoworkingGuestTariff create(UUID guestExternalId, UUID tariffExternalId) {
+        return repo.create(guestExternalId, tariffExternalId);
+    }
+
     public CoworkingGuestTariff deductDay(UUID externalId) {
         return repo.deductDay(externalId);
     }

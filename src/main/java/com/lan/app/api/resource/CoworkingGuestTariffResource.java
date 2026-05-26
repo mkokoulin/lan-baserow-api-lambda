@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement;
 
+import com.lan.app.api.dto.request.CreateCoworkingGuestTariffRequest;
 import com.lan.app.api.dto.response.CoworkingGuestTariffResponse;
 import com.lan.app.api.mapper.ApiCoworkingGuestTariffMapper;
 import com.lan.app.service.CoworkingGuestTariffService;
@@ -16,6 +17,8 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -41,6 +44,12 @@ public class CoworkingGuestTariffResource {
     ) {
         this.service = service;
         this.mapper = mapper;
+    }
+
+    @POST
+    public CoworkingGuestTariffResponse create(@NotNull @Valid CreateCoworkingGuestTariffRequest body) {
+        var created = service.create(body.guestId(), body.tariffId());
+        return mapper.toResponse(created);
     }
 
     @GET
