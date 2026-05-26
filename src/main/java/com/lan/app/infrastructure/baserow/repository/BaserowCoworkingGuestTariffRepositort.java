@@ -81,6 +81,7 @@ public class BaserowCoworkingGuestTariffRepositort implements CoworkingGuestTari
     public List<CoworkingGuestTariff> findByGuestExternalId(UUID guestExternalId) {
         var guestRow = guestClient.findUniqueByExternalId(guestsTableId, guestExternalId);
         return client.findAllByGuestRowId(tableId, guestRow.id()).results().stream()
+            .filter(row -> !row.tariffId().isEmpty() && !row.guestId().isEmpty())
             .map(mapper::toDomain)
             .toList();
     }
