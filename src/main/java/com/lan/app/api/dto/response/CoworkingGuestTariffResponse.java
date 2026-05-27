@@ -1,13 +1,13 @@
 package com.lan.app.api.dto.response;
 
-import java.time.Instant;
 import java.util.UUID;
+
+import com.lan.app.domain.model.GuestTariffStatus;
 
 public record CoworkingGuestTariffResponse(
     UUID id,
     UUID tariffId,
     UUID guestId,
-    Instant dateStart,
-    Instant dateEnd,
-    Integer daysUsed
+    Integer daysUsed,
+    GuestTariffStatus status
 ){}

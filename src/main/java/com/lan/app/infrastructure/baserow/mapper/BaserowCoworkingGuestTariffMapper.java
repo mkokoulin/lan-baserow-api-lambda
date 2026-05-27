@@ -3,6 +3,7 @@ package com.lan.app.infrastructure.baserow.mapper;
 import java.util.UUID;
 
 import com.lan.app.domain.model.CoworkingGuestTariff;
+import com.lan.app.domain.model.GuestTariffStatus;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingGuestTariffRow;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,9 +19,8 @@ public class BaserowCoworkingGuestTariffMapper {
             guestTariff.externalId(),
             UUID.fromString(guestTariff.tariffId().getFirst().value()),
             UUID.fromString(guestTariff.guestId().getFirst().value()),
-            guestTariff.dateStart(),
-            guestTariff.dateEnd(),
-            guestTariff.daysUsed()
+            guestTariff.daysUsed(),
+            GuestTariffStatus.fromBaserow(guestTariff.status())
         );
     }
 }

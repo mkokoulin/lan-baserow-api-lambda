@@ -13,9 +13,8 @@ public class ApiCoworkingGuestTariffMapper {
             guestTariff.id(),
             guestTariff.tariffId(),
             guestTariff.guestId(),
-            guestTariff.dateStart(),
-            guestTariff.dateEnd(),
-            guestTariff.daysUsed()
+            guestTariff.daysUsed(),
+            guestTariff.status()
         );
     }
 }

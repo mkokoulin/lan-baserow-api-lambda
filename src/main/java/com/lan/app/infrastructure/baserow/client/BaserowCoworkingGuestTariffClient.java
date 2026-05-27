@@ -37,7 +37,7 @@ public interface BaserowCoworkingGuestTariffClient {
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "filter__active__equal", value = "true")
+    @ClientQueryParam(name = "filter__status__single_select_equal", value = "ACTIVE")
     BaserowListResponse<BaserowCoworkingGuestTariffRow> list(
         @PathParam("tableId") int tableId
     );
@@ -46,7 +46,7 @@ public interface BaserowCoworkingGuestTariffClient {
     @Path("/{tableId}/{rowId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "filter__active__equal", value = "true")
+    @ClientQueryParam(name = "filter__status__single_select_equal", value = "ACTIVE")
     BaserowListResponse<BaserowCoworkingGuestTariffRow> getByRowId(
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId
@@ -56,7 +56,7 @@ public interface BaserowCoworkingGuestTariffClient {
     @Path("/{tableId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "filter__active__equal", value = "true")
+    @ClientQueryParam(name = "filter__status__single_select_equal", value = "ACTIVE")
     BaserowListResponse<BaserowCoworkingGuestTariffRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
         @QueryParam("filter__external_id__equal") UUID externalId

@@ -7,5 +7,10 @@ import java.util.List;
 
 public record CreateGuestTariffRowRequest(
     @NotNull @JsonProperty("guest_id") List<Integer> guestId,
-    @NotNull @JsonProperty("tariff_id") List<Integer> tariffId
-) {}
+    @NotNull @JsonProperty("tariff_id") List<Integer> tariffId,
+    @JsonProperty("status") String status
+) {
+    public CreateGuestTariffRowRequest(List<Integer> guestId, List<Integer> tariffId) {
+        this(guestId, tariffId, "PENDING");
+    }
+}
