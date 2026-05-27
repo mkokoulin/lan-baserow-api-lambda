@@ -18,7 +18,6 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
@@ -46,21 +45,37 @@ public class CoworkingGuestTariffResource {
         this.mapper = mapper;
     }
 
-    @POST
-    public CoworkingGuestTariffResponse create(@NotNull @Valid CreateCoworkingGuestTariffRequest body) {
-        var created = service.create(body.guestId(), body.tariffId());
-        return mapper.toResponse(created);
-    }
-
     @GET
     public List<CoworkingGuestTariffResponse> list(
         @QueryParam("guestId") UUID guestId
     ) {
-        var guestTariffs = service.list();
-        return guestTariffs.stream()
+        if (guestId == null) {
+            return List.of();
+        }
+        return service.findByGuestExternalId(guestId).stream()
             .map(mapper::toResponse)
-            .filter(gt -> gt.guestId().equals(guestId))
             .toList();
+    }
+
+    @POST
+    @Operation(
+        operationId = "createGuestTariff",
+        summary = "Create a pending guest tariff request",
+        description = "Creates a guest_tariff record with status 'pending'. The admin must activate it manually."
+    )
+    @APIResponses({
+        @APIResponse(responseCode = "200", description = "Guest tariff request created"),
+        @APIResponse(responseCode = "400", description = "Validation failed"),
+        @APIResponse(responseCode = "401", description = "User is not authenticated"),
+        @APIResponse(responseCode = "403", description = "User does not have permission"),
+        @APIResponse(responseCode = "404", description = "Guest or tariff not found"),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public CoworkingGuestTariffResponse create(
+        @Valid CreateCoworkingGuestTariffRequest req
+    ) {
+        var created = service.create(req.guestId(), req.tariffId());
+        return mapper.toResponse(created);
     }
 
     @GET
