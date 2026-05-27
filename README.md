@@ -55,6 +55,26 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 ./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
 ```
 
+## Running tests
+
+Run all tests:
+
+```shell script
+./gradlew test
+```
+
+Run tests without Lambda extension (faster startup):
+
+```shell script
+./gradlew test -PskipLambda
+```
+
+Run a specific test class:
+
+```shell script
+./gradlew test --tests "com.lan.app.api.resource.CoworkingGuestTariffResourceTest"
+```
+
 ## JWT Keys
 
 JWT authentication requires an RSA key pair.
