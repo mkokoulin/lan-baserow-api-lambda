@@ -46,7 +46,7 @@ public interface BaserowCoworkingMeetingRoomBookingClient {
     @Path("/{tableId}/")
     BaserowListResponse<BaserowCoworkingMeetingRoomBookingRow> findByExternalIdRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_externalId__equal") UUID externalId
+        @QueryParam("filter__external_id__equal") UUID externalId
     );
 
     default BaserowCoworkingMeetingRoomBookingRow findUniqueByExternalId(int tableId, UUID externalId) {

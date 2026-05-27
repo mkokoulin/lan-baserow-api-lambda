@@ -45,7 +45,7 @@ public interface BaserowCoworkingActiveTariffClient {
     @ClientQueryParam(name = "filter__active__equal", value = "true")
     BaserowListResponse<BaserowCoworkingActiveTariffRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_externalId__equal") UUID externalId
+        @QueryParam("filter__external_id__equal") UUID externalId
     );
 
     default BaserowCoworkingActiveTariffRow findUniqueByExternalId(int tableId, UUID externalId) {

@@ -59,7 +59,7 @@ public interface BaserowCoworkingGuestTariffClient {
     @ClientQueryParam(name = "filter__active__equal", value = "true")
     BaserowListResponse<BaserowCoworkingGuestTariffRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_externalId__equal") UUID externalId
+        @QueryParam("filter__external_id__equal") UUID externalId
     );
 
     @GET
@@ -67,7 +67,7 @@ public interface BaserowCoworkingGuestTariffClient {
     @ClientQueryParam(name = "user_field_names", value = "true")
     BaserowListResponse<BaserowCoworkingGuestTariffRow> findAllByGuestRowId(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_guest_id__link_row_has") int guestRowId
+        @QueryParam("filter__guest_id__link_row_has") int guestRowId
     );
 
     @POST

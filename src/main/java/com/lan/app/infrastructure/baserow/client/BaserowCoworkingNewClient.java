@@ -50,7 +50,7 @@ public interface BaserowCoworkingNewClient {
     @ClientQueryParam(name = "filter__active__equal", value = "true")
     BaserowListResponse<BaserowCoworkingNewRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_externalId__equal") UUID externalId
+        @QueryParam("filter__external_id__equal") UUID externalId
     );
 
     default BaserowCoworkingNewRow findUniqueByExternalId(int tableId, UUID externalId) {
