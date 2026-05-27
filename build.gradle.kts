@@ -13,11 +13,12 @@ val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
 dependencies {
-    implementation("io.quarkus:quarkus-smallrye-jwt-build")
+    implementation(project(":baserow"))
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
+    implementation("io.quarkus:quarkus-smallrye-jwt-build")
     implementation("io.quarkus:quarkus-rest")
-    implementation("io.quarkus:quarkus-rest-client-jackson")
     implementation("io.quarkus:quarkus-rest-client")
+    implementation("io.quarkus:quarkus-rest-client-jackson")
     implementation("io.quarkus:quarkus-smallrye-openapi")
     implementation("io.quarkus:quarkus-rest-jackson")
     implementation("io.quarkus:quarkus-jackson")
@@ -35,7 +36,6 @@ dependencies {
     if (!project.hasProperty("skipLambda")) {
         implementation("io.quarkus:quarkus-amazon-lambda-http")
     }
-    implementation("io.quarkus:quarkus-smallrye-openapi")
 }
 
 group = "com.lan"

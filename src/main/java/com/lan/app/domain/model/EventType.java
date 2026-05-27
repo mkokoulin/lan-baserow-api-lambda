@@ -1,20 +1,18 @@
 package com.lan.app.domain.model;
 
-import com.lan.app.infrastructure.baserow.dto.BaserowSingleSelect;
-
 public enum EventType {
     EVENT,
     FESTIVAL;
 
-    public static EventType fromBaserow(BaserowSingleSelect raw) {
-        if (raw == null || raw.value() == null || raw.value().isBlank()) {
+    public static EventType fromString(String value) {
+        if (value == null || value.isBlank()) {
             throw new IllegalArgumentException("type is empty");
         }
 
-        return switch (raw.value().trim().toLowerCase()) {
+        return switch (value.trim().toLowerCase()) {
             case "event" -> EVENT;
             case "festival" -> FESTIVAL;
-            default -> throw new IllegalArgumentException("Unknown type: " + raw);
+            default -> throw new IllegalArgumentException("Unknown type: " + value);
         };
     }
 

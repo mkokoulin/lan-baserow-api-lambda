@@ -5,6 +5,7 @@ import com.lan.app.domain.exception.AppException;
 import com.lan.app.domain.exception.BusinessConflictException;
 import com.lan.app.domain.exception.ResourceNotFoundException;
 import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
+import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
 import com.lan.app.infrastructure.baserow.exception.BaserowUnavailableException;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
@@ -29,6 +30,15 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
 
     @Override
     public Response toResponse(Throwable exception) {
+        if (exception instanceof BaserowNotFoundException e) {
+            return buildResponse(
+                Response.Status.NOT_FOUND,
+                ErrorCode.RESOURCE_NOT_FOUND,
+                e.getMessage(),
+                Map.of("externalId", e.externalId().toString())
+            );
+        }
+
         if (exception instanceof ResourceNotFoundException e) {
             return buildResponse(
                 Response.Status.NOT_FOUND,
@@ -53,8 +63,8 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
             return buildResponse(
                 Response.Status.BAD_GATEWAY,
                 ErrorCode.BASEROW_INCOMPLETE_ROW,
-                "Coworking active tariff data is incomplete.",
-                e.details()
+                e.getMessage(),
+                Map.of()
             );
         }
 
@@ -65,7 +75,7 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
                 Response.Status.SERVICE_UNAVAILABLE,
                 ErrorCode.BASEROW_UNAVAILABLE,
                 "External data source is temporarily unavailable.",
-                e.details()
+                Map.of()
             );
         }
 

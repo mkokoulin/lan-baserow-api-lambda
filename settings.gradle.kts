@@ -11,3 +11,4 @@ pluginManagement {
     }
 }
 rootProject.name = "lan-baserow-service"
+include(":baserow")

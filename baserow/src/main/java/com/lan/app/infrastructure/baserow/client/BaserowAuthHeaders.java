@@ -3,20 +3,16 @@ package com.lan.app.infrastructure.baserow.client;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.client.ClientRequestContext;
 import jakarta.ws.rs.client.ClientRequestFilter;
-
-import com.lan.app.api.config.BaserowConfig;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 public class BaserowAuthHeaders implements ClientRequestFilter {
 
-    private final BaserowConfig config;
-
-    public BaserowAuthHeaders(BaserowConfig config) {
-        this.config = config;
-    }
+    @ConfigProperty(name = "baserow.token")
+    String token;
 
     @Override
     public void filter(ClientRequestContext requestContext) {
-        requestContext.getHeaders().putSingle("Authorization", "Token " + config.token());
+        requestContext.getHeaders().putSingle("Authorization", "Token " + token);
     }
 }

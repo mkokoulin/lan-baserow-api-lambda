@@ -20,7 +20,7 @@ public class BaserowCoworkingGuestTariffMapper {
             UUID.fromString(guestTariff.tariffId().getFirst().value()),
             UUID.fromString(guestTariff.guestId().getFirst().value()),
             guestTariff.daysUsed(),
-            GuestTariffStatus.fromBaserow(guestTariff.status())
+            GuestTariffStatus.fromString(guestTariff.status() != null ? guestTariff.status().value() : null)
         );
     }
 }

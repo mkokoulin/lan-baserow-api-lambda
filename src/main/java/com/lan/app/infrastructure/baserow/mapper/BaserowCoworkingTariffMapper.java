@@ -18,7 +18,7 @@ public class BaserowCoworkingTariffMapper {
             row.filterCoffeeOrTea(),
             row.printoutScan(),
             row.luggageStorage(),
-            CoworkingTariffType.fromBaserow(row.type())
+            CoworkingTariffType.fromString(row.type() != null ? row.type().value() : null)
         );
     }
 }
