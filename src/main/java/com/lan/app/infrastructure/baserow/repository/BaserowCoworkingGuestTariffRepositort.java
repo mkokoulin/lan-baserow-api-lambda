@@ -61,7 +61,6 @@ public class BaserowCoworkingGuestTariffRepositort implements CoworkingGuestTari
         var guestRow = guestClient.findUniqueByExternalId(guestsTableId, guestExternalId);
         var tariffRow = tariffClient.findUniqueByExternalId(tariffsTableId, tariffExternalId);
         var req = new CreateGuestTariffRowRequest(
-            UUID.randomUUID(),
             List.of(guestRow.id()),
             List.of(tariffRow.id())
         );
