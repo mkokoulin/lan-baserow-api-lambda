@@ -63,8 +63,7 @@ public class BaserowCoworkingGuestTariffRepositort implements CoworkingGuestTari
         var req = new CreateGuestTariffRowRequest(
             UUID.randomUUID(),
             List.of(guestRow.id()),
-            List.of(tariffRow.id()),
-            0
+            List.of(tariffRow.id())
         );
         var created = client.create(tableId, req);
         return mapper.toDomain(created);

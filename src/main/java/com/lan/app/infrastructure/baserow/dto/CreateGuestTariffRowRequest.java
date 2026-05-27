@@ -9,6 +9,5 @@ import java.util.UUID;
 public record CreateGuestTariffRowRequest(
     @NotNull @JsonProperty("external_id") UUID externalId,
     @NotNull @JsonProperty("guest_id") List<Integer> guestId,
-    @NotNull @JsonProperty("tariff_id") List<Integer> tariffId,
-    @NotNull @JsonProperty("days_used") Integer daysUsed
+    @NotNull @JsonProperty("tariff_id") List<Integer> tariffId
 ) {}

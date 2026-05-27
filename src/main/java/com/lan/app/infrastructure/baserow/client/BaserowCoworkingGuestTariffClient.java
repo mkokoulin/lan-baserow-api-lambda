@@ -28,6 +28,7 @@ import jakarta.ws.rs.QueryParam;
 
 @RegisterRestClient(configKey = "baserow")
 @RegisterProvider(BaserowAuthHeaders.class)
+@RegisterProvider(BaserowErrorLoggingFilter.class)
 @Path("/api/database/rows/table")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
