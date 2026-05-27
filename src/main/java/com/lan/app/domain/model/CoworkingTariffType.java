@@ -8,7 +8,7 @@ public enum CoworkingTariffType {
 
     public static CoworkingTariffType fromBaserow(BaserowSingleSelect raw) {
         if (raw == null || raw.value() == null || raw.value().isBlank()) {
-            throw new IllegalArgumentException("type is empty");
+            return null;
         }
 
         return switch (raw.value().trim().toLowerCase()) {
