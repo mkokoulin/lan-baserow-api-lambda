@@ -58,16 +58,16 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
 
     @Override
     public EventRegistration create(Id eventId, Id guestId, int guestCount, String comment, String source) {
-        // Generate the external UUID client-side so we always have it even if Baserow's
-        // create response omits the external_id field (same behaviour seen for link fields).
+        // Generate the external UUID client-side as a fallback in case Baserow's create
+        // response omits the external_id field (same behaviour seen for link fields).
+        // external_id is a formula field in Baserow — do NOT send it in the request body.
         UUID generatedExternalId = UUID.randomUUID();
         var body = new CreateEventRegistrationRowRequest(
             List.of(eventId.internalId()),
             List.of(guestId.internalId()),
             guestCount,
             comment,
-            source,
-            generatedExternalId
+            source
         );
         var created = execute(() -> client.create(registrationsTableId, body));
         // Prefer the UUID returned by Baserow (formula field); fall back to our generated one.
