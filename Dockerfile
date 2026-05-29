@@ -4,7 +4,6 @@ WORKDIR /app
 
 COPY gradle/ gradle/
 COPY gradlew gradlew.bat gradle.properties settings.gradle.kts build.gradle.kts ./
-COPY baserow/ baserow/
 RUN chmod +x gradlew && ./gradlew dependencies --no-daemon -q -PskipLambda 2>/dev/null || true
 
 COPY src/ src/
