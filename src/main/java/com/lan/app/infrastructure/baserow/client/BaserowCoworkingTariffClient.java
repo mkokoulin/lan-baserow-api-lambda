@@ -1,9 +1,10 @@
 package com.lan.app.infrastructure.baserow.client;
+import com.baserow.client.BaserowAuthHeaders;
 
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingTariffRow;
-import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
-import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
-import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
+import com.baserow.dto.BaserowListResponse;
+import com.baserow.exception.BaserowDataIntegrityException;
+import com.baserow.exception.BaserowNotFoundException;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

@@ -1,11 +1,12 @@
 package com.lan.app.infrastructure.baserow.client;
+import com.baserow.client.BaserowAuthHeaders;
 
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingMeetingRoomBookingRow;
-import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
+import com.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.CreateCoworkingMeetingRoomBookingRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateCoworkingMeetingRoomBookingRowRequest;
-import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
-import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
+import com.baserow.exception.BaserowDataIntegrityException;
+import com.baserow.exception.BaserowNotFoundException;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

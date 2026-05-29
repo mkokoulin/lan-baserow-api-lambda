@@ -1,4 +1,6 @@
 package com.lan.app.infrastructure.baserow.client;
+import com.baserow.client.BaserowAuthHeaders;
+import com.baserow.client.BaserowErrorLoggingFilter;
 
 import java.util.UUID;
 
@@ -7,11 +9,11 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingActiveTariffRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingGuestTariffRow;
-import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
+import com.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.CreateGuestTariffRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateGuestTariffDaysUsedRequest;
-import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
-import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
+import com.baserow.exception.BaserowDataIntegrityException;
+import com.baserow.exception.BaserowNotFoundException;
 
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;

@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.lan.app.domain.model.CoworkingGuestTariff;
 import com.lan.app.domain.model.GuestTariffStatus;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingGuestTariffRow;
-import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
+import com.baserow.exception.BaserowDataIntegrityException;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped

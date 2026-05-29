@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.dto;
+import com.baserow.dto.BaserowSelectOption;
 
 import java.time.Instant;
 import java.util.List;

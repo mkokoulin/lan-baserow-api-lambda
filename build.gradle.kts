@@ -13,7 +13,7 @@ val quarkusPlatformArtifactId: String by project
 val quarkusPlatformVersion: String by project
 
 dependencies {
-    implementation(project(":baserow"))
+    implementation("io.github.mkokoulin:baserow-java-client:1.0.0")
     implementation(enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}"))
     implementation("io.quarkus:quarkus-smallrye-jwt-build")
     implementation("io.quarkus:quarkus-rest")

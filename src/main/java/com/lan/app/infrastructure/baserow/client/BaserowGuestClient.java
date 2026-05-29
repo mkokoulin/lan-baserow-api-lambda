@@ -1,8 +1,10 @@
 package com.lan.app.infrastructure.baserow.client;
 
 import com.lan.app.infrastructure.baserow.dto.*;
-import com.lan.app.infrastructure.baserow.exception.BaserowDataIntegrityException;
-import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
+import com.baserow.client.BaserowAuthHeaders;
+import com.baserow.dto.BaserowListResponse;
+import com.baserow.exception.BaserowDataIntegrityException;
+import com.baserow.exception.BaserowNotFoundException;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;

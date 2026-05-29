@@ -1,10 +1,11 @@
 package com.lan.app.infrastructure.baserow.repository;
+import com.baserow.repository.AbstractBaserowRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.client.BaserowPaymentClient;
-import com.lan.app.infrastructure.baserow.dto.BaserowFile;
+import com.baserow.dto.BaserowFile;
 import com.lan.app.infrastructure.baserow.dto.BaserowPaymentRow;
 import com.lan.app.infrastructure.baserow.dto.CreatePaymentRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdatePaymentRow;

@@ -6,8 +6,8 @@ import com.lan.app.infrastructure.baserow.client.BaserowCoworkingActiveTariffCli
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingTariffClient;
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingActiveTariffRow;
-import com.lan.app.infrastructure.baserow.exception.BaserowNotFoundException;
-import com.lan.app.infrastructure.baserow.exception.BaserowUnavailableException;
+import com.baserow.exception.BaserowNotFoundException;
+import com.baserow.exception.BaserowUnavailableException;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingActiveTariffMapper;
 import com.lan.app.repository.CoworkingActiveTariffRepository;
 import jakarta.enterprise.context.ApplicationScoped;

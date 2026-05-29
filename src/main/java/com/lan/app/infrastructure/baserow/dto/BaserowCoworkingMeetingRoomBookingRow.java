@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.dto;
+import com.baserow.dto.BaserowLinkToTable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;

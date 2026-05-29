@@ -1,4 +1,6 @@
 package com.lan.app.infrastructure.baserow.dto;
+import com.baserow.dto.BaserowSingleSelect;
+import com.baserow.dto.BaserowLinkToTable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,7 +1,8 @@
 package com.lan.app.infrastructure.baserow.client;
+import com.baserow.client.BaserowAuthHeaders;
 
 import com.lan.app.infrastructure.baserow.dto.BaserowCoworkingNotificationRow;
-import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
+import com.baserow.dto.BaserowListResponse;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;

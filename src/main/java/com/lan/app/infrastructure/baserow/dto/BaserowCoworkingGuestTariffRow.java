@@ -1,4 +1,6 @@
 package com.lan.app.infrastructure.baserow.dto;
+import com.baserow.dto.BaserowSingleSelect;
+import com.baserow.dto.BaserowLinkToTable;
 
 import java.util.List;
 import java.util.UUID;

@@ -27,7 +27,9 @@ public class EventRegistrationMapper {
             ? registration.guestId().externalId().toString()
             : String.valueOf(registration.guestId().internalId());
         return new EventRegistrationResponse(
-            registration.id().externalId().toString(),
+            registration.id().externalId() != null
+                ? registration.id().externalId().toString()
+                : String.valueOf(registration.id().internalId()),
             eventIdStr,
             guestIdStr,
             registration.comment(),

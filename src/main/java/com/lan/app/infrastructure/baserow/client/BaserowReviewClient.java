@@ -1,6 +1,7 @@
 package com.lan.app.infrastructure.baserow.client;
+import com.baserow.client.BaserowAuthHeaders;
 
-import com.lan.app.infrastructure.baserow.dto.BaserowListResponse;
+import com.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.BaserowReviewRow;
 import com.lan.app.infrastructure.baserow.dto.CreateReviewRowRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;

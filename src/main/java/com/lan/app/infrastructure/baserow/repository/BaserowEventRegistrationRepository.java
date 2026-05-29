@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
+import com.baserow.repository.AbstractBaserowRepository;
 
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
@@ -57,16 +58,38 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
 
     @Override
     public EventRegistration create(Id eventId, Id guestId, int guestCount, String comment, String source) {
+        // Generate the external UUID client-side so we always have it even if Baserow's
+        // create response omits the external_id field (same behaviour seen for link fields).
+        UUID generatedExternalId = UUID.randomUUID();
         var body = new CreateEventRegistrationRowRequest(
             List.of(eventId.internalId()),
             List.of(guestId.internalId()),
             guestCount,
             comment,
-            source
+            source,
+            generatedExternalId
         );
         var created = execute(() -> client.create(registrationsTableId, body));
-        var fullRow = execute(() -> client.getByRowId(registrationsTableId, created.id()));
-        return mapper.toDomain(fullRow);
+        // Prefer the UUID returned by Baserow (formula field); fall back to our generated one.
+        UUID externalId = created.externalId() != null ? created.externalId() : generatedExternalId;
+        // Baserow sometimes returns null/empty link fields immediately after creation.
+        // We already know eventId and guestId from the input — construct the domain object
+        // directly rather than re-fetching and mapping potentially-null link fields.
+        if (created.guestId() == null || created.guestId().isEmpty()
+                || created.eventId() == null || created.eventId().isEmpty()) {
+            log.warnf("Baserow create response missing links (guestId=%s, eventId=%s) for row %d — constructing from input params",
+                created.guestId(), created.eventId(), created.id());
+            return new EventRegistration(
+                new Id(created.id(), externalId),
+                eventId,
+                guestId,
+                guestCount,
+                comment,
+                source,
+                false
+            );
+        }
+        return mapper.toDomain(created, externalId);
     }
 
     @Override

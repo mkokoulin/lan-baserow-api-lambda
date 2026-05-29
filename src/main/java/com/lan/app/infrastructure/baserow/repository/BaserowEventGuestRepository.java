@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
+import com.baserow.repository.AbstractBaserowRepository;
 
 import com.lan.app.domain.model.EventGuest;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
