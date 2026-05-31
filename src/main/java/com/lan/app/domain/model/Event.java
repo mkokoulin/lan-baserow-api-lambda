@@ -18,6 +18,7 @@ public record Event(
     String comment,
     Boolean isPin,
     boolean requiresPrepayment,
-    java.math.BigDecimal price
+    java.math.BigDecimal price,
+    String imageUrl
 ) {
 }

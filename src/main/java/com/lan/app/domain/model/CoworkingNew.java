@@ -8,5 +8,6 @@ public record CoworkingNew(
     String titleRu,
     String bodyEn,
     String bodyRu,
+    String imageUrl,
     String link
 ){}

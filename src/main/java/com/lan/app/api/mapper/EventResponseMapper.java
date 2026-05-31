@@ -23,7 +23,8 @@ public class EventResponseMapper {
             event.comment(),
             event.isPin(),
             event.requiresPrepayment(),
-            event.price()
+            event.price(),
+            event.imageUrl()
         );
     }
 }

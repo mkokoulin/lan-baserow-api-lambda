@@ -67,6 +67,12 @@ public record FestivalResponse(
         examples = "false",
         required = true
     )
-    Boolean isPin
+    Boolean isPin,
+
+    @Schema(
+        description = "URL of the festival cover image uploaded in Baserow",
+        nullable = true
+    )
+    String image
 ) {
 }

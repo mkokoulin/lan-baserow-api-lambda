@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.dto;
+import com.baserow.dto.BaserowFile;
 import com.baserow.dto.BaserowLinkToTable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -25,5 +26,6 @@ public record BaserowEventRow(
     @JsonProperty("comment") String comment,
     @JsonProperty("is_pin") boolean isPin,
     @JsonProperty("requires_prepayment") Boolean requiresPrepayment,
-    @JsonProperty("price") java.math.BigDecimal price
+    @JsonProperty("price") java.math.BigDecimal price,
+    @JsonProperty("image") List<BaserowFile> image
 ) {}

@@ -15,6 +15,7 @@ public class ApiCoworkingNewMapper {
             r.titleRu(),
             r.bodyEn(),
             r.bodyRu(),
+            r.imageUrl(),
             r.link()
         );
     }

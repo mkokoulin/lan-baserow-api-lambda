@@ -17,7 +17,8 @@ public class ApiEventsFestivalMapper {
             festival.dateStart(),
             festival.dateEnd(),
             festival.isVisible(),
-            festival.isPin()
+            festival.isPin(),
+            festival.imageUrl()
         );
     }
 }

@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.dto;
+import com.baserow.dto.BaserowFile;
 import com.baserow.dto.BaserowSelectOption;
 
 import java.time.Instant;
@@ -19,5 +20,6 @@ public record BaserowEventsFestivalRow(
     @NotNull @JsonProperty("date_start") Instant dateStart,
     @NotNull @JsonProperty("date_end") Instant dateEnd,
     @JsonProperty("is_visible") boolean isVisible,
-    @JsonProperty("is_pin") boolean isPin
+    @JsonProperty("is_pin") boolean isPin,
+    @JsonProperty("image") List<BaserowFile> image
 ) {}

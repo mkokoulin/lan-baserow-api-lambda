@@ -9,12 +9,16 @@ import jakarta.enterprise.context.ApplicationScoped;
 public class BaserowCoworkingNewMapper {
 
     public CoworkingNew toDomain(BaserowCoworkingNewRow row) {
+        String imageUrl = row.image() != null && !row.image().isEmpty()
+            ? row.image().getFirst().url()
+            : null;
         return new CoworkingNew(
             row.externalId(),
             row.titleEn(),
             row.titleRu(),
             row.bodyEn(),
             row.bodyRu(),
+            imageUrl,
             row.link()
         );
     }

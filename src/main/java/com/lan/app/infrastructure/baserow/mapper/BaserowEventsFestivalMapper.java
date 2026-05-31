@@ -19,6 +19,10 @@ public class BaserowEventsFestivalMapper {
                 .map(ei -> UUID.fromString(ei.value()))
                 .toList();
 
+        String imageUrl = festivale.image() != null && !festivale.image().isEmpty()
+            ? festivale.image().getFirst().url()
+            : null;
+
         return new Festival(
             new Id(festivale.id(), festivale.externalId()),
             festivale.name(),
@@ -27,7 +31,8 @@ public class BaserowEventsFestivalMapper {
             festivale.dateStart(),
             festivale.dateEnd(),
             festivale.isVisible(),
-            festivale.isPin()
+            festivale.isPin(),
+            imageUrl
         );
     }
 

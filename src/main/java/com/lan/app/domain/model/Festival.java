@@ -12,5 +12,6 @@ public record Festival(
     Instant dateStart,
     Instant dateEnd,
     Boolean isVisible,
-    Boolean isPin
+    Boolean isPin,
+    String imageUrl
 ) {}

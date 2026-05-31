@@ -123,6 +123,12 @@ public record EventResponse(
         examples = "5000",
         nullable = true
     )
-    java.math.BigDecimal price
+    java.math.BigDecimal price,
+
+    @Schema(
+        description = "URL of the event cover image uploaded in Baserow",
+        nullable = true
+    )
+    String image
 ) {
 }

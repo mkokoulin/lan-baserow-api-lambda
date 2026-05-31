@@ -17,6 +17,10 @@ public class BaserowEventMapper {
             ? event.notifications().stream().map(n -> String.valueOf(n.id())).toList()
             : List.<String>of();
 
+        String imageUrl = event.image() != null && !event.image().isEmpty()
+            ? event.image().getFirst().url()
+            : null;
+
         return new Event(
             new Id(event.id(), event.externalId()),
             event.name(),
@@ -31,7 +35,8 @@ public class BaserowEventMapper {
             event.comment(),
             event.isPin(),
             event.requiresPrepayment() != null && event.requiresPrepayment(),
-            event.price()
+            event.price(),
+            imageUrl
         );
     }
 
