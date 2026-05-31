@@ -35,5 +35,6 @@ public interface BaserowConfig {
         int guestTariffsTableId();
         int newsTableId();
         int reviewsTableId();
+        int siteBookingsTableId();
     }
 }
