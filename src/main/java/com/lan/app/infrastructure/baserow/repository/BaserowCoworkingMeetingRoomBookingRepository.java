@@ -55,7 +55,8 @@ public class BaserowCoworkingMeetingRoomBookingRepository extends AbstractBasero
 
     public CoworkingMeetingRoomBooking create(CreateCoworkingMeetingRoomBookingCommand cmd) {
         return execute(() -> {
-            var req = mapper.toBaserowRequest(cmd);
+            var guestRow = guestClient.findUniqueByExternalId(coworkingGuestsTableId, cmd.guestId());
+            var req = mapper.toBaserowRequest(cmd, guestRow.id());
             var row = client.create(coworkingMeetingRoomBookingTableId, req);
             return mapper.toDomain(row, resolveGuestExternalId(row));
         });

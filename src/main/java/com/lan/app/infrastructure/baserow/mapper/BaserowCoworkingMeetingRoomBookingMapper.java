@@ -8,6 +8,7 @@ import com.lan.app.service.command.CreateCoworkingMeetingRoomBookingCommand;
 import com.lan.app.service.command.UpdateCoworkingMeetingRoomBookingCommand;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.List;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -24,13 +25,13 @@ public class BaserowCoworkingMeetingRoomBookingMapper {
         );
     }
 
-    public CreateCoworkingMeetingRoomBookingRowRequest toBaserowRequest(CreateCoworkingMeetingRoomBookingCommand cmd) {
+    public CreateCoworkingMeetingRoomBookingRowRequest toBaserowRequest(CreateCoworkingMeetingRoomBookingCommand cmd, int guestRowId) {
         if (cmd == null) {
             return null;
         }
 
         return new CreateCoworkingMeetingRoomBookingRowRequest(
-            cmd.guestId(),
+            List.of(guestRowId),
             cmd.dateStart(),
             cmd.dateEnd(),
             cmd.persons(),
