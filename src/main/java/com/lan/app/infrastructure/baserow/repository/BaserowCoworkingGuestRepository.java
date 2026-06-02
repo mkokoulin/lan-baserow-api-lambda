@@ -85,8 +85,8 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
     }
 
     @Override
-    public CoworkingGuest create(String firstName, String lastName, String phone, String telegram) {
-        var body = new CreateGuestRowRequest(firstName, lastName, phone, telegram, null, null);
+    public CoworkingGuest create(String firstName, String lastName, String phone, String telegram, Long telegramChatId) {
+        var body = new CreateGuestRowRequest(firstName, lastName, phone, telegram, null, telegramChatId);
         return mapper.toDomain(client.create(guestsTableId, body));
     }
 

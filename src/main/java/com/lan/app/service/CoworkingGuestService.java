@@ -55,7 +55,7 @@ public class CoworkingGuestService {
                 java.util.Map.of("telegramChatId", telegramChatId)
             );
         }
-        return repo.create(firstName, lastName, phone, telegram);
+        return repo.create(firstName, lastName, phone, telegram, telegramChatId);
     }
 
     public CoworkingGuest update(UUID externalId, UpdateCoworkingGuestCommand cmd) {
