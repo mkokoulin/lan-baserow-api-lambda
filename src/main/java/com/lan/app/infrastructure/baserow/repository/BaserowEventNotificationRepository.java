@@ -79,26 +79,52 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         var now = Instant.now();
         var nowYerevan = ZonedDateTime.now(YEREVAN);
 
+        log.infof("findDue: fetched %d active rows, now=%s (Yerevan hour=%d), working hours=%d-%d",
+            rows.size(), now, nowYerevan.getHour(), workingHourStart, workingHourEnd);
+
         if (!isWorkingHour(nowYerevan)) {
-            log.debugf("Outside working hours (%d), skipping event notifications", nowYerevan.getHour());
+            log.infof("Outside working hours (%d), skipping event notifications", nowYerevan.getHour());
             return List.of();
         }
 
         var result = new ArrayList<EventNotificationDue>();
 
         for (var row : rows) {
-            if (!isPending(row)) continue;
-            if (row.eventId() == null || row.eventId().isEmpty()) continue;
-            if (row.notifications() == null || row.notifications().isEmpty()) continue;
+            String rowStatus = row.status() != null ? row.status().value() : "null";
+            if (!isPending(row)) {
+                log.infof("Row %d skipped: status=%s (not pending)", row.id(), rowStatus);
+                continue;
+            }
+            if (row.eventId() == null || row.eventId().isEmpty()) {
+                log.infof("Row %d skipped: no event_id linked", row.id());
+                continue;
+            }
+            if (row.notifications() == null || row.notifications().isEmpty()) {
+                log.infof("Row %d skipped: no notification templates linked", row.id());
+                continue;
+            }
 
             int eventRowId = row.eventId().getFirst().id();
+            log.infof("Row %d: processing, eventRowId=%d, templates=%d",
+                row.id(), eventRowId, row.notifications().size());
 
             try {
                 var event = fetchEvent(eventRowId);
-                if (event == null) continue;
+                if (event == null) {
+                    log.infof("Row %d skipped: could not fetch event rowId=%d", row.id(), eventRowId);
+                    continue;
+                }
 
                 Instant eventStart = event.dateStart();
-                if (eventStart == null || now.isAfter(eventStart)) continue;
+                if (eventStart == null) {
+                    log.infof("Row %d skipped: event rowId=%d has null dateStart", row.id(), eventRowId);
+                    continue;
+                }
+                if (now.isAfter(eventStart)) {
+                    log.infof("Row %d skipped: event rowId=%d already started (eventStart=%s, now=%s)",
+                        row.id(), eventRowId, eventStart, now);
+                    continue;
+                }
 
                 for (var notifLink : row.notifications()) {
                     int notifRowId = notifLink.id();
@@ -106,18 +132,30 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         var template = execute(() ->
                             notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
                         );
-                        if (template.leadHours() == null || template.message() == null) continue;
-
-                        Instant scheduledTime = eventStart.minus(template.leadHours(), ChronoUnit.HOURS);
-                        if (!isDue(scheduledTime, now)) continue;
-
-                        List<Long> chatIds = fetchChatIdsForEvent(eventRowId);
-                        if (chatIds.isEmpty()) {
-                            log.debugf("No Telegram chat IDs for event rowId=%d, skipping", eventRowId);
+                        if (template.leadHours() == null || template.message() == null) {
+                            log.infof("Row %d, template %d skipped: leadHours=%s message=%s",
+                                row.id(), notifRowId, template.leadHours(), template.message());
                             continue;
                         }
 
-                        // Mark as sending before returning so the next scheduler tick skips this row
+                        Instant scheduledTime = eventStart.minus(template.leadHours(), ChronoUnit.HOURS);
+                        log.infof("Row %d, template %d: eventStart=%s leadHours=%d scheduledTime=%s now=%s",
+                            row.id(), notifRowId, eventStart, template.leadHours(), scheduledTime, now);
+
+                        if (!isDue(scheduledTime, now)) {
+                            log.infof("Row %d, template %d skipped: not due yet (scheduledTime=%s, window ends=%s)",
+                                row.id(), notifRowId, scheduledTime,
+                                scheduledTime.plus(MAX_OVERDUE_HOURS, ChronoUnit.HOURS));
+                            continue;
+                        }
+
+                        List<Long> chatIds = fetchChatIdsForEvent(eventRowId);
+                        if (chatIds.isEmpty()) {
+                            log.infof("Row %d skipped: no Telegram chat IDs for event rowId=%d", row.id(), eventRowId);
+                            continue;
+                        }
+
+                        log.infof("Row %d: sending notification to %d chat(s)", row.id(), chatIds.size());
                         updateStatus(row.id(), "sending");
                         result.add(new EventNotificationDue(
                             row.id(),
@@ -125,7 +163,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                             event.name(),
                             chatIds
                         ));
-                        break; // one notification per events_notification row per run
+                        break;
                     } catch (Exception e) {
                         log.warnf("Failed to process template rowId=%d for events_notification rowId=%d: %s",
                             notifRowId, row.id(), e.getMessage());
@@ -136,6 +174,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
             }
         }
 
+        log.infof("findDue: returning %d due notification(s)", result.size());
         return result;
     }
 
