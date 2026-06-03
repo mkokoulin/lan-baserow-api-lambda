@@ -6,25 +6,21 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
 
 /**
- * Baserow returns date fields without timezone info (e.g. "2026-06-03T15:00:00"),
- * representing local Armenia time. This deserializer treats such strings as Asia/Yerevan
- * and converts to UTC Instant. If the string already includes an offset or 'Z', that takes precedence.
+ * Baserow stores event times in Armenia local time but may return them with a Z suffix
+ * (e.g. "2026-06-03T15:00:00Z") where 15:00 is the local clock value, not UTC.
+ * This deserializer always takes the local date-time portion, ignores any offset or Z,
+ * and interprets it as Asia/Yerevan time.
  */
 public class BaserowInstantDeserializer extends StdDeserializer<Instant> {
 
     private static final ZoneId YEREVAN = ZoneId.of("Asia/Yerevan");
-    private static final DateTimeFormatter FORMATTER = new DateTimeFormatterBuilder()
-        .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        .optionalStart()
-        .appendOffsetId()
-        .optionalEnd()
-        .toFormatter()
-        .withZone(YEREVAN);
 
     public BaserowInstantDeserializer() {
         super(Instant.class);
@@ -34,6 +30,12 @@ public class BaserowInstantDeserializer extends StdDeserializer<Instant> {
     public Instant deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         String raw = p.getText();
         if (raw == null || raw.isBlank()) return null;
-        return FORMATTER.parse(raw.trim(), Instant::from);
+        LocalDateTime ldt;
+        try {
+            ldt = OffsetDateTime.parse(raw.trim()).toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            ldt = LocalDateTime.parse(raw.trim(), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        }
+        return ldt.atZone(YEREVAN).toInstant();
     }
 }
