@@ -1,12 +1,11 @@
 package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.response.BotRegistrationDto;
+import com.lan.app.api.dto.response.EventNotificationDueResponse;
+import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
 import jakarta.annotation.security.PermitAll;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
@@ -26,9 +25,11 @@ import java.util.List;
 public class BotResource {
 
     private final EventRegistrationService service;
+    private final EventNotificationService notificationService;
 
-    public BotResource(EventRegistrationService service) {
+    public BotResource(EventRegistrationService service, EventNotificationService notificationService) {
         this.service = service;
+        this.notificationService = notificationService;
     }
 
     @GET
@@ -62,5 +63,48 @@ public class BotResource {
                 .toList();
 
         return Response.ok(result).build();
+    }
+
+    @GET
+    @Path("/event-notifications/due")
+    @Operation(
+        operationId = "botDueEventNotifications",
+        summary = "Return event notifications that are due to be sent now",
+        description = "Returns active pending event notifications whose scheduled send time (event start minus lead hours) " +
+            "has been reached and the current time is within working hours (09:00–21:00 Yerevan). " +
+            "Each returned notification is immediately marked as 'sending' to prevent double-delivery. " +
+            "After sending, call mark-sent or mark-failed."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "List of due notifications (may be empty)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = EventNotificationDueResponse.class)
+            )
+        )
+    })
+    public Response dueEventNotifications() {
+        var due = notificationService.findDue().stream()
+            .map(d -> new EventNotificationDueResponse(d.rowId(), d.message(), d.eventName(), d.chatIds()))
+            .toList();
+        return Response.ok(due).build();
+    }
+
+    @POST
+    @Path("/event-notifications/{id}/mark-sent")
+    @Operation(operationId = "botMarkEventNotificationSent", summary = "Mark an event notification as sent")
+    public Response markEventNotificationSent(@PathParam("id") int id) {
+        notificationService.markSent(id);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/event-notifications/{id}/mark-failed")
+    @Operation(operationId = "botMarkEventNotificationFailed", summary = "Mark an event notification as failed")
+    public Response markEventNotificationFailed(@PathParam("id") int id) {
+        notificationService.markFailed(id);
+        return Response.ok().build();
     }
 }

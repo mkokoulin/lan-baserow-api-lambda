@@ -52,6 +52,15 @@ public interface BaserowEventRegistrationClient {
     );
 
     @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "200")
+    BaserowListResponse<BaserowRegistrationRow> findByEventRowIdRaw(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__event_id__link_row_has") int eventRowId
+    );
+
+    @GET
     @ClientQueryParam(name = "user_field_names", value = "true")
     @Path("/{tableId}/{rowId}/")
     BaserowRegistrationRow getByRowId(
