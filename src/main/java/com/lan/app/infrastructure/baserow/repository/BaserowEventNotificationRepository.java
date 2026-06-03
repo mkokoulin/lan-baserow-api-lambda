@@ -29,8 +29,6 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
 
     private static final Logger log = Logger.getLogger(BaserowEventNotificationRepository.class);
     private static final ZoneId YEREVAN = ZoneId.of("Asia/Yerevan");
-    private static final int WORKING_HOUR_START = 9;
-    private static final int WORKING_HOUR_END = 21;
     private static final long MAX_OVERDUE_HOURS = 24;
 
     private final int eventNotificationsTableId;
@@ -38,6 +36,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     private final int eventsTableId;
     private final int registrationsTableId;
     private final int guestsTableId;
+    private final int workingHourStart;
+    private final int workingHourEnd;
 
     private final BaserowEventNotificationClient client;
     private final BaserowNotificationTemplateClient notificationTemplateClient;
@@ -51,6 +51,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         @ConfigProperty(name = "baserow.events.events-table-id") int eventsTableId,
         @ConfigProperty(name = "baserow.events.registrations-table-id") int registrationsTableId,
         @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
+        @ConfigProperty(name = "app.notifications.working-hour-start", defaultValue = "9") int workingHourStart,
+        @ConfigProperty(name = "app.notifications.working-hour-end", defaultValue = "21") int workingHourEnd,
         @RestClient BaserowEventNotificationClient client,
         @RestClient BaserowNotificationTemplateClient notificationTemplateClient,
         @RestClient BaserowEventClient eventClient,
@@ -62,6 +64,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         this.eventsTableId = eventsTableId;
         this.registrationsTableId = registrationsTableId;
         this.guestsTableId = guestsTableId;
+        this.workingHourStart = workingHourStart;
+        this.workingHourEnd = workingHourEnd;
         this.client = client;
         this.notificationTemplateClient = notificationTemplateClient;
         this.eventClient = eventClient;
@@ -167,7 +171,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
 
     private boolean isWorkingHour(ZonedDateTime time) {
         int hour = time.getHour();
-        return hour >= WORKING_HOUR_START && hour < WORKING_HOUR_END;
+        return hour >= workingHourStart && hour < workingHourEnd;
     }
 
     private boolean isDue(Instant scheduledTime, Instant now) {
