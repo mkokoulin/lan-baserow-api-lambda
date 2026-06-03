@@ -23,6 +23,7 @@ public interface BaserowConfig {
         int eventsTableId();
         int registrationsTableId();
         int notificationsTableId();
+        int eventNotificationsTableId();
         int festivalsTableId();
         int paymentsTableId();
     }
