@@ -3,6 +3,7 @@ import com.baserow.dto.BaserowFile;
 import com.baserow.dto.BaserowLinkToTable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -15,8 +16,8 @@ public record BaserowEventRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
     @NotBlank @JsonProperty("name") String name,
-    @NotNull @JsonProperty("date_start") Instant dateStart,
-    @NotNull @JsonProperty("date_end") Instant dateEnd,
+    @NotNull @JsonProperty("date_start") @JsonDeserialize(using = BaserowInstantDeserializer.class) Instant dateStart,
+    @NotNull @JsonProperty("date_end") @JsonDeserialize(using = BaserowInstantDeserializer.class) Instant dateEnd,
     @NotBlank @JsonProperty("description") String description,
     @JsonProperty("external_registration_url") String externalRegistrationUrl,
     @NotNull @JsonProperty("registration_url") URI registrationUrl,
