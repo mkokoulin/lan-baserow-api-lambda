@@ -136,13 +136,17 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         Duration leadTime = parseLeadTime(template.leadTime());
                         if (leadTime == null || template.message() == null) {
                             log.infof("Row %d, template %d skipped: leadTime=%s message=%s",
-                                row.id(), notifRowId, template.leadTime(), template.message());
+                                row.id(), notifRowId,
+                                template.leadTime() != null ? template.leadTime().stream().map(s -> s.value()).toList() : null,
+                                template.message());
                             continue;
                         }
 
                         Instant scheduledTime = eventStart.minus(leadTime);
                         log.infof("Row %d, template %d: eventStart=%s leadTime=%s scheduledTime=%s now=%s",
-                            row.id(), notifRowId, eventStart, template.leadTime(), scheduledTime, now);
+                            row.id(), notifRowId, eventStart,
+                            template.leadTime().stream().map(s -> s.value()).toList(),
+                            scheduledTime, now);
 
                         if (!isDue(scheduledTime, now)) {
                             log.infof("Row %d, template %d skipped: not due yet (scheduledTime=%s, window ends=%s)",
@@ -210,7 +214,9 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         return row.status() != null && "pending".equalsIgnoreCase(row.status().value());
     }
 
-    private Duration parseLeadTime(String raw) {
+    private Duration parseLeadTime(java.util.List<com.baserow.dto.BaserowSingleSelect> options) {
+        if (options == null || options.isEmpty()) return null;
+        String raw = options.getFirst().value();
         if (raw == null || raw.isBlank()) return null;
         String s = raw.trim().toLowerCase();
         try {
