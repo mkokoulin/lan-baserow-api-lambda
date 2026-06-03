@@ -10,7 +10,7 @@ import java.util.UUID;
 public record BaserowNotificationRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
-    @JsonProperty("lead_hours") Integer leadHours,
+    @JsonProperty("lead_time") String leadTime,
     @JsonProperty("message") String message,
     @JsonProperty("comment") String comment,
     @JsonProperty("active") boolean active

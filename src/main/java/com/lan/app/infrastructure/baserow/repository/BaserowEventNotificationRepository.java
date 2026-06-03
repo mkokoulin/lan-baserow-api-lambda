@@ -16,6 +16,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -132,15 +133,16 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         var template = execute(() ->
                             notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
                         );
-                        if (template.leadHours() == null || template.message() == null) {
-                            log.infof("Row %d, template %d skipped: leadHours=%s message=%s",
-                                row.id(), notifRowId, template.leadHours(), template.message());
+                        Duration leadTime = parseLeadTime(template.leadTime());
+                        if (leadTime == null || template.message() == null) {
+                            log.infof("Row %d, template %d skipped: leadTime=%s message=%s",
+                                row.id(), notifRowId, template.leadTime(), template.message());
                             continue;
                         }
 
-                        Instant scheduledTime = eventStart.minus(template.leadHours(), ChronoUnit.HOURS);
-                        log.infof("Row %d, template %d: eventStart=%s leadHours=%d scheduledTime=%s now=%s",
-                            row.id(), notifRowId, eventStart, template.leadHours(), scheduledTime, now);
+                        Instant scheduledTime = eventStart.minus(leadTime);
+                        log.infof("Row %d, template %d: eventStart=%s leadTime=%s scheduledTime=%s now=%s",
+                            row.id(), notifRowId, eventStart, template.leadTime(), scheduledTime, now);
 
                         if (!isDue(scheduledTime, now)) {
                             log.infof("Row %d, template %d skipped: not due yet (scheduledTime=%s, window ends=%s)",
@@ -206,6 +208,18 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
 
     private boolean isPending(BaserowEventNotificationRow row) {
         return row.status() != null && "pending".equalsIgnoreCase(row.status().value());
+    }
+
+    private Duration parseLeadTime(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String s = raw.trim().toLowerCase();
+        try {
+            if (s.endsWith("h")) return Duration.ofHours(Long.parseLong(s.substring(0, s.length() - 1).trim()));
+            if (s.endsWith("m")) return Duration.ofMinutes(Long.parseLong(s.substring(0, s.length() - 1).trim()));
+        } catch (NumberFormatException e) {
+            log.warnf("Cannot parse lead_time value '%s'", raw);
+        }
+        return null;
     }
 
     private boolean isWorkingHour(ZonedDateTime time) {
