@@ -116,6 +116,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                     continue;
                 }
 
+                log.infof("Row %d: event rawDateStart='%s'", row.id(), event.dateStart());
                 Instant eventStart = com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(event.dateStart());
                 if (eventStart == null) {
                     log.infof("Row %d skipped: event rowId=%d has null dateStart", row.id(), eventRowId);
