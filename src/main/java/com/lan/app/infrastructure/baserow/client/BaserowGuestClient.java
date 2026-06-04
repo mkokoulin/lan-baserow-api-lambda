@@ -36,7 +36,7 @@ public interface BaserowGuestClient {
     @ClientQueryParam(name = "size", value = "1")
     BaserowListResponse<BaserowGuestRow> findByExternalIdRaw(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__field_7464331__equal") UUID externalId
+        @QueryParam("filter__external_id__equal") UUID externalId
     );
 
     default BaserowGuestRow findUniqueByExternalId(int tableId, UUID externalId) {

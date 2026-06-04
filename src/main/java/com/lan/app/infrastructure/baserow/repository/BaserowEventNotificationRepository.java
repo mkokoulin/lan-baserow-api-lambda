@@ -162,7 +162,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         }
 
                         log.infof("Row %d: sending notification to %d chat(s)", row.id(), chatIds.size());
-                        updateStatus(row.id(), "sending");
+                        updateStatus(row.id(), "SENDING");
                         result.add(new EventNotificationDue(
                             row.id(),
                             template.message(),
@@ -186,17 +186,17 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
 
     @Override
     public void markSending(int rowId) {
-        updateStatus(rowId, "sending");
+        updateStatus(rowId, "SENDING");
     }
 
     @Override
     public void markSent(int rowId) {
-        updateStatus(rowId, "sent");
+        updateStatus(rowId, "SENT");
     }
 
     @Override
     public void markFailed(int rowId) {
-        updateStatus(rowId, "failed");
+        updateStatus(rowId, "FAILED");
     }
 
     private void updateStatus(int rowId, String status) {
