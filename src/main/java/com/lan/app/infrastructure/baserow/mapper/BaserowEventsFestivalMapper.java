@@ -28,8 +28,8 @@ public class BaserowEventsFestivalMapper {
             festivale.name(),
             festivale.description(),
             eventsIds,
-            festivale.dateStart(),
-            festivale.dateEnd(),
+            BaserowEventMapper.parseBaserowDate(festivale.dateStart()),
+            BaserowEventMapper.parseBaserowDate(festivale.dateEnd()),
             festivale.isVisible(),
             festivale.isPin(),
             imageUrl

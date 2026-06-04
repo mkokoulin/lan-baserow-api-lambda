@@ -138,7 +138,8 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
             int eventRowId = reg.eventId().getFirst().id();
             try {
                 var eventRow = execute(() -> eventClient.getByRowId(eventTableId, eventRowId));
-                result.add(new EventRegistrationItem(eventRow.name(), eventRow.dateStart()));
+                result.add(new EventRegistrationItem(eventRow.name(),
+                    com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(eventRow.dateStart())));
             } catch (Exception e) {
                 log.warnf("Could not fetch event rowId=%d for guestRowId=%d: %s",
                         eventRowId, guestRowId, e.getMessage());
