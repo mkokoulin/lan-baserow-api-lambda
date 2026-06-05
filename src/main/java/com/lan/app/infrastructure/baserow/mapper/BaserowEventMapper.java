@@ -52,26 +52,28 @@ public class BaserowEventMapper {
     }
 
     /**
-     * Baserow returns dates as the local Armenia clock value (e.g. "2026-06-04T11:10:00Z" where
-     * 11:10 is Yerevan local time, not UTC). Strip any offset/Z and convert to UTC using +04:00.
+     * Baserow returns dates either:
+     * - With timezone (e.g. "2026-06-05T05:45:00Z" or "...+04:00") — already correct UTC, use as-is.
+     * - Without timezone (e.g. "2026-06-05T09:45:00") — treat as Yerevan local, convert to UTC.
      */
     public static Instant parseBaserowDate(String raw) {
         if (raw == null || raw.isBlank()) return null;
         String s = raw.trim();
-        LocalDateTime ldt;
         try {
-            ldt = OffsetDateTime.parse(s).toLocalDateTime();
+            Instant result = OffsetDateTime.parse(s).toInstant();
+            log.debugf("parseBaserowDate '%s' -> utc=%s", raw, result);
+            return result;
         } catch (DateTimeParseException e) {
             try {
-                ldt = LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+                Instant result = LocalDateTime.parse(s, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    .toInstant(YEREVAN);
+                log.debugf("parseBaserowDate '%s' (no tz, treating as Yerevan) -> utc=%s", raw, result);
+                return result;
             } catch (DateTimeParseException e2) {
                 log.warnf("Cannot parse Baserow date '%s': %s", raw, e2.getMessage());
                 return null;
             }
         }
-        Instant result = ldt.toInstant(YEREVAN);
-        log.debugf("parseBaserowDate '%s' -> local=%s -> utc=%s", raw, ldt, result);
-        return result;
     }
 
     private URI parseUri(String raw) {
