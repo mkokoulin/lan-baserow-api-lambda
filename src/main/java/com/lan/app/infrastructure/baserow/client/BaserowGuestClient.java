@@ -68,6 +68,15 @@ public interface BaserowGuestClient {
         @QueryParam("filter__phone__equal") String phone
     );
 
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "1")
+    BaserowListResponse<BaserowGuestRow> findByPhoneContainsRaw(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__phone__contains") String phoneDigits
+    );
+
     @POST
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
