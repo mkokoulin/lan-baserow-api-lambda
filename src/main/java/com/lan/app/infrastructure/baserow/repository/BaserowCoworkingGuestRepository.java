@@ -12,6 +12,7 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,9 +51,11 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
 
     @Override
     public Optional<CoworkingGuest> findByPhone(String phone) {
-        var resp = client.findByPhoneContainsRaw(guestsTableId, digitsOnly(phone));
-        if (resp.count() > 0 && !resp.results().isEmpty()) {
-            return Optional.of(mapper.toDomain(resp.results().getFirst()));
+        for (String candidate : phoneVariants(phone)) {
+            var resp = client.findByPhoneRaw(guestsTableId, candidate);
+            if (resp.count() > 0 && !resp.results().isEmpty()) {
+                return Optional.of(mapper.toDomain(resp.results().getFirst()));
+            }
         }
         return Optional.empty();
     }
@@ -66,17 +69,33 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
 
     @Override
     public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
-        var resp = client.findByPhoneContainsRaw(guestsTableId, digitsOnly(phone));
-        if (resp.count() == 0 || resp.results().isEmpty()) {
-            return Optional.empty();
+        for (String candidate : phoneVariants(phone)) {
+            var resp = client.findByPhoneRaw(guestsTableId, candidate);
+            if (resp.count() > 0 && !resp.results().isEmpty()) {
+                var updated = client.patchChatId(guestsTableId, resp.results().getFirst().id(), new LinkChatIdRowRequest(chatId));
+                return Optional.of(mapper.toDomain(updated));
+            }
         }
-        var updated = client.patchChatId(guestsTableId, resp.results().getFirst().id(), new LinkChatIdRowRequest(chatId));
-        return Optional.of(mapper.toDomain(updated));
+        return Optional.empty();
     }
 
-    private static String digitsOnly(String phone) {
-        if (phone == null) return "";
-        return phone.replaceAll("[^\\d]", "");
+    /**
+     * Produces candidate phone strings for Baserow's equal filter.
+     * Uses %2B instead of + because JAX-RS passes + unencoded and Django decodes it as a space.
+     * @Encoded on the client method prevents double-encoding of %2B.
+     */
+    private static List<String> phoneVariants(String phone) {
+        if (phone == null) return List.of();
+        String digits = phone.replaceAll("[^\\d]", "");
+        if (digits.startsWith("374") && digits.length() == 11) {
+            String local = digits.substring(3);
+            return List.of("%2B" + digits, digits, local);
+        }
+        if (digits.length() == 8) {
+            String full = "374" + digits;
+            return List.of("%2B" + full, full, digits);
+        }
+        return List.of(phone.replace("+", "%2B"), phone);
     }
 
     @Override
