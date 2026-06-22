@@ -80,6 +80,14 @@ public record EventResponse(
     URI instagramUrl,
 
     @Schema(
+        description = "Link to the event's Telegram post or channel",
+        examples = "https://t.me/lan_yerevan/123",
+        nullable = true,
+        format = "uri"
+    )
+    URI telegramUrl,
+
+    @Schema(
         description = "Whether the internal registration form should be shown to users. " +
             "When false, users are expected to register via externalRegistrationUrl.",
         examples = "true",

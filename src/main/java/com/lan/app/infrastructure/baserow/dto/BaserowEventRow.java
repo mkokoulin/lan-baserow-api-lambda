@@ -20,6 +20,7 @@ public record BaserowEventRow(
     @JsonProperty("external_registration_url") String externalRegistrationUrl,
     @NotNull @JsonProperty("registration_url") URI registrationUrl,
     @JsonProperty("instagram_url") String instagramUrl,
+    @JsonProperty("telegram_url") String telegramUrl,
     @JsonProperty("show_form") boolean showForm,
     @JsonProperty("notifications") List<BaserowLinkToTable> notifications,
     @JsonProperty("comment") String comment,

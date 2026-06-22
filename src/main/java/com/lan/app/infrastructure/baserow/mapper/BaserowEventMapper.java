@@ -41,6 +41,7 @@ public class BaserowEventMapper {
             parseUri(event.externalRegistrationUrl()),
             event.registrationUrl(),
             parseUri(event.instagramUrl()),
+            parseUri(event.telegramUrl()),
             event.showForm(),
             notifications,
             event.comment(),

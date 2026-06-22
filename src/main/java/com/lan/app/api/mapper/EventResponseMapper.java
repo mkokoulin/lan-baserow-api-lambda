@@ -18,6 +18,7 @@ public class EventResponseMapper {
             event.externalRegistrationUrl(),
             event.registrationUrl(),
             event.instagramUrl(),
+            event.telegramUrl(),
             event.showForm(),
             event.notifications(),
             event.comment(),

@@ -13,6 +13,7 @@ public record Event(
     URI externalRegistrationUrl,
     URI registrationUrl,
     URI instagramUrl,
+    URI telegramUrl,
     boolean showForm,
     List<String> notifications,
     String comment,
