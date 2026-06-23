@@ -1,7 +1,9 @@
 package com.lan.app.api.resource;
 
+import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.api.dto.response.BotRegistrationDto;
 import com.lan.app.api.dto.response.EventNotificationDueResponse;
+import com.lan.app.api.dto.response.RecipientDto;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
 import jakarta.annotation.security.PermitAll;
@@ -87,7 +89,10 @@ public class BotResource {
     })
     public Response dueEventNotifications() {
         var due = notificationService.findDue().stream()
-            .map(d -> new EventNotificationDueResponse(d.rowId(), d.message(), d.eventName(), d.chatIds()))
+            .map(d -> new EventNotificationDueResponse(
+                d.rowId(), d.message(), d.eventName(),
+                d.recipients().stream().map(r -> new RecipientDto(r.chatId(), r.guestRowId())).toList()
+            ))
             .toList();
         return Response.ok(due).build();
     }
@@ -105,6 +110,19 @@ public class BotResource {
     @Operation(operationId = "botMarkEventNotificationFailed", summary = "Mark an event notification as failed")
     public Response markEventNotificationFailed(@PathParam("id") int id) {
         notificationService.markFailed(id);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/event-notifications/{id}/results")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(operationId = "botSaveEventNotificationResults", summary = "Save per-guest notification results")
+    public Response saveEventNotificationResults(
+        @PathParam("id") int id,
+        List<NotificationResultRequest> results
+    ) {
+        if (results == null || results.isEmpty()) return Response.ok().build();
+        notificationService.saveResults(id, results);
         return Response.ok().build();
     }
 }

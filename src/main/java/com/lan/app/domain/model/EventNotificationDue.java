@@ -6,5 +6,5 @@ public record EventNotificationDue(
     int rowId,
     String message,
     String eventName,
-    List<Long> chatIds
+    List<NotificationRecipient> recipients
 ) {}

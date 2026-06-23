@@ -6,5 +6,5 @@ public record EventNotificationDueResponse(
     int id,
     String message,
     String eventName,
-    List<Long> chatIds
+    List<RecipientDto> recipients
 ) {}

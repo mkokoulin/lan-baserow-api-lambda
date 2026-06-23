@@ -26,6 +26,7 @@ public interface BaserowConfig {
         int eventNotificationsTableId();
         int festivalsTableId();
         int paymentsTableId();
+        int notificationResultsTableId();
     }
 
     interface Coworking {

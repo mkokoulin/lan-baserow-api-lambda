@@ -1,14 +1,18 @@
 package com.lan.app.infrastructure.baserow.repository;
 
 import com.baserow.repository.AbstractBaserowRepository;
+import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
+import com.lan.app.domain.model.NotificationRecipient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationClient;
+import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationResultClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowNotificationTemplateClient;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventRow;
+import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationResultRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateEventNotificationStatusRequest;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,6 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,11 +45,14 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     private final int workingHourStart;
     private final int workingHourEnd;
 
+    private final int notificationResultsTableId;
+
     private final BaserowEventNotificationClient client;
     private final BaserowNotificationTemplateClient notificationTemplateClient;
     private final BaserowEventClient eventClient;
     private final BaserowEventRegistrationClient registrationClient;
     private final BaserowGuestClient guestClient;
+    private final BaserowEventNotificationResultClient resultClient;
 
     public BaserowEventNotificationRepository(
         @ConfigProperty(name = "baserow.events.event-notifications-table-id") int eventNotificationsTableId,
@@ -52,19 +60,22 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         @ConfigProperty(name = "baserow.events.events-table-id") int eventsTableId,
         @ConfigProperty(name = "baserow.events.registrations-table-id") int registrationsTableId,
         @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
+        @ConfigProperty(name = "baserow.events.notification-results-table-id") int notificationResultsTableId,
         @ConfigProperty(name = "app.notifications.working-hour-start", defaultValue = "9") int workingHourStart,
         @ConfigProperty(name = "app.notifications.working-hour-end", defaultValue = "21") int workingHourEnd,
         @RestClient BaserowEventNotificationClient client,
         @RestClient BaserowNotificationTemplateClient notificationTemplateClient,
         @RestClient BaserowEventClient eventClient,
         @RestClient BaserowEventRegistrationClient registrationClient,
-        @RestClient BaserowGuestClient guestClient
+        @RestClient BaserowGuestClient guestClient,
+        @RestClient BaserowEventNotificationResultClient resultClient
     ) {
         this.eventNotificationsTableId = eventNotificationsTableId;
         this.notificationsTableId = notificationsTableId;
         this.eventsTableId = eventsTableId;
         this.registrationsTableId = registrationsTableId;
         this.guestsTableId = guestsTableId;
+        this.notificationResultsTableId = notificationResultsTableId;
         this.workingHourStart = workingHourStart;
         this.workingHourEnd = workingHourEnd;
         this.client = client;
@@ -72,6 +83,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         this.eventClient = eventClient;
         this.registrationClient = registrationClient;
         this.guestClient = guestClient;
+        this.resultClient = resultClient;
     }
 
     @Override
@@ -156,19 +168,19 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                             continue;
                         }
 
-                        List<Long> chatIds = fetchChatIdsForEvent(eventRowId);
-                        if (chatIds.isEmpty()) {
+                        List<NotificationRecipient> recipients = fetchRecipientsForEvent(eventRowId);
+                        if (recipients.isEmpty()) {
                             log.infof("Row %d skipped: no Telegram chat IDs for event rowId=%d", row.id(), eventRowId);
                             continue;
                         }
 
-                        log.infof("Row %d: sending notification to %d chat(s)", row.id(), chatIds.size());
+                        log.infof("Row %d: sending notification to %d chat(s)", row.id(), recipients.size());
                         updateStatus(row.id(), "SENDING");
                         result.add(new EventNotificationDue(
                             row.id(),
                             template.message(),
                             event.name(),
-                            chatIds
+                            recipients
                         ));
                         break;
                     } catch (Exception e) {
@@ -248,8 +260,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         }
     }
 
-    private List<Long> fetchChatIdsForEvent(int eventRowId) {
-        var chatIds = new ArrayList<Long>();
+    private List<NotificationRecipient> fetchRecipientsForEvent(int eventRowId) {
+        var recipients = new ArrayList<NotificationRecipient>();
         try {
             var registrations = execute(() ->
                 registrationClient.findByEventRowIdRaw(registrationsTableId, eventRowId).results()
@@ -260,7 +272,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                 try {
                     var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
                     if (guest.telegramChatId() != null) {
-                        chatIds.add(guest.telegramChatId());
+                        recipients.add(new NotificationRecipient(guest.telegramChatId(), guestRowId));
                     }
                 } catch (Exception e) {
                     log.warnf("Could not fetch guest rowId=%d: %s", guestRowId, e.getMessage());
@@ -269,6 +281,32 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         } catch (Exception e) {
             log.warnf("Could not fetch registrations for event rowId=%d: %s", eventRowId, e.getMessage());
         }
-        return chatIds;
+        return recipients;
+    }
+
+    @Override
+    public void saveResults(int notificationRowId, List<NotificationResultRequest> results) {
+        if (results == null || results.isEmpty()) return;
+        String sentAt = DateTimeFormatter.ISO_INSTANT.format(Instant.now());
+        boolean anyFailed = false;
+        for (var r : results) {
+            boolean failed = "FAILED".equalsIgnoreCase(r.status());
+            if (failed) anyFailed = true;
+            try {
+                execute(() -> {
+                    resultClient.create(notificationResultsTableId, new CreateEventNotificationResultRowRequest(
+                        List.of(notificationRowId),
+                        List.of(r.guestRowId()),
+                        r.status(),
+                        r.failureReason(),
+                        sentAt
+                    ));
+                    return null;
+                });
+            } catch (Exception e) {
+                log.warnf("Failed to save notification result for guestRowId=%d: %s", r.guestRowId(), e.getMessage());
+            }
+        }
+        updateStatus(notificationRowId, anyFailed ? "FAILED" : "SENT");
     }
 }

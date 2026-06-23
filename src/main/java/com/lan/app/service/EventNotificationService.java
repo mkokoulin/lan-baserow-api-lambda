@@ -1,5 +1,6 @@
 package com.lan.app.service;
 
+import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,5 +26,9 @@ public class EventNotificationService {
 
     public void markFailed(int rowId) {
         repo.markFailed(rowId);
+    }
+
+    public void saveResults(int notificationRowId, List<NotificationResultRequest> results) {
+        repo.saveResults(notificationRowId, results);
     }
 }
