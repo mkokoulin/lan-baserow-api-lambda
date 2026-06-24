@@ -8,5 +8,4 @@ public record CoworkingGuestTariff(
     UUID guestId,
     Integer daysUsed,
     GuestTariffStatus status
-) {
-}
+) {}

@@ -8,5 +8,4 @@ public record CoworkingActiveTariffListItem(
     Integer daysUsed,
     Instant dateStart,
     Instant dateEnd
-) {
-}
+) {}

@@ -9,7 +9,7 @@ public class EventNotificationMapper {
 
     public EventNotificationResponse toResponse(EventNotification notification) {
         return new EventNotificationResponse(
-            notification.Id().externalId().toString(),
+            notification.id().externalId().toString(),
             notification.leadHours(),
             notification.message(),
             notification.active()

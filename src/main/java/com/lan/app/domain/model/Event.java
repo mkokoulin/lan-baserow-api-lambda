@@ -1,5 +1,6 @@
 package com.lan.app.domain.model;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -19,7 +20,6 @@ public record Event(
     String comment,
     Boolean isPin,
     boolean requiresPrepayment,
-    java.math.BigDecimal price,
+    BigDecimal price,
     String imageUrl
-) {
-}
+) {}

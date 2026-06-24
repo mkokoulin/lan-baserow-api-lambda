@@ -5,6 +5,4 @@ import jakarta.validation.constraints.NotNull;
 
 public record EventImage(
     @NotNull @NotBlank String url
-) {
-}
-
+) {}

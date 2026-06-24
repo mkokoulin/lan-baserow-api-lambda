@@ -10,5 +10,4 @@ public record CoworkingMeetingRoomBooking(
     Instant dateEnd,
     Integer persons,
     String comment
-) {
-}
+) {}

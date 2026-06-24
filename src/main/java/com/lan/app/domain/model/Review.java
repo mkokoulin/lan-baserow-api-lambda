@@ -8,5 +8,4 @@ public record Review(
     Integer rating,
     String text,
     String createdAt
-) {
-}
+) {}

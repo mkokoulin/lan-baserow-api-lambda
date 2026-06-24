@@ -30,7 +30,7 @@ dependencies {
     testImplementation("io.quarkus:quarkus-test-security")
     testImplementation("io.rest-assured:rest-assured")
     testImplementation("org.mockito:mockito-junit-jupiter")
-    implementation("io.quarkus:quarkus-hibernate-validator")
+implementation("io.quarkus:quarkus-hibernate-validator")
     implementation("io.quarkus:quarkus-cache")
     implementation("io.quarkus:quarkus-smallrye-health")
     if (!project.hasProperty("skipLambda")) {

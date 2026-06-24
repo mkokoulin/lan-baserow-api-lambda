@@ -7,5 +7,4 @@ public record CoworkingNotification(
     UUID externalId,
     String message,
     Instant sentAt
-) {
-}
+) {}

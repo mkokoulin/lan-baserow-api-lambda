@@ -8,5 +8,4 @@ public record EventRegistrationDraft(
     Integer guestCount,
     String comment,
     String source
-) {
-}
+) {}

@@ -8,5 +8,4 @@ public record EventGuest(
     String phone,
     String source,
     Long chatId
-) {
-}
+) {}

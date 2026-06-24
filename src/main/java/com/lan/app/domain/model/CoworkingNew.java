@@ -10,4 +10,4 @@ public record CoworkingNew(
     String bodyRu,
     String imageUrl,
     String link
-){}
+) {}

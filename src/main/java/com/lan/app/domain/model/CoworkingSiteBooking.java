@@ -11,5 +11,4 @@ public record CoworkingSiteBooking(
     String bookingDate,
     String startTime,
     String endTime
-) {
-}
+) {}

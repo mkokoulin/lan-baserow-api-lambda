@@ -9,5 +9,4 @@ public record CoworkingGuest(
     String lastName,
     String telegram,
     String phone
-) {
-}
+) {}

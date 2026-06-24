@@ -11,5 +11,4 @@ public record EventCoworkingTariff(
     boolean filterCoffeeAndTea,
     boolean printoutScan,
     boolean luggageStorage
-) {
-}
+) {}

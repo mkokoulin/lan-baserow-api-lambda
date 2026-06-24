@@ -12,5 +12,4 @@ public record CoworkingTariff(
     boolean printoutScan,
     boolean luggageStorage,
     CoworkingTariffType type
-) {
-}
+) {}
