@@ -31,4 +31,8 @@ public class EventNotificationService {
     public void saveResults(int notificationRowId, List<NotificationResultRequest> results) {
         repo.saveResults(notificationRowId, results);
     }
+
+    public void recordGuestAction(int notificationRowId, int guestRowId, String action) {
+        repo.recordGuestAction(notificationRowId, guestRowId, action);
+    }
 }

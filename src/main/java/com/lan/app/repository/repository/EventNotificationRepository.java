@@ -11,4 +11,5 @@ public interface EventNotificationRepository {
     void markSent(int rowId);
     void markFailed(int rowId);
     void saveResults(int notificationRowId, List<NotificationResultRequest> results);
+    void recordGuestAction(int notificationRowId, int guestRowId, String action);
 }

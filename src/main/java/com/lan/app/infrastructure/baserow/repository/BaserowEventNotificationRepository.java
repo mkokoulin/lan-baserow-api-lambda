@@ -10,10 +10,12 @@ import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationResultC
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowNotificationTemplateClient;
+import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationResultRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationResultRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateEventNotificationStatusRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateNotificationResultActionRequest;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -178,7 +180,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         updateStatus(row.id(), "SENDING");
                         result.add(new EventNotificationDue(
                             row.id(),
-                            template.message(),
+                            applyPlaceholders(template.message(), event.name(), eventStart),
                             event.name(),
                             recipients
                         ));
@@ -221,6 +223,18 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         } catch (Exception e) {
             log.warnf("Failed to update events_notification rowId=%d to status=%s: %s", rowId, status, e.getMessage());
         }
+    }
+
+    // Lets admins write one reusable template per lead time (e.g. "Напоминаем, что сегодня ({event_date})
+    // встречаемся на «{event_name}» в LAN...") instead of hand-typing the name/date into every event's message.
+    private String applyPlaceholders(String message, String eventName, Instant eventStart) {
+        if (message == null) return null;
+        String result = message.replace("{event_name}", eventName != null ? eventName : "");
+        if (eventStart != null) {
+            String eventDate = DateTimeFormatter.ofPattern("dd/MM").withZone(YEREVAN).format(eventStart);
+            result = result.replace("{event_date}", eventDate);
+        }
+        return result;
     }
 
     private boolean isPending(BaserowEventNotificationRow row) {
@@ -308,5 +322,43 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
             }
         }
         updateStatus(notificationRowId, anyFailed ? "FAILED" : "SENT");
+    }
+
+    @Override
+    public void recordGuestAction(int notificationRowId, int guestRowId, String action) {
+        try {
+            var existing = execute(() ->
+                resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, notificationRowId, guestRowId)
+            ).results();
+
+            if (existing.isEmpty()) {
+                // No delivery-result row was created for this guest (e.g. it predates this feature) —
+                // create one so the guest's answer still has somewhere to live.
+                log.warnf("recordGuestAction: no result row for eventNotification=%d guest=%d, creating one",
+                    notificationRowId, guestRowId);
+                execute(() -> {
+                    resultClient.create(notificationResultsTableId, new CreateEventNotificationResultRowRequest(
+                        List.of(notificationRowId),
+                        List.of(guestRowId),
+                        "SENT",
+                        null,
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+                    ));
+                    return null;
+                });
+                existing = execute(() ->
+                    resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, notificationRowId, guestRowId)
+                ).results();
+            }
+
+            for (BaserowEventNotificationResultRow row : existing) {
+                execute(() -> resultClient.updateAction(
+                    notificationResultsTableId, row.id(), new UpdateNotificationResultActionRequest(action)
+                ));
+            }
+        } catch (Exception e) {
+            log.warnf("Failed to record guest action for eventNotification=%d guest=%d: %s",
+                notificationRowId, guestRowId, e.getMessage());
+        }
     }
 }

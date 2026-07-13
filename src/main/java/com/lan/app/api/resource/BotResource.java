@@ -1,5 +1,6 @@
 package com.lan.app.api.resource;
 
+import com.lan.app.api.dto.request.NotificationActionRequest;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.api.dto.response.BotRegistrationDto;
 import com.lan.app.api.dto.response.EventNotificationDueResponse;
@@ -123,6 +124,28 @@ public class BotResource {
     ) {
         if (results == null || results.isEmpty()) return Response.ok().build();
         notificationService.saveResults(id, results);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/event-notifications/{id}/action")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+        operationId = "botRecordEventNotificationAction",
+        summary = "Record a guest's attendance answer for a reminder",
+        description = "Called when the guest taps the 'Всё в силе' / 'Не смогу' button on a reminder. " +
+            "Stores the answer (CONFIRMED/DECLINED) on the guest's notification-result row."
+    )
+    public Response recordEventNotificationAction(
+        @PathParam("id") int id,
+        NotificationActionRequest req
+    ) {
+        if (req == null || req.action() == null || req.action().isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("{\"error\":\"action is required\"}")
+                .build();
+        }
+        notificationService.recordGuestAction(id, req.guestRowId(), req.action());
         return Response.ok().build();
     }
 }
