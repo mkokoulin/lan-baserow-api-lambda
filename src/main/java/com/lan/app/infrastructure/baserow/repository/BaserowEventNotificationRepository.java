@@ -357,7 +357,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                 ));
             }
         } catch (Exception e) {
-            log.warnf("Failed to record guest action for eventNotification=%d guest=%d: %s",
+            log.warnf(e, "Failed to record guest action for eventNotification=%d guest=%d: %s",
                 notificationRowId, guestRowId, e.getMessage());
         }
     }
