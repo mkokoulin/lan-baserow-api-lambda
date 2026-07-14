@@ -13,4 +13,5 @@ public interface EventRegistrationRepository {
     Optional<Integer> getGuestRowIdByExternalId(UUID regExternalId);
     List<EventRegistrationItem> findByGuestRowId(int guestRowId);
     Optional<Long> markPaid(UUID externalId);
+    Optional<EventRegistrationItem> findByExternalId(UUID regExternalId);
 }

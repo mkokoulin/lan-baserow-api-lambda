@@ -184,7 +184,6 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                             event.name(),
                             recipients
                         ));
-                        break;
                     } catch (Exception e) {
                         log.warnf("Failed to process template rowId=%d for events_notification rowId=%d: %s",
                             notifRowId, row.id(), e.getMessage());
@@ -319,6 +318,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                 });
             } catch (Exception e) {
                 log.warnf("Failed to save notification result for guestRowId=%d: %s", r.guestRowId(), e.getMessage());
+                anyFailed = true;
             }
         }
         updateStatus(notificationRowId, anyFailed ? "FAILED" : "SENT");

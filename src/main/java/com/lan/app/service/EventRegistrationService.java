@@ -68,6 +68,10 @@ public class EventRegistrationService {
         return registrationRepo.markPaid(regExternalId);
     }
 
+    public Optional<EventRegistrationItem> findByExternalId(UUID regExternalId) {
+        return registrationRepo.findByExternalId(regExternalId);
+    }
+
     public void storeTelegramChatId(UUID regExternalId, Long chatId) {
         try {
             registrationRepo.getGuestRowIdByExternalId(regExternalId)

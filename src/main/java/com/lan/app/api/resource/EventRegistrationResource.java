@@ -117,6 +117,16 @@ public class EventRegistrationResource {
     @Path("/{regId}/confirm")
     @PermitAll
     @Operation(operationId = "confirmRegistration", summary = "Mark a site registration as bot-confirmed")
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "OK",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = com.lan.app.api.dto.response.RegistrationConfirmResponse.class)
+            )
+        )
+    })
     public Response confirm(
         @PathParam("regId") String regId,
         @QueryParam("chatId") Long chatId
@@ -134,7 +144,13 @@ public class EventRegistrationResource {
                 }
             );
         }
-        return Response.ok().build();
+        String eventName = null;
+        try {
+            eventName = service.findByExternalId(java.util.UUID.fromString(regId))
+                .map(com.lan.app.domain.model.EventRegistrationItem::eventName)
+                .orElse(null);
+        } catch (IllegalArgumentException ignored) {}
+        return Response.ok(new com.lan.app.api.dto.response.RegistrationConfirmResponse(eventName)).build();
     }
 
     @GET

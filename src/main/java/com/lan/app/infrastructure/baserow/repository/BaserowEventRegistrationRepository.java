@@ -134,17 +134,33 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
 
         var result = new ArrayList<EventRegistrationItem>();
         for (var reg : registrations) {
-            if (reg.eventId() == null || reg.eventId().isEmpty()) continue;
-            int eventRowId = reg.eventId().getFirst().id();
-            try {
-                var eventRow = execute(() -> eventClient.getByRowId(eventTableId, eventRowId));
-                result.add(new EventRegistrationItem(eventRow.name(),
-                    com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(eventRow.dateStart())));
-            } catch (Exception e) {
-                log.warnf("Could not fetch event rowId=%d for guestRowId=%d: %s",
-                        eventRowId, guestRowId, e.getMessage());
-            }
+            fetchEventItem(reg, "guestRowId=" + guestRowId).ifPresent(result::add);
         }
         return result;
+    }
+
+    @Override
+    public Optional<EventRegistrationItem> findByExternalId(UUID regExternalId) {
+        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, regExternalId));
+        if (response.results().isEmpty()) {
+            log.warnf("Registration not found in Baserow for externalId=%s", regExternalId);
+            return Optional.empty();
+        }
+        var reg = response.results().getFirst();
+        return fetchEventItem(reg, "externalId=" + regExternalId);
+    }
+
+    private Optional<EventRegistrationItem> fetchEventItem(
+            com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow reg, String context) {
+        if (reg.eventId() == null || reg.eventId().isEmpty()) return Optional.empty();
+        int eventRowId = reg.eventId().getFirst().id();
+        try {
+            var eventRow = execute(() -> eventClient.getByRowId(eventTableId, eventRowId));
+            return Optional.of(new EventRegistrationItem(eventRow.name(),
+                com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(eventRow.dateStart())));
+        } catch (Exception e) {
+            log.warnf("Could not fetch event rowId=%d for %s: %s", eventRowId, context, e.getMessage());
+            return Optional.empty();
+        }
     }
 }
