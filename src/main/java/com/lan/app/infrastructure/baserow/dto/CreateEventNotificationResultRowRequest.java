@@ -11,5 +11,6 @@ public record CreateEventNotificationResultRowRequest(
     @JsonProperty("guest") List<Integer> guest,
     @JsonProperty("status") String status,
     @JsonProperty("failure_reason") String failureReason,
-    @JsonProperty("sent_at") String sentAt
+    @JsonProperty("sent_at") String sentAt,
+    @JsonProperty("event_registrations") List<Integer> eventRegistrations
 ) {}

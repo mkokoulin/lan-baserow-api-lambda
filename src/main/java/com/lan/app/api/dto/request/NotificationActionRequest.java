@@ -6,5 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record NotificationActionRequest(
     @JsonProperty("guestRowId") int guestRowId,
+    @JsonProperty("registrationRowId") int registrationRowId,
     @JsonProperty("action") String action
 ) {}

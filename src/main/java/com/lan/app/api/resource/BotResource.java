@@ -92,7 +92,9 @@ public class BotResource {
         var due = notificationService.findDue().stream()
             .map(d -> new EventNotificationDueResponse(
                 d.rowId(), d.message(), d.eventName(),
-                d.recipients().stream().map(r -> new RecipientDto(r.chatId(), r.guestRowId())).toList()
+                d.recipients().stream()
+                    .map(r -> new RecipientDto(r.chatId(), r.guestRowId(), r.registrationRowId()))
+                    .toList()
             ))
             .toList();
         return Response.ok(due).build();
@@ -145,7 +147,7 @@ public class BotResource {
                 .entity("{\"error\":\"action is required\"}")
                 .build();
         }
-        notificationService.recordGuestAction(id, req.guestRowId(), req.action());
+        notificationService.recordGuestAction(id, req.guestRowId(), req.registrationRowId(), req.action());
         return Response.ok().build();
     }
 }

@@ -285,7 +285,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                 try {
                     var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
                     if (guest.telegramChatId() != null) {
-                        recipients.add(new NotificationRecipient(guest.telegramChatId(), guestRowId));
+                        recipients.add(new NotificationRecipient(guest.telegramChatId(), guestRowId, reg.id()));
                     }
                 } catch (Exception e) {
                     log.warnf("Could not fetch guest rowId=%d: %s", guestRowId, e.getMessage());
@@ -312,7 +312,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         List.of(r.guestRowId()),
                         r.status(),
                         r.failureReason(),
-                        sentAt
+                        sentAt,
+                        List.of(r.registrationRowId())
                     ));
                     return null;
                 });
@@ -325,7 +326,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     }
 
     @Override
-    public void recordGuestAction(int notificationRowId, int guestRowId, String action) {
+    public void recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
         try {
             var existing = execute(() ->
                 resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, notificationRowId, guestRowId)
@@ -342,7 +343,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         List.of(guestRowId),
                         "SENT",
                         null,
-                        DateTimeFormatter.ISO_INSTANT.format(Instant.now())
+                        DateTimeFormatter.ISO_INSTANT.format(Instant.now()),
+                        List.of(registrationRowId)
                     ));
                     return null;
                 });
