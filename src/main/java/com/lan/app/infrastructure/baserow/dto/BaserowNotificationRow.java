@@ -13,7 +13,8 @@ public record BaserowNotificationRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
     @JsonProperty("lead_time") List<BaserowSingleSelect> leadTime,
-    @JsonProperty("message") String message,
+    @JsonProperty("message_en") String messageEn,
+    @JsonProperty("message_ru") String messageRu,
     @JsonProperty("comment") String comment,
     @JsonProperty("active") boolean active
 ) {}

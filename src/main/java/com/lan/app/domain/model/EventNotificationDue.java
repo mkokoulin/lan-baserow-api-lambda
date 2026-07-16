@@ -4,7 +4,8 @@ import java.util.List;
 
 public record EventNotificationDue(
     int rowId,
-    String message,
+    String messageEn,
+    String messageRu,
     String eventName,
     List<NotificationRecipient> recipients
 ) {}

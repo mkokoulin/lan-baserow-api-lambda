@@ -149,11 +149,11 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                             notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
                         );
                         Duration leadTime = parseLeadTime(template.leadTime());
-                        if (leadTime == null || template.message() == null) {
-                            log.infof("Row %d, template %d skipped: leadTime=%s message=%s",
+                        if (leadTime == null || template.messageEn() == null || template.messageRu() == null) {
+                            log.infof("Row %d, template %d skipped: leadTime=%s messageEn=%s messageRu=%s",
                                 row.id(), notifRowId,
                                 template.leadTime() != null ? template.leadTime().stream().map(s -> s.value()).toList() : null,
-                                template.message());
+                                template.messageEn(), template.messageRu());
                             continue;
                         }
 
@@ -180,7 +180,8 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         updateStatus(row.id(), "SENDING");
                         result.add(new EventNotificationDue(
                             row.id(),
-                            applyPlaceholders(template.message(), event.name(), eventStart),
+                            applyPlaceholders(template.messageEn(), event.name(), eventStart),
+                            applyPlaceholders(template.messageRu(), event.name(), eventStart),
                             event.name(),
                             recipients
                         ));

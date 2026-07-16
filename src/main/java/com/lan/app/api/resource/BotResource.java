@@ -91,7 +91,7 @@ public class BotResource {
     public Response dueEventNotifications() {
         var due = notificationService.findDue().stream()
             .map(d -> new EventNotificationDueResponse(
-                d.rowId(), d.message(), d.eventName(),
+                d.rowId(), d.messageEn(), d.messageRu(), d.eventName(),
                 d.recipients().stream()
                     .map(r -> new RecipientDto(r.chatId(), r.guestRowId(), r.registrationRowId()))
                     .toList()
