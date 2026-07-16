@@ -107,6 +107,20 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
     }
 
     @Override
+    public Optional<Integer> getEventRowIdByExternalId(UUID regExternalId) {
+        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, regExternalId));
+        if (response.results().isEmpty()) {
+            log.warnf("Registration not found in Baserow for externalId=%s", regExternalId);
+            return Optional.empty();
+        }
+        var reg = response.results().getFirst();
+        if (reg.eventId() == null || reg.eventId().isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(reg.eventId().getFirst().id());
+    }
+
+    @Override
     public Optional<Long> markPaid(UUID externalId) {
         var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, externalId));
         if (response.results().isEmpty()) {

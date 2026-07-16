@@ -2,6 +2,7 @@ package com.lan.app.service;
 
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
+import com.lan.app.domain.model.EventNotificationPreview;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -18,6 +19,10 @@ public class EventNotificationService {
 
     public List<EventNotificationDue> findDue() {
         return repo.findDue();
+    }
+
+    public List<EventNotificationPreview> findDueForEvent(int eventRowId) {
+        return repo.findDueForEvent(eventRowId);
     }
 
     public void markSent(int rowId) {

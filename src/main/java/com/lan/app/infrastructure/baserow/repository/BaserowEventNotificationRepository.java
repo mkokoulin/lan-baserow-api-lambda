@@ -3,6 +3,7 @@ package com.lan.app.infrastructure.baserow.repository;
 import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
+import com.lan.app.domain.model.EventNotificationPreview;
 import com.lan.app.domain.model.NotificationRecipient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationClient;
@@ -196,6 +197,67 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         }
 
         log.infof("findDue: returning %d due notification(s)", result.size());
+        return result;
+    }
+
+    // Read-only counterpart of findDue() for the website's in-app notification channel.
+    // Unlike findDue(), it never mutates the row's status (that lifecycle belongs to Telegram
+    // delivery) and doesn't gate on "pending" status, since the web channel is independent of it.
+    @Override
+    public List<EventNotificationPreview> findDueForEvent(int eventRowId) {
+        var now = Instant.now();
+        var nowYerevan = ZonedDateTime.now(YEREVAN);
+        if (!isWorkingHour(nowYerevan)) {
+            return List.of();
+        }
+
+        var event = fetchEvent(eventRowId);
+        if (event == null) {
+            return List.of();
+        }
+        Instant eventStart = com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(event.dateStart());
+        if (eventStart == null || now.isAfter(eventStart)) {
+            return List.of();
+        }
+
+        var rows = execute(() -> client.listActive(eventNotificationsTableId)).results();
+        var result = new ArrayList<EventNotificationPreview>();
+
+        for (var row : rows) {
+            if (row.eventId() == null || row.eventId().isEmpty() || row.eventId().getFirst().id() != eventRowId) {
+                continue;
+            }
+            if (row.notifications() == null) continue;
+
+            for (var notifLink : row.notifications()) {
+                int notifRowId = notifLink.id();
+                try {
+                    var template = execute(() ->
+                        notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
+                    );
+                    Duration leadTime = parseLeadTime(template.leadTime());
+                    if (leadTime == null || template.messageEn() == null || template.messageRu() == null) {
+                        continue;
+                    }
+
+                    Instant scheduledTime = eventStart.minus(leadTime);
+                    if (!isDue(scheduledTime, now)) {
+                        continue;
+                    }
+
+                    result.add(new EventNotificationPreview(
+                        notifRowId,
+                        applyPlaceholders(template.messageEn(), event.name(), eventStart),
+                        applyPlaceholders(template.messageRu(), event.name(), eventStart),
+                        event.name()
+                    ));
+                } catch (Exception e) {
+                    log.warnf("findDueForEvent: failed to process template rowId=%d for eventRowId=%d: %s",
+                        notifRowId, eventRowId, e.getMessage());
+                }
+            }
+        }
+
         return result;
     }
 

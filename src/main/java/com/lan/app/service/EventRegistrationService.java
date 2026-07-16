@@ -72,6 +72,10 @@ public class EventRegistrationService {
         return registrationRepo.findByExternalId(regExternalId);
     }
 
+    public Optional<Integer> getEventRowIdByExternalId(UUID regExternalId) {
+        return registrationRepo.getEventRowIdByExternalId(regExternalId);
+    }
+
     public void storeTelegramChatId(UUID regExternalId, Long chatId) {
         try {
             registrationRepo.getGuestRowIdByExternalId(regExternalId)

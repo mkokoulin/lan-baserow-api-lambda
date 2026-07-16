@@ -2,7 +2,9 @@ package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.request.EventRegistrationCreateRequest;
 import com.lan.app.api.dto.response.EventRegistrationResponse;
+import com.lan.app.api.dto.response.WebNotificationDueResponse;
 import com.lan.app.api.mapper.EventRegistrationMapper;
+import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -39,14 +41,18 @@ public class EventRegistrationResource {
     private static final Logger log = Logger.getLogger(EventRegistrationResource.class);
 
     private final EventRegistrationService service;
+    private final EventNotificationService notificationService;
     private final EventRegistrationMapper mapper;
     private final RegistrationConfirmStore confirmStore;
     private final RegistrationPaidStore paidStore;
 
-    public EventRegistrationResource(EventRegistrationService service, EventRegistrationMapper mapper,
+    public EventRegistrationResource(EventRegistrationService service,
+                                     EventNotificationService notificationService,
+                                     EventRegistrationMapper mapper,
                                      RegistrationConfirmStore confirmStore,
                                      RegistrationPaidStore paidStore) {
         this.service = service;
+        this.notificationService = notificationService;
         this.mapper = mapper;
         this.confirmStore = confirmStore;
         this.paidStore = paidStore;
@@ -183,5 +189,32 @@ public class EventRegistrationResource {
     @Operation(operationId = "isRegistrationPaid", summary = "Check if a registration has been paid")
     public Response isPaid(@PathParam("regId") String regId) {
         return Response.ok(java.util.Map.of("paid", paidStore.isPaid(regId))).build();
+    }
+
+    @GET
+    @Path("/{regId}/notifications/due")
+    @PermitAll
+    @Operation(
+        operationId = "webDueNotifications",
+        summary = "Return in-app notifications due for a site registration",
+        description = "Read-only counterpart of the bot's due-notifications feed, for the website's " +
+            "in-app browser notifications. Does not affect the Telegram delivery status of the underlying " +
+            "notification row."
+    )
+    public Response dueNotifications(@PathParam("regId") String regId) {
+        java.util.UUID uuid;
+        try {
+            uuid = java.util.UUID.fromString(regId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(400).build();
+        }
+        var eventRowId = service.getEventRowIdByExternalId(uuid);
+        if (eventRowId.isEmpty()) {
+            return Response.ok(java.util.List.of()).build();
+        }
+        var due = notificationService.findDueForEvent(eventRowId.get()).stream()
+            .map(d -> new WebNotificationDueResponse(d.id(), d.messageEn(), d.messageRu(), d.eventName()))
+            .toList();
+        return Response.ok(due).build();
     }
 }

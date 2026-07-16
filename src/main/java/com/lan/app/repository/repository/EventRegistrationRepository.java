@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface EventRegistrationRepository {
     EventRegistration create(Id eventId, Id guestId, int guestCount, String comment, String source);
     Optional<Integer> getGuestRowIdByExternalId(UUID regExternalId);
+    Optional<Integer> getEventRowIdByExternalId(UUID regExternalId);
     List<EventRegistrationItem> findByGuestRowId(int guestRowId);
     Optional<Long> markPaid(UUID externalId);
     Optional<EventRegistrationItem> findByExternalId(UUID regExternalId);
