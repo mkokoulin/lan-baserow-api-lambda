@@ -31,7 +31,8 @@ public class BaserowEventsFestivalMapper {
             BaserowEventMapper.parseBaserowDate(festivale.dateStart()),
             BaserowEventMapper.parseBaserowDate(festivale.dateEnd()),
             festivale.isVisible(),
-            festivale.isPin(),
+            festivale.position(),
+            festivale.showOnHome(),
             imageUrl
         );
     }

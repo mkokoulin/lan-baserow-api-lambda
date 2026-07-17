@@ -45,7 +45,8 @@ public class BaserowEventMapper {
             event.showForm(),
             notifications,
             event.comment(),
-            event.isPin(),
+            event.position(),
+            event.showOnHome(),
             event.requiresPrepayment() != null && event.requiresPrepayment(),
             event.price(),
             imageUrl

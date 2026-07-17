@@ -22,7 +22,8 @@ public class EventResponseMapper {
             event.showForm(),
             event.notifications(),
             event.comment(),
-            event.isPin(),
+            event.position(),
+            event.showOnHome(),
             event.requiresPrepayment(),
             event.price(),
             event.imageUrl()

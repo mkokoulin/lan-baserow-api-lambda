@@ -19,6 +19,7 @@ public record BaserowEventsFestivalRow(
     @JsonProperty("date_start") String dateStart,
     @JsonProperty("date_end") String dateEnd,
     @JsonProperty("is_visible") boolean isVisible,
-    @JsonProperty("is_pin") boolean isPin,
+    @JsonProperty("position") Integer position,
+    @JsonProperty("show_on_home") boolean showOnHome,
     @JsonProperty("image") List<BaserowFile> image
 ) {}

@@ -113,11 +113,19 @@ public record EventResponse(
     String comment,
 
     @Schema(
-        description = "",
+        description = "Manual display order for the homepage events list (ascending, lower first). " +
+            "When null, the event is not manually curated and falls back to date-based sorting.",
+        examples = "1",
+        nullable = true
+    )
+    Integer position,
+
+    @Schema(
+        description = "Whether this event should be included in the curated homepage events list",
         examples = "true",
         required = true
     )
-    boolean isPin,
+    boolean showOnHome,
 
     @Schema(
         description = "Whether this event requires prepayment before registration is confirmed",

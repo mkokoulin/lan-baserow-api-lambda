@@ -24,7 +24,8 @@ public record BaserowEventRow(
     @JsonProperty("show_form") boolean showForm,
     @JsonProperty("notifications") List<BaserowLinkToTable> notifications,
     @JsonProperty("comment") String comment,
-    @JsonProperty("is_pin") boolean isPin,
+    @JsonProperty("position") Integer position,
+    @JsonProperty("show_on_home") boolean showOnHome,
     @JsonProperty("requires_prepayment") Boolean requiresPrepayment,
     @JsonProperty("price") java.math.BigDecimal price,
     @JsonProperty("image") List<BaserowFile> image

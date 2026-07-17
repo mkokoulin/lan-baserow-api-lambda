@@ -18,7 +18,8 @@ public record Event(
     boolean showForm,
     List<String> notifications,
     String comment,
-    Boolean isPin,
+    Integer position,
+    boolean showOnHome,
     boolean requiresPrepayment,
     BigDecimal price,
     String imageUrl

@@ -63,11 +63,19 @@ public record FestivalResponse(
     Boolean isVisible,
 
     @Schema(
-        description = "Whether the festival is pinned (highlighted) in listings",
-        examples = "false",
+        description = "Manual display order for the homepage events list (ascending, lower first). " +
+            "When null, the festival is not manually curated and falls back to date-based sorting.",
+        examples = "1",
+        nullable = true
+    )
+    Integer position,
+
+    @Schema(
+        description = "Whether this festival should be included in the curated homepage events list",
+        examples = "true",
         required = true
     )
-    Boolean isPin,
+    boolean showOnHome,
 
     @Schema(
         description = "URL of the festival cover image uploaded in Baserow",

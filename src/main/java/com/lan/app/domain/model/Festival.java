@@ -12,6 +12,7 @@ public record Festival(
     Instant dateStart,
     Instant dateEnd,
     Boolean isVisible,
-    Boolean isPin,
+    Integer position,
+    boolean showOnHome,
     String imageUrl
 ) {}
