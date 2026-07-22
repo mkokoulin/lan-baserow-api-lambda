@@ -128,6 +128,13 @@ public record EventResponse(
     boolean showOnHome,
 
     @Schema(
+        description = "Whether the event is publicly visible on the home page and events list",
+        examples = "true",
+        required = true
+    )
+    boolean isVisible,
+
+    @Schema(
         description = "Whether this event requires prepayment before registration is confirmed",
         examples = "false",
         nullable = true
@@ -145,6 +152,22 @@ public record EventResponse(
         description = "URL of the event cover image uploaded in Baserow",
         nullable = true
     )
-    String image
+    String image,
+
+    @Schema(
+        description = "Maximum number of guests this event can accommodate. When null, the event is " +
+            "uncapped and never considered sold out.",
+        examples = "50",
+        nullable = true
+    )
+    Integer maxCapacity,
+
+    @Schema(
+        description = "Whether the event is sold out, i.e. maxCapacity minus the sum of guestCount " +
+            "across all registrations is zero or less. Always false when maxCapacity is null.",
+        examples = "false",
+        required = true
+    )
+    boolean soldOut
 ) {
 }

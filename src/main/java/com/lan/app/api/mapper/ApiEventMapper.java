@@ -24,9 +24,12 @@ public class ApiEventMapper {
             event.comment(),
             event.position(),
             event.showOnHome(),
+            event.isVisible(),
             event.requiresPrepayment(),
             event.price(),
-            event.imageUrl()
+            event.imageUrl(),
+            event.maxCapacity(),
+            event.soldOut()
         );
     }
 }

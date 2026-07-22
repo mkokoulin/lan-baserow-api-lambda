@@ -15,4 +15,5 @@ public interface EventRegistrationRepository {
     List<EventRegistrationItem> findByGuestRowId(int guestRowId);
     Optional<Long> markPaid(UUID externalId);
     Optional<EventRegistrationItem> findByExternalId(UUID regExternalId);
+    int countGuests(int eventRowId);
 }

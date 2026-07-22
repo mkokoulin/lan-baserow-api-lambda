@@ -154,6 +154,14 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
     }
 
     @Override
+    public int countGuests(int eventRowId) {
+        // NOTE: page size is hardcoded to 200 (same limitation as BaserowEventNotificationRepository's
+        // fetchRecipientsForEvent) — fine at this system's scale, would need pagination beyond that.
+        var registrations = execute(() -> client.findByEventRowIdRaw(registrationsTableId, eventRowId).results());
+        return registrations.stream().mapToInt(com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow::guestCount).sum();
+    }
+
+    @Override
     public Optional<EventRegistrationItem> findByExternalId(UUID regExternalId) {
         var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, regExternalId));
         if (response.results().isEmpty()) {

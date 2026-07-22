@@ -26,7 +26,9 @@ public record BaserowEventRow(
     @JsonProperty("comment") String comment,
     @JsonProperty("position") Integer position,
     @JsonProperty("show_on_home") boolean showOnHome,
+    @JsonProperty("is_visible") Boolean isVisible,
     @JsonProperty("requires_prepayment") Boolean requiresPrepayment,
     @JsonProperty("price") java.math.BigDecimal price,
-    @JsonProperty("image") List<BaserowFile> image
+    @JsonProperty("image") List<BaserowFile> image,
+    @JsonProperty("max_capacity") Integer maxCapacity
 ) {}

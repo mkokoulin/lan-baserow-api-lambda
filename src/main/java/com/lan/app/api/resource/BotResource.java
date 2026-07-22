@@ -3,8 +3,10 @@ package com.lan.app.api.resource;
 import com.lan.app.api.dto.request.NotificationActionRequest;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.api.dto.response.BotRegistrationDto;
+import com.lan.app.api.dto.response.EventCapacityAlertDueResponse;
 import com.lan.app.api.dto.response.EventNotificationDueResponse;
 import com.lan.app.api.dto.response.RecipientDto;
+import com.lan.app.service.EventCapacityAlertService;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
 import jakarta.annotation.security.PermitAll;
@@ -29,10 +31,16 @@ public class BotResource {
 
     private final EventRegistrationService service;
     private final EventNotificationService notificationService;
+    private final EventCapacityAlertService capacityAlertService;
 
-    public BotResource(EventRegistrationService service, EventNotificationService notificationService) {
+    public BotResource(
+        EventRegistrationService service,
+        EventNotificationService notificationService,
+        EventCapacityAlertService capacityAlertService
+    ) {
         this.service = service;
         this.notificationService = notificationService;
+        this.capacityAlertService = capacityAlertService;
     }
 
     @GET
@@ -149,5 +157,32 @@ public class BotResource {
         }
         notificationService.recordGuestAction(id, req.guestRowId(), req.registrationRowId(), req.action());
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("/event-capacity-alerts/due")
+    @Operation(
+        operationId = "botDueEventCapacityAlerts",
+        summary = "Return events that just freed up capacity after being sold out",
+        description = "Returns events that transitioned from sold-out to having available capacity since " +
+            "the last poll, so the admin can be alerted to work their waitlist. Each returned event is " +
+            "immediately marked as alerted to prevent duplicate notifications; there is no separate " +
+            "mark-sent call."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "List of events with freed-up capacity (may be empty)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = EventCapacityAlertDueResponse.class)
+            )
+        )
+    })
+    public Response dueEventCapacityAlerts() {
+        var due = capacityAlertService.findDue().stream()
+            .map(a -> new EventCapacityAlertDueResponse(a.eventName(), a.registeredCount(), a.maxCapacity()))
+            .toList();
+        return Response.ok(due).build();
     }
 }

@@ -1,5 +1,6 @@
 package com.lan.app.service;
 
+import com.lan.app.domain.exception.BusinessConflictException;
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.repository.EventGuestRepository;
@@ -10,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -34,6 +36,12 @@ public class EventRegistrationService {
 
     public EventRegistration create(CreateEventRegistrationCommand cmd) {
         var event = eventRepo.get(cmd.eventId());
+        if (event.soldOut()) {
+            throw new BusinessConflictException(
+                "Event is sold out.",
+                Map.of("eventId", event.id().externalId().toString())
+            );
+        }
         var guest = guestRepo.get(cmd.guestId());
 
         return registrationRepo.create(

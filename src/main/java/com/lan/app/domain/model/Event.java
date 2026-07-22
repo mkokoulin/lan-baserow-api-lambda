@@ -20,7 +20,10 @@ public record Event(
     String comment,
     Integer position,
     boolean showOnHome,
+    boolean isVisible,
     boolean requiresPrepayment,
     BigDecimal price,
-    String imageUrl
+    String imageUrl,
+    Integer maxCapacity,
+    boolean soldOut
 ) {}
