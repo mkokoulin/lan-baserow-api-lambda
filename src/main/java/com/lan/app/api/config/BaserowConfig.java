@@ -15,6 +15,10 @@ public interface BaserowConfig {
 
     Coworking coworking();
 
+    Support support();
+
+    Careers careers();
+
     interface Guests {
         int guestsTableId();
     }
@@ -38,5 +42,13 @@ public interface BaserowConfig {
         int newsTableId();
         int reviewsTableId();
         int siteBookingsTableId();
+    }
+
+    interface Support {
+        int complaintsTableId();
+    }
+
+    interface Careers {
+        int vacanciesTableId();
     }
 }

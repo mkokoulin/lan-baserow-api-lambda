@@ -10,19 +10,21 @@ import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationResultClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
-import com.lan.app.infrastructure.baserow.client.BaserowNotificationTemplateClient;
-import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationResultRow;
-import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationRow;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventRow;
+import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationResultRow;
+import com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationResultRowRequest;
+import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateEventNotificationStatusRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateNotificationResultActionRequest;
+import com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -41,8 +43,16 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     private static final ZoneId YEREVAN = ZoneId.of("Asia/Yerevan");
     private static final long MAX_OVERDUE_HOURS = 24;
 
+    // Fixed reminder policy — no longer admin-configurable. Wave A covers everyone registered
+    // in time for the day-before reminder; guests who register after that cutoff (but before the
+    // day-of cutoff) get wave B instead; anyone registering later than wave B gets nothing
+    // automated and is followed up manually.
+    private static final double WAVE_A_SEND_TIME_SECONDS = 14 * 3600.0;              // day before, 14:00 Yerevan
+    private static final double WAVE_B_SEND_TIME_SECONDS = 10 * 3600.0 + 15 * 60.0;  // day of, 10:15 Yerevan
+    private static final String MESSAGE_RU = "Привет! ⚡️ Напоминаем, что сегодня ({event_date}) встречаемся на «{event_name}» в LAN. Подтвердите, пожалуйста, ваше участие, чтобы мы правильно рассчитали количество мест:";
+    private static final String MESSAGE_EN = "Hi! ⚡️ Just a reminder that today ({event_date}) we're meeting for \"{event_name}\" at LAN. Please confirm your participation so we can accurately calculate the number of seats:";
+
     private final int eventNotificationsTableId;
-    private final int notificationsTableId;
     private final int eventsTableId;
     private final int registrationsTableId;
     private final int guestsTableId;
@@ -52,15 +62,17 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     private final int notificationResultsTableId;
 
     private final BaserowEventNotificationClient client;
-    private final BaserowNotificationTemplateClient notificationTemplateClient;
     private final BaserowEventClient eventClient;
     private final BaserowEventRegistrationClient registrationClient;
     private final BaserowGuestClient guestClient;
     private final BaserowEventNotificationResultClient resultClient;
 
+    // Overridable in tests (package-private setter below) to pin "now" to a fixed instant —
+    // production always uses the real clock in the Yerevan zone.
+    private Clock clock = Clock.system(YEREVAN);
+
     public BaserowEventNotificationRepository(
         @ConfigProperty(name = "baserow.events.event-notifications-table-id") int eventNotificationsTableId,
-        @ConfigProperty(name = "baserow.events.notifications-table-id") int notificationsTableId,
         @ConfigProperty(name = "baserow.events.events-table-id") int eventsTableId,
         @ConfigProperty(name = "baserow.events.registrations-table-id") int registrationsTableId,
         @ConfigProperty(name = "baserow.guests.guests-table-id") int guestsTableId,
@@ -68,14 +80,12 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         @ConfigProperty(name = "app.notifications.working-hour-start", defaultValue = "9") int workingHourStart,
         @ConfigProperty(name = "app.notifications.working-hour-end", defaultValue = "21") int workingHourEnd,
         @RestClient BaserowEventNotificationClient client,
-        @RestClient BaserowNotificationTemplateClient notificationTemplateClient,
         @RestClient BaserowEventClient eventClient,
         @RestClient BaserowEventRegistrationClient registrationClient,
         @RestClient BaserowGuestClient guestClient,
         @RestClient BaserowEventNotificationResultClient resultClient
     ) {
         this.eventNotificationsTableId = eventNotificationsTableId;
-        this.notificationsTableId = notificationsTableId;
         this.eventsTableId = eventsTableId;
         this.registrationsTableId = registrationsTableId;
         this.guestsTableId = guestsTableId;
@@ -83,114 +93,57 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         this.workingHourStart = workingHourStart;
         this.workingHourEnd = workingHourEnd;
         this.client = client;
-        this.notificationTemplateClient = notificationTemplateClient;
         this.eventClient = eventClient;
         this.registrationClient = registrationClient;
         this.guestClient = guestClient;
         this.resultClient = resultClient;
     }
 
+    void setClock(Clock clock) {
+        this.clock = clock;
+    }
+
     @Override
     public List<EventNotificationDue> findDue() {
-        var rows = execute(() -> client.listActive(eventNotificationsTableId)).results();
-        var now = Instant.now();
-        var nowYerevan = ZonedDateTime.now(YEREVAN);
-
-        log.infof("findDue: fetched %d active rows, now=%s (Yerevan hour=%d), working hours=%d-%d",
-            rows.size(), now, nowYerevan.getHour(), workingHourStart, workingHourEnd);
+        var now = Instant.now(clock);
+        var nowYerevan = ZonedDateTime.now(clock);
 
         if (!isWorkingHour(nowYerevan)) {
             log.infof("Outside working hours (%d), skipping event notifications", nowYerevan.getHour());
             return List.of();
         }
 
+        var events = execute(() -> eventClient.list(eventsTableId)).results();
+        log.infof("findDue: scanning %d event(s), now=%s (Yerevan hour=%d)", events.size(), now, nowYerevan.getHour());
+
         var result = new ArrayList<EventNotificationDue>();
 
-        for (var row : rows) {
-            String rowStatus = row.status() != null ? row.status().value() : "null";
-            if (!isPending(row)) {
-                log.infof("Row %d skipped: status=%s (not pending)", row.id(), rowStatus);
-                continue;
-            }
-            if (row.eventId() == null || row.eventId().isEmpty()) {
-                log.infof("Row %d skipped: no event_id linked", row.id());
-                continue;
-            }
-            if (row.notifications() == null || row.notifications().isEmpty()) {
-                log.infof("Row %d skipped: no notification templates linked", row.id());
-                continue;
-            }
+        for (var event : events) {
+            Instant eventStart = BaserowEventMapper.parseBaserowDate(event.dateStart());
+            if (eventStart == null || now.isAfter(eventStart)) continue;
 
-            int eventRowId = row.eventId().getFirst().id();
-            log.infof("Row %d: processing, eventRowId=%d, templates=%d",
-                row.id(), eventRowId, row.notifications().size());
+            Instant waveA = computeScheduledTime(eventStart, 1, WAVE_A_SEND_TIME_SECONDS);
+            Instant waveB = computeScheduledTime(eventStart, 0, WAVE_B_SEND_TIME_SECONDS);
+            if (!isDue(waveA, now) && !isDue(waveB, now)) continue;
 
+            int eventRowId = event.id();
             try {
-                var event = fetchEvent(eventRowId);
-                if (event == null) {
-                    log.infof("Row %d skipped: could not fetch event rowId=%d", row.id(), eventRowId);
-                    continue;
-                }
+                var recipients = collectEligibleRecipients(eventRowId, waveA, waveB, now);
+                if (recipients.isEmpty()) continue;
 
-                log.infof("Row %d: event rawDateStart='%s'", row.id(), event.dateStart());
-                Instant eventStart = com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(event.dateStart());
-                if (eventStart == null) {
-                    log.infof("Row %d skipped: event rowId=%d has null dateStart", row.id(), eventRowId);
-                    continue;
-                }
-                if (now.isAfter(eventStart)) {
-                    log.infof("Row %d skipped: event rowId=%d already started (eventStart=%s, now=%s)",
-                        row.id(), eventRowId, eventStart, now);
-                    continue;
-                }
+                int anchorRowId = findOrCreateAnchorRow(eventRowId);
+                log.infof("Event %d: sending notification to %d chat(s) via events_notification row %d",
+                    eventRowId, recipients.size(), anchorRowId);
 
-                for (var notifLink : row.notifications()) {
-                    int notifRowId = notifLink.id();
-                    try {
-                        var template = execute(() ->
-                            notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
-                        );
-                        Instant scheduledTime = computeScheduledTime(eventStart, template.offsetDays(), template.sendTimeSeconds());
-                        if (scheduledTime == null || template.messageEn() == null || template.messageRu() == null) {
-                            log.infof("Row %d, template %d skipped: offsetDays=%s sendTimeSeconds=%s messageEn=%s messageRu=%s",
-                                row.id(), notifRowId, template.offsetDays(), template.sendTimeSeconds(),
-                                template.messageEn(), template.messageRu());
-                            continue;
-                        }
-
-                        log.infof("Row %d, template %d: eventStart=%s offsetDays=%d sendTimeSeconds=%s scheduledTime=%s now=%s",
-                            row.id(), notifRowId, eventStart, template.offsetDays(), template.sendTimeSeconds(),
-                            scheduledTime, now);
-
-                        if (!isDue(scheduledTime, now)) {
-                            log.infof("Row %d, template %d skipped: not due yet (scheduledTime=%s, window ends=%s)",
-                                row.id(), notifRowId, scheduledTime,
-                                scheduledTime.plus(MAX_OVERDUE_HOURS, ChronoUnit.HOURS));
-                            continue;
-                        }
-
-                        List<NotificationRecipient> recipients = fetchRecipientsForEvent(eventRowId);
-                        if (recipients.isEmpty()) {
-                            log.infof("Row %d skipped: no Telegram chat IDs for event rowId=%d", row.id(), eventRowId);
-                            continue;
-                        }
-
-                        log.infof("Row %d: sending notification to %d chat(s)", row.id(), recipients.size());
-                        updateStatus(row.id(), "SENDING");
-                        result.add(new EventNotificationDue(
-                            row.id(),
-                            applyPlaceholders(template.messageEn(), event.name(), eventStart),
-                            applyPlaceholders(template.messageRu(), event.name(), eventStart),
-                            event.name(),
-                            recipients
-                        ));
-                    } catch (Exception e) {
-                        log.warnf("Failed to process template rowId=%d for events_notification rowId=%d: %s",
-                            notifRowId, row.id(), e.getMessage());
-                    }
-                }
+                result.add(new EventNotificationDue(
+                    anchorRowId,
+                    applyPlaceholders(MESSAGE_EN, event.name(), eventStart),
+                    applyPlaceholders(MESSAGE_RU, event.name(), eventStart),
+                    event.name(),
+                    recipients
+                ));
             } catch (Exception e) {
-                log.warnf("Failed to process events_notification rowId=%d: %s", row.id(), e.getMessage());
+                log.warnf("Failed to process event rowId=%d: %s", eventRowId, e.getMessage());
             }
         }
 
@@ -198,13 +151,93 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         return result;
     }
 
-    // Read-only counterpart of findDue() for the website's in-app notification channel.
-    // Unlike findDue(), it never mutates the row's status (that lifecycle belongs to Telegram
-    // delivery) and doesn't gate on "pending" status, since the web channel is independent of it.
+    // For each registration on the event, figures out which wave (if any) it's assigned to —
+    // the earliest wave that's strictly after the guest registered — and, if that wave is due
+    // now and the guest hasn't already been notified for this event, resolves their chat id.
+    private List<NotificationRecipient> collectEligibleRecipients(int eventRowId, Instant waveA, Instant waveB, Instant now) {
+        var recipients = new ArrayList<NotificationRecipient>();
+        // A guest can have more than one registration row for the same event (nothing prevents
+        // re-registering) — without this, two eligible registrations for the same guest would
+        // both pass the alreadyNotified() check (it only reflects past ticks' Baserow writes,
+        // not sends queued earlier in this very pass) and the guest would get double-messaged.
+        var seenGuestRowIds = new java.util.HashSet<Integer>();
+        Integer anchorRowId = null;
+
+        List<BaserowRegistrationRow> registrations;
+        try {
+            registrations = execute(() -> registrationClient.findByEventRowIdRaw(registrationsTableId, eventRowId).results());
+        } catch (Exception e) {
+            log.warnf("Could not fetch registrations for event rowId=%d: %s", eventRowId, e.getMessage());
+            return recipients;
+        }
+
+        for (var reg : registrations) {
+            if (reg.guestId() == null || reg.guestId().isEmpty()) continue;
+
+            Instant registeredAt = BaserowEventMapper.parseBaserowDate(reg.createdAt());
+            if (registeredAt == null) registeredAt = Instant.EPOCH;
+
+            Instant assigned = assignedWave(registeredAt, waveA, waveB);
+            if (assigned == null || !isDue(assigned, now)) continue;
+
+            int guestRowId = reg.guestId().getFirst().id();
+            if (!seenGuestRowIds.add(guestRowId)) continue;
+
+            try {
+                if (anchorRowId == null) anchorRowId = findOrCreateAnchorRow(eventRowId);
+                if (alreadyNotified(anchorRowId, guestRowId)) continue;
+
+                var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
+                if (guest.telegramChatId() != null) {
+                    recipients.add(new NotificationRecipient(guest.telegramChatId(), guestRowId, reg.id()));
+                }
+            } catch (Exception e) {
+                log.warnf("Could not resolve guest rowId=%d for event rowId=%d: %s", guestRowId, eventRowId, e.getMessage());
+            }
+        }
+        return recipients;
+    }
+
+    // Earliest of {waveA, waveB} that lies strictly after the registration timestamp; null if
+    // the guest registered after both (no automated reminder — manual follow-up territory).
+    private Instant assignedWave(Instant registeredAt, Instant waveA, Instant waveB) {
+        Instant assigned = null;
+        if (waveA != null && waveA.isAfter(registeredAt)) assigned = waveA;
+        if (waveB != null && waveB.isAfter(registeredAt) && (assigned == null || waveB.isBefore(assigned))) assigned = waveB;
+        return assigned;
+    }
+
+    private boolean alreadyNotified(int anchorRowId, int guestRowId) {
+        try {
+            return !execute(() ->
+                resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, anchorRowId, guestRowId)
+            ).results().isEmpty();
+        } catch (Exception e) {
+            log.warnf("Could not check existing notification results for anchor=%d guest=%d: %s",
+                anchorRowId, guestRowId, e.getMessage());
+            return false;
+        }
+    }
+
+    private int findOrCreateAnchorRow(int eventRowId) {
+        var existing = execute(() -> client.findByEventIdRaw(eventNotificationsTableId, eventRowId)).results();
+        if (!existing.isEmpty()) return existing.getFirst().id();
+
+        var created = execute(() -> client.create(
+            eventNotificationsTableId,
+            new CreateEventNotificationRowRequest(List.of(eventRowId), true)
+        ));
+        log.infof("Auto-created events_notification anchor row %d for event rowId=%d", created.id(), eventRowId);
+        return created.id();
+    }
+
+    // Read-only counterpart of findDue() for the website's in-app notification channel. Not
+    // guest-specific (the caller doesn't identify which registration is asking) — just reports
+    // whether either wave is currently due for the event.
     @Override
     public List<EventNotificationPreview> findDueForEvent(int eventRowId) {
-        var now = Instant.now();
-        var nowYerevan = ZonedDateTime.now(YEREVAN);
+        var now = Instant.now(clock);
+        var nowYerevan = ZonedDateTime.now(clock);
         if (!isWorkingHour(nowYerevan)) {
             return List.of();
         }
@@ -213,49 +246,23 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         if (event == null) {
             return List.of();
         }
-        Instant eventStart = com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(event.dateStart());
+        Instant eventStart = BaserowEventMapper.parseBaserowDate(event.dateStart());
         if (eventStart == null || now.isAfter(eventStart)) {
             return List.of();
         }
 
-        var rows = execute(() -> client.listActive(eventNotificationsTableId)).results();
-        var result = new ArrayList<EventNotificationPreview>();
-
-        for (var row : rows) {
-            if (row.eventId() == null || row.eventId().isEmpty() || row.eventId().getFirst().id() != eventRowId) {
-                continue;
-            }
-            if (row.notifications() == null) continue;
-
-            for (var notifLink : row.notifications()) {
-                int notifRowId = notifLink.id();
-                try {
-                    var template = execute(() ->
-                        notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
-                    );
-                    Instant scheduledTime = computeScheduledTime(eventStart, template.offsetDays(), template.sendTimeSeconds());
-                    if (scheduledTime == null || template.messageEn() == null || template.messageRu() == null) {
-                        continue;
-                    }
-
-                    if (!isDue(scheduledTime, now)) {
-                        continue;
-                    }
-
-                    result.add(new EventNotificationPreview(
-                        notifRowId,
-                        applyPlaceholders(template.messageEn(), event.name(), eventStart),
-                        applyPlaceholders(template.messageRu(), event.name(), eventStart),
-                        event.name()
-                    ));
-                } catch (Exception e) {
-                    log.warnf("findDueForEvent: failed to process template rowId=%d for eventRowId=%d: %s",
-                        notifRowId, eventRowId, e.getMessage());
-                }
-            }
+        Instant waveA = computeScheduledTime(eventStart, 1, WAVE_A_SEND_TIME_SECONDS);
+        Instant waveB = computeScheduledTime(eventStart, 0, WAVE_B_SEND_TIME_SECONDS);
+        if (!isDue(waveA, now) && !isDue(waveB, now)) {
+            return List.of();
         }
 
-        return result;
+        return List.of(new EventNotificationPreview(
+            eventRowId,
+            applyPlaceholders(MESSAGE_EN, event.name(), eventStart),
+            applyPlaceholders(MESSAGE_RU, event.name(), eventStart),
+            event.name()
+        ));
     }
 
     @Override
@@ -284,8 +291,6 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         }
     }
 
-    // Lets admins write one reusable template per lead time (e.g. "Напоминаем, что сегодня ({event_date})
-    // встречаемся на «{event_name}» в LAN...") instead of hand-typing the name/date into every event's message.
     private String applyPlaceholders(String message, String eventName, Instant eventStart) {
         if (message == null) return null;
         String result = message.replace("{event_name}", eventName != null ? eventName : "");
@@ -294,10 +299,6 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
             result = result.replace("{event_date}", eventDate);
         }
         return result;
-    }
-
-    private boolean isPending(BaserowEventNotificationRow row) {
-        return row.status() != null && "pending".equalsIgnoreCase(row.status().value());
     }
 
     // offsetDays counts calendar days before the event's Yerevan-local date (0 = day of the event);
@@ -316,6 +317,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     }
 
     private boolean isDue(Instant scheduledTime, Instant now) {
+        if (scheduledTime == null) return false;
         if (now.isBefore(scheduledTime)) return false;
         return now.isBefore(scheduledTime.plus(MAX_OVERDUE_HOURS, ChronoUnit.HOURS));
     }
@@ -327,30 +329,6 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
             log.warnf("Could not fetch event rowId=%d: %s", eventRowId, e.getMessage());
             return null;
         }
-    }
-
-    private List<NotificationRecipient> fetchRecipientsForEvent(int eventRowId) {
-        var recipients = new ArrayList<NotificationRecipient>();
-        try {
-            var registrations = execute(() ->
-                registrationClient.findByEventRowIdRaw(registrationsTableId, eventRowId).results()
-            );
-            for (var reg : registrations) {
-                if (reg.guestId() == null || reg.guestId().isEmpty()) continue;
-                int guestRowId = reg.guestId().getFirst().id();
-                try {
-                    var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
-                    if (guest.telegramChatId() != null) {
-                        recipients.add(new NotificationRecipient(guest.telegramChatId(), guestRowId, reg.id()));
-                    }
-                } catch (Exception e) {
-                    log.warnf("Could not fetch guest rowId=%d: %s", guestRowId, e.getMessage());
-                }
-            }
-        } catch (Exception e) {
-            log.warnf("Could not fetch registrations for event rowId=%d: %s", eventRowId, e.getMessage());
-        }
-        return recipients;
     }
 
     @Override
