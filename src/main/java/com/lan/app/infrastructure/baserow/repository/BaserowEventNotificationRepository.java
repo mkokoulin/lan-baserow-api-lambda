@@ -23,8 +23,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
-import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -149,19 +150,16 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                         var template = execute(() ->
                             notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
                         );
-                        Duration leadTime = parseLeadTime(template.leadTime());
-                        if (leadTime == null || template.messageEn() == null || template.messageRu() == null) {
-                            log.infof("Row %d, template %d skipped: leadTime=%s messageEn=%s messageRu=%s",
-                                row.id(), notifRowId,
-                                template.leadTime() != null ? template.leadTime().stream().map(s -> s.value()).toList() : null,
+                        Instant scheduledTime = computeScheduledTime(eventStart, template.offsetDays(), template.sendTimeSeconds());
+                        if (scheduledTime == null || template.messageEn() == null || template.messageRu() == null) {
+                            log.infof("Row %d, template %d skipped: offsetDays=%s sendTimeSeconds=%s messageEn=%s messageRu=%s",
+                                row.id(), notifRowId, template.offsetDays(), template.sendTimeSeconds(),
                                 template.messageEn(), template.messageRu());
                             continue;
                         }
 
-                        Instant scheduledTime = eventStart.minus(leadTime);
-                        log.infof("Row %d, template %d: eventStart=%s leadTime=%s scheduledTime=%s now=%s",
-                            row.id(), notifRowId, eventStart,
-                            template.leadTime().stream().map(s -> s.value()).toList(),
+                        log.infof("Row %d, template %d: eventStart=%s offsetDays=%d sendTimeSeconds=%s scheduledTime=%s now=%s",
+                            row.id(), notifRowId, eventStart, template.offsetDays(), template.sendTimeSeconds(),
                             scheduledTime, now);
 
                         if (!isDue(scheduledTime, now)) {
@@ -235,12 +233,11 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
                     var template = execute(() ->
                         notificationTemplateClient.getByRowId(notificationsTableId, notifRowId)
                     );
-                    Duration leadTime = parseLeadTime(template.leadTime());
-                    if (leadTime == null || template.messageEn() == null || template.messageRu() == null) {
+                    Instant scheduledTime = computeScheduledTime(eventStart, template.offsetDays(), template.sendTimeSeconds());
+                    if (scheduledTime == null || template.messageEn() == null || template.messageRu() == null) {
                         continue;
                     }
 
-                    Instant scheduledTime = eventStart.minus(leadTime);
                     if (!isDue(scheduledTime, now)) {
                         continue;
                     }
@@ -303,18 +300,14 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         return row.status() != null && "pending".equalsIgnoreCase(row.status().value());
     }
 
-    private Duration parseLeadTime(java.util.List<com.baserow.dto.BaserowSingleSelect> options) {
-        if (options == null || options.isEmpty()) return null;
-        String raw = options.getFirst().value();
-        if (raw == null || raw.isBlank()) return null;
-        String s = raw.trim().toLowerCase();
-        try {
-            if (s.endsWith("h")) return Duration.ofHours(Long.parseLong(s.substring(0, s.length() - 1).trim()));
-            if (s.endsWith("m")) return Duration.ofMinutes(Long.parseLong(s.substring(0, s.length() - 1).trim()));
-        } catch (NumberFormatException e) {
-            log.warnf("Cannot parse lead_time value '%s'", raw);
-        }
-        return null;
+    // offsetDays counts calendar days before the event's Yerevan-local date (0 = day of the event);
+    // sendTimeSeconds is the Yerevan-local time of day to send, as seconds since midnight.
+    private Instant computeScheduledTime(Instant eventStart, Integer offsetDays, Double sendTimeSeconds) {
+        if (offsetDays == null || offsetDays < 0 || sendTimeSeconds == null) return null;
+        long secondsOfDay = sendTimeSeconds.longValue() % 86400;
+        LocalTime sendTime = LocalTime.ofSecondOfDay(secondsOfDay);
+        LocalDate targetDate = eventStart.atZone(YEREVAN).toLocalDate().minusDays(offsetDays);
+        return ZonedDateTime.of(targetDate, sendTime, YEREVAN).toInstant();
     }
 
     private boolean isWorkingHour(ZonedDateTime time) {
