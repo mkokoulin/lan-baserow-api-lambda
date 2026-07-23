@@ -11,6 +11,7 @@ import org.jboss.resteasy.reactive.RestForm;
 import org.jboss.resteasy.reactive.multipart.FileUpload;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.util.Map;
@@ -91,7 +92,7 @@ public class PaymentResource {
         }
         result.chatId().ifPresent(id -> log.infof("Payment %s approved, notifying chatId=%d", paymentId, id));
 
-        return Response.ok(Map.of("chatId", result.chatId().orElse(null))).build();
+        return Response.ok(Collections.singletonMap("chatId", result.chatId().orElse(null))).build();
     }
 
     @POST
@@ -113,6 +114,6 @@ public class PaymentResource {
         }
 
         result.chatId().ifPresent(id -> log.infof("Payment %s rejected, notifying chatId=%d", paymentId, id));
-        return Response.ok(Map.of("chatId", result.chatId().orElse(null))).build();
+        return Response.ok(Collections.singletonMap("chatId", result.chatId().orElse(null))).build();
     }
 }

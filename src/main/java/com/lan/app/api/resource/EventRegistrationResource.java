@@ -180,7 +180,7 @@ public class EventRegistrationResource {
         }
         var chatId = service.markPaid(uuid);
         paidStore.markPaid(regId);
-        return Response.ok(java.util.Map.of("chatId", chatId.isPresent() ? chatId.get() : null)).build();
+        return Response.ok(java.util.Collections.singletonMap("chatId", chatId.orElse(null))).build();
     }
 
     @GET

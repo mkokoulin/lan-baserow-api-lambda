@@ -28,6 +28,7 @@ dependencies {
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.quarkus:quarkus-junit5-mockito")
     testImplementation("io.quarkus:quarkus-test-security")
+    testImplementation("io.quarkus:quarkus-test-security-jwt")
     testImplementation("io.rest-assured:rest-assured")
     testImplementation("org.mockito:mockito-junit-jupiter")
 implementation("io.quarkus:quarkus-hibernate-validator")
