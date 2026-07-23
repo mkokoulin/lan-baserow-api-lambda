@@ -14,5 +14,6 @@ public record BaserowVacancyRow(
     @NotBlank @JsonProperty("title") String title,
     @NotBlank @JsonProperty("deadline") String deadline,
     @NotBlank @JsonProperty("description") String description,
-    @Nullable @JsonProperty("href") String href
+    @Nullable @JsonProperty("href") String href,
+    @NotNull @JsonProperty("is_visible") Boolean isVisible
 ) {}
