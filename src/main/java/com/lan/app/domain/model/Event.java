@@ -25,5 +25,6 @@ public record Event(
     BigDecimal price,
     String imageUrl,
     Integer maxCapacity,
-    boolean soldOut
+    boolean soldOut,
+    Integer availableSpots
 ) {}

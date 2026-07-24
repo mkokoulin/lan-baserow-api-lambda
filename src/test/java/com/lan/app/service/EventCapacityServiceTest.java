@@ -75,4 +75,31 @@ class EventCapacityServiceTest {
 
         assertTrue(service.isSoldOut(0, EVENT_ROW_ID));
     }
+
+    @Test
+    @DisplayName("remainingCapacity: maxCapacity == null → null, repo не вызывается")
+    void remainingCapacity_nullMaxCapacity_returnsNull() {
+        var service = new EventCapacityService(registrationRepo);
+
+        assertEquals(null, service.remainingCapacity(null, EVENT_ROW_ID));
+        verifyNoInteractions(registrationRepo);
+    }
+
+    @Test
+    @DisplayName("remainingCapacity: есть свободные места → возвращает разницу")
+    void remainingCapacity_underCapacity_returnsDifference() {
+        var service = new EventCapacityService(registrationRepo);
+        when(registrationRepo.countGuests(EVENT_ROW_ID)).thenReturn(7);
+
+        assertEquals(3, service.remainingCapacity(10, EVENT_ROW_ID));
+    }
+
+    @Test
+    @DisplayName("remainingCapacity: перебронировано → возвращает 0, а не отрицательное число")
+    void remainingCapacity_overCapacity_returnsZero() {
+        var service = new EventCapacityService(registrationRepo);
+        when(registrationRepo.countGuests(EVENT_ROW_ID)).thenReturn(15);
+
+        assertEquals(0, service.remainingCapacity(10, EVENT_ROW_ID));
+    }
 }

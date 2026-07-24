@@ -23,15 +23,18 @@ public class EventRegistrationService {
     private final EventRepository eventRepo;
     private final EventGuestRepository guestRepo;
     private final EventRegistrationRepository registrationRepo;
+    private final EventCapacityService capacityService;
 
     public EventRegistrationService(
         EventRepository eventRepo,
         EventGuestRepository guestRepo,
-        EventRegistrationRepository registrationRepo
+        EventRegistrationRepository registrationRepo,
+        EventCapacityService capacityService
     ) {
         this.eventRepo = eventRepo;
         this.guestRepo = guestRepo;
         this.registrationRepo = registrationRepo;
+        this.capacityService = capacityService;
     }
 
     public EventRegistration create(CreateEventRegistrationCommand cmd) {
@@ -39,7 +42,17 @@ public class EventRegistrationService {
         if (event.soldOut()) {
             throw new BusinessConflictException(
                 "Event is sold out.",
-                Map.of("eventId", event.id().externalId().toString())
+                Map.of("eventId", event.id().externalId().toString(), "availableSpots", 0)
+            );
+        }
+        Integer remaining = capacityService.remainingCapacity(event.maxCapacity(), event.id().internalId());
+        if (remaining != null && cmd.guestCount() > remaining) {
+            throw new BusinessConflictException(
+                "Not enough seats left for the requested guest count.",
+                Map.of(
+                    "eventId", event.id().externalId().toString(),
+                    "availableSpots", remaining
+                )
             );
         }
         var guest = guestRepo.get(cmd.guestId());

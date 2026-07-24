@@ -21,4 +21,13 @@ public class EventCapacityService {
         if (maxCapacity == null) return false;
         return maxCapacity - registeredGuestCount(eventRowId) <= 0;
     }
+
+    /**
+     * Remaining seats for the event, or {@code null} when the event is uncapped.
+     * Never negative — overselling (if it ever happens) is reported as zero.
+     */
+    public Integer remainingCapacity(Integer maxCapacity, int eventRowId) {
+        if (maxCapacity == null) return null;
+        return Math.max(0, maxCapacity - registeredGuestCount(eventRowId));
+    }
 }

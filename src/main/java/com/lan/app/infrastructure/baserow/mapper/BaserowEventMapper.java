@@ -23,7 +23,7 @@ public class BaserowEventMapper {
     // Armenia is UTC+4 year-round (no DST since 2012)
     private static final ZoneOffset YEREVAN = ZoneOffset.ofHours(4);
 
-    public Event toDomain(BaserowEventRow event, boolean soldOut) {
+    public Event toDomain(BaserowEventRow event, boolean soldOut, Integer availableSpots) {
         var notifications = event.notifications() != null
             ? event.notifications().stream().map(n -> String.valueOf(n.id())).toList()
             : List.<String>of();
@@ -52,7 +52,8 @@ public class BaserowEventMapper {
             event.price(),
             imageUrl,
             event.maxCapacity(),
-            soldOut
+            soldOut,
+            availableSpots
         );
     }
 

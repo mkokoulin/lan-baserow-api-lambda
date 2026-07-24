@@ -168,6 +168,14 @@ public record EventResponse(
         examples = "false",
         required = true
     )
-    boolean soldOut
+    boolean soldOut,
+
+    @Schema(
+        description = "Number of seats still available, i.e. maxCapacity minus the sum of guestCount " +
+            "across all registrations, floored at zero. Null when maxCapacity is null (uncapped event).",
+        examples = "12",
+        nullable = true
+    )
+    Integer availableSpots
 ) {
 }

@@ -48,6 +48,7 @@ public class BaserowEventsEventRepository implements EventRepository {
 
     private Event toDomainWithCapacity(BaserowEventRow row) {
         boolean soldOut = capacityService.isSoldOut(row.maxCapacity(), row.id());
-        return mapper.toDomain(row, soldOut);
+        Integer availableSpots = capacityService.remainingCapacity(row.maxCapacity(), row.id());
+        return mapper.toDomain(row, soldOut, availableSpots);
     }
 }

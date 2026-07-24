@@ -37,6 +37,8 @@ class EventRegistrationServiceTest {
     EventGuestRepository guestRepo;
     @Mock
     EventRegistrationRepository registrationRepo;
+    @Mock
+    EventCapacityService capacityService;
 
     EventRegistrationService service;
 
@@ -49,7 +51,7 @@ class EventRegistrationServiceTest {
         return new Event(
             EVENT_ID, "Событие", Instant.now(), Instant.now(), "d",
             null, null, null, null, true, List.of(), null, null,
-            true, true, false, BigDecimal.ZERO, null, 10, soldOut
+            true, true, false, BigDecimal.ZERO, null, 10, soldOut, null
         );
     }
 
@@ -63,9 +65,10 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("событие не sold out → регистрация создаётся")
         void notSoldOut_createsRegistration() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             var cmd = new CreateEventRegistrationCommand(EVENT_EXTERNAL_ID, GUEST_EXTERNAL_ID, "comment", 2, "web");
             when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(false));
+            when(capacityService.remainingCapacity(10, EVENT_ID.internalId())).thenReturn(5);
             when(guestRepo.get(GUEST_EXTERNAL_ID)).thenReturn(guest());
             var expected = new EventRegistration(new Id(3, UUID.randomUUID()), EVENT_ID, GUEST_ID, 2, "comment", "web", false);
             when(registrationRepo.create(EVENT_ID, GUEST_ID, 2, "comment", "web")).thenReturn(expected);
@@ -78,12 +81,27 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("событие sold out → BusinessConflictException, регистрация не создаётся")
         void soldOut_throwsConflict() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             var cmd = new CreateEventRegistrationCommand(EVENT_EXTERNAL_ID, GUEST_EXTERNAL_ID, "comment", 2, "web");
             when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(true));
 
             assertThrows(BusinessConflictException.class, () -> service.create(cmd));
 
+            verifyNoInteractions(guestRepo);
+            verify(registrationRepo, never()).create(any(), any(), anyInt(), any(), any());
+        }
+
+        @Test
+        @DisplayName("guestCount превышает оставшиеся места → BusinessConflictException, регистрация не создаётся")
+        void guestCountExceedsRemaining_throwsConflict() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var cmd = new CreateEventRegistrationCommand(EVENT_EXTERNAL_ID, GUEST_EXTERNAL_ID, "comment", 4, "web");
+            when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(false));
+            when(capacityService.remainingCapacity(10, EVENT_ID.internalId())).thenReturn(3);
+
+            var ex = assertThrows(BusinessConflictException.class, () -> service.create(cmd));
+
+            assertEquals(3, ex.details().get("availableSpots"));
             verifyNoInteractions(guestRepo);
             verify(registrationRepo, never()).create(any(), any(), anyInt(), any(), any());
         }
@@ -95,7 +113,7 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("гость по chatId найден → возвращает его регистрации")
         void guestFound_returnsRegistrations() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             Long chatId = 123L;
             when(guestRepo.findByTelegramChatId(chatId)).thenReturn(Optional.of(guest()));
             var item = new EventRegistrationItem("Событие", Instant.now());
@@ -109,7 +127,7 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("гость по chatId не найден → пустой список")
         void guestNotFound_returnsEmptyList() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             Long chatId = 123L;
             when(guestRepo.findByTelegramChatId(chatId)).thenReturn(Optional.empty());
 
@@ -126,7 +144,7 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("repo кидает исключение → проглатывается, не пробрасывается наружу")
         void repoThrows_isSwallowed() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             doThrow(new RuntimeException("boom")).when(guestRepo).storeTelegramChatId(1, 123L);
 
             assertDoesNotThrow(() -> service.storeTelegramChatIdForGuest(1, 123L));
@@ -139,7 +157,7 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("гость найден по регистрации → chatId сохраняется")
         void guestFound_storesChatId() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             UUID regId = UUID.randomUUID();
             when(registrationRepo.getGuestRowIdByExternalId(regId)).thenReturn(Optional.of(7));
 
@@ -151,7 +169,7 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("гость не найден по регистрации → chatId не сохраняется")
         void guestNotFound_doesNotStore() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             UUID regId = UUID.randomUUID();
             when(registrationRepo.getGuestRowIdByExternalId(regId)).thenReturn(Optional.empty());
 
@@ -163,7 +181,7 @@ class EventRegistrationServiceTest {
         @Test
         @DisplayName("repo кидает исключение → проглатывается, не пробрасывается наружу")
         void repoThrows_isSwallowed() {
-            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo);
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             UUID regId = UUID.randomUUID();
             when(registrationRepo.getGuestRowIdByExternalId(regId)).thenThrow(new RuntimeException("boom"));
 

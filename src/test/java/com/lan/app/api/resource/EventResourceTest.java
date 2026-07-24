@@ -36,7 +36,7 @@ class EventResourceTest {
             Instant.parse("2026-05-10T18:00:00Z"), Instant.parse("2026-05-10T21:00:00Z"),
             "desc", null, null, null, null,
             true, List.of(), null, null,
-            true, true, false, BigDecimal.ZERO, null, 50, false
+            true, true, false, BigDecimal.ZERO, null, 50, false, 50
         );
     }
 
