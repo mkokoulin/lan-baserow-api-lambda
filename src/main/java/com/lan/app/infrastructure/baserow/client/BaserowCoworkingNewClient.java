@@ -29,7 +29,7 @@ public interface BaserowCoworkingNewClient {
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "filter__active__equal", value = "true")
+    @ClientQueryParam(name = "filter__is_visible__boolean", value = "true")
     BaserowListResponse<BaserowCoworkingNewRow> list(
         @PathParam("tableId") int tableId
     );
@@ -38,7 +38,7 @@ public interface BaserowCoworkingNewClient {
     @Path("/{tableId}/{rowId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "filter__active__equal", value = "true")
+    @ClientQueryParam(name = "filter__is_visible__boolean", value = "true")
     BaserowListResponse<BaserowCoworkingNewRow> getByRowId(
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId
@@ -48,7 +48,7 @@ public interface BaserowCoworkingNewClient {
     @Path("/{tableId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "filter__active__equal", value = "true")
+    @ClientQueryParam(name = "filter__is_visible__boolean", value = "true")
     BaserowListResponse<BaserowCoworkingNewRow> findAllByExternalId(
         @PathParam("tableId") int tableId,
         @QueryParam("filter__external_id__equal") UUID externalId

@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 @QuarkusTest
 class CoworkingNewResourceTest {
 
-    static final String BASE_PATH = "/coworking/v1/news";
+    static final String BASE_PATH = "/coworking/v1/blog";
 
     @InjectMock
     CoworkingNewService service;
@@ -31,7 +31,7 @@ class CoworkingNewResourceTest {
     }
 
     @Nested
-    @DisplayName("GET /coworking/v1/news")
+    @DisplayName("GET /coworking/v1/blog")
     @TestSecurity(user = "test-user", roles = {"web-users"})
     class List_ {
 
@@ -62,7 +62,7 @@ class CoworkingNewResourceTest {
     }
 
     @Nested
-    @DisplayName("GET /coworking/v1/news — без авторизации")
+    @DisplayName("GET /coworking/v1/blog — без авторизации")
     class Unauthenticated {
 
         @Test

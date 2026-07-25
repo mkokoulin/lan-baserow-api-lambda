@@ -17,5 +17,6 @@ public record BaserowCoworkingNewRow(
     @NotNull @NotBlank @JsonProperty("body_en") String bodyEn,
     @NotNull @NotBlank @JsonProperty("body_ru") String bodyRu,
     @NotNull @JsonProperty("image") List<BaserowFile> image,
-    @JsonProperty("link") String link
+    @JsonProperty("link") String link,
+    @NotNull @JsonProperty("is_visible") Boolean isVisible
 ) {}
