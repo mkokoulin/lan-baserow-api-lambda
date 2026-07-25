@@ -21,6 +21,8 @@ public interface BaserowConfig {
 
     Initiatives initiatives();
 
+    Faq faq();
+
     interface Guests {
         int guestsTableId();
     }
@@ -56,5 +58,9 @@ public interface BaserowConfig {
 
     interface Initiatives {
         int initiativesTableId();
+    }
+
+    interface Faq {
+        int faqTableId();
     }
 }
