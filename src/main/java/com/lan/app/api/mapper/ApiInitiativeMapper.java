@@ -11,8 +11,10 @@ public class ApiInitiativeMapper {
     public InitiativeResponse toResponse(Initiative initiative) {
         return new InitiativeResponse(
             initiative.id().externalId(),
-            initiative.title(),
-            initiative.description(),
+            initiative.titleEn(),
+            initiative.titleRu(),
+            initiative.descriptionEn(),
+            initiative.descriptionRu(),
             initiative.imageUrl(),
             initiative.href()
         );

@@ -15,8 +15,10 @@ public class BaserowInitiativeMapper {
             : null;
         return new Initiative(
             new Id(row.id(), row.externalId()),
-            row.title(),
-            row.description(),
+            row.titleEn(),
+            row.titleRu(),
+            row.descriptionEn(),
+            row.descriptionRu(),
             imageUrl,
             row.href()
         );

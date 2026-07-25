@@ -14,8 +14,10 @@ import jakarta.validation.constraints.NotNull;
 public record BaserowInitiativeRow(
     @NotNull @JsonProperty("id") Integer id,
     @NotNull @JsonProperty("external_id") UUID externalId,
-    @NotBlank @JsonProperty("title") String title,
-    @NotBlank @JsonProperty("description") String description,
+    @NotBlank @JsonProperty("title_en") String titleEn,
+    @NotBlank @JsonProperty("title_ru") String titleRu,
+    @NotBlank @JsonProperty("description_en") String descriptionEn,
+    @NotBlank @JsonProperty("description_ru") String descriptionRu,
     @Nullable @JsonProperty("image") List<BaserowFile> image,
     @Nullable @JsonProperty("href") String href,
     @NotNull @JsonProperty("is_visible") Boolean isVisible
