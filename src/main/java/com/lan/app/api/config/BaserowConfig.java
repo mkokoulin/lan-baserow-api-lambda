@@ -19,6 +19,8 @@ public interface BaserowConfig {
 
     Careers careers();
 
+    Initiatives initiatives();
+
     interface Guests {
         int guestsTableId();
     }
@@ -50,5 +52,9 @@ public interface BaserowConfig {
 
     interface Careers {
         int vacanciesTableId();
+    }
+
+    interface Initiatives {
+        int initiativesTableId();
     }
 }
