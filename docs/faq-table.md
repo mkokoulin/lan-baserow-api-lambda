@@ -11,6 +11,8 @@ Table ID: `1097501` (already wired into `application.properties` and `template.y
 | `question_ru` | Single line text              | yes      | Question, Russian                                                 |
 | `answer_en`   | Long text, **rich text ON**    | yes      | Answer, English. HTML produced by Baserow's rich text editor       |
 | `answer_ru`   | Long text, **rich text ON**    | yes      | Answer, Russian. HTML produced by Baserow's rich text editor       |
+| `category_en` | Single line text              | no       | Section heading used to group FAQ entries on the page, English. Entries sharing the same category are grouped together, in the order the category first appears (sorted by `position`). Leave blank to keep the entry ungrouped |
+| `category_ru` | Single line text              | no       | Section heading used to group FAQ entries on the page, Russian. Same grouping rules as `category_en` |
 | `position`    | Number (integer)              | no       | Sort order, ascending. Leave blank to fall back to row order      |
 | `is_visible`  | Boolean                       | yes      | Only rows with `is_visible = true` are returned by the API        |
 
@@ -31,10 +33,10 @@ Table ID: `1097501` (already wired into `application.properties` and `template.y
 
 ## Example rows
 
-| external_id                          | question_en                    | question_ru                          | answer_en                                             | answer_ru                                                     | position | is_visible |
-|---------------------------------------|---------------------------------|----------------------------------------|--------------------------------------------------------|-----------------------------------------------------------------|----------|------------|
-| 8f14e45f-ceea-4a9e-8c96-1b1f3c0a7e11  | What are your working hours?   | Какой у вас график работы?           | `<p>We are open daily from <strong>9:00 to 22:00</strong>.</p>` | `<p>Мы работаем ежедневно с <strong>9:00 до 22:00</strong>.</p>` | 1        | true       |
-| 3c2a2e5b-6f1d-4b8a-9e2a-2b6a1d4f9c02  | How do I book a meeting room?  | Как забронировать переговорную?       | `<p>Book via the <a href="/coworking/booking">booking page</a> or ask at reception.</p>` | `<p>Забронируйте на <a href="/coworking/booking">странице бронирования</a> или на ресепшене.</p>` | 2        | true       |
+| external_id                          | question_en                    | question_ru                          | answer_en                                             | answer_ru                                                     | category_en        | category_ru           | position | is_visible |
+|---------------------------------------|---------------------------------|----------------------------------------|--------------------------------------------------------|-----------------------------------------------------------------|---------------------|------------------------|----------|------------|
+| 8f14e45f-ceea-4a9e-8c96-1b1f3c0a7e11  | What are your working hours?   | Какой у вас график работы?           | `<p>We are open daily from <strong>9:00 to 22:00</strong>.</p>` | `<p>Мы работаем ежедневно с <strong>9:00 до 22:00</strong>.</p>` | Coworking & plans   | Коворкинг и тарифы     | 1        | true       |
+| 3c2a2e5b-6f1d-4b8a-9e2a-2b6a1d4f9c02  | How do I book a meeting room?  | Как забронировать переговорную?       | `<p>Book via the <a href="/coworking/booking">booking page</a> or ask at reception.</p>` | `<p>Забронируйте на <a href="/coworking/booking">странице бронирования</a> или на ресепшене.</p>` | Meeting rooms & gear | Переговорные и оборудование | 2        | true       |
 
 ## API
 
@@ -53,6 +55,8 @@ Response shape (`FaqResponse`):
   "questionRu": "Какой у вас график работы?",
   "answerEn": "<p>We are open daily from <strong>9:00 to 22:00</strong>.</p>",
   "answerRu": "<p>Мы работаем ежедневно с <strong>9:00 до 22:00</strong>.</p>",
+  "categoryEn": "Coworking & plans",
+  "categoryRu": "Коворкинг и тарифы",
   "position": 1
 }
 ```

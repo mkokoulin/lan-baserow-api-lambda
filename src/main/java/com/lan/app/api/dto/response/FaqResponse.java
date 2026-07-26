@@ -49,6 +49,20 @@ public record FaqResponse(
     String answerRu,
 
     @Schema(
+        description = "Section/category name used to group FAQ entries on the page (English)",
+        examples = "Coworking & plans",
+        nullable = true
+    )
+    String categoryEn,
+
+    @Schema(
+        description = "Section/category name used to group FAQ entries on the page (Russian)",
+        examples = "Коворкинг и тарифы",
+        nullable = true
+    )
+    String categoryRu,
+
+    @Schema(
         description = "Display order (ascending). Lower numbers appear first",
         nullable = true
     )

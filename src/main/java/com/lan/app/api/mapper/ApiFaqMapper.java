@@ -15,6 +15,8 @@ public class ApiFaqMapper {
             faq.questionRu(),
             faq.answerEn(),
             faq.answerRu(),
+            faq.categoryEn(),
+            faq.categoryRu(),
             faq.position()
         );
     }

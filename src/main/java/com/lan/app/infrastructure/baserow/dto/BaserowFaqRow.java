@@ -15,6 +15,8 @@ public record BaserowFaqRow(
     @NotBlank @JsonProperty("question_ru") String questionRu,
     @NotBlank @JsonProperty("answer_en") String answerEn,
     @NotBlank @JsonProperty("answer_ru") String answerRu,
+    @Nullable @JsonProperty("category_en") String categoryEn,
+    @Nullable @JsonProperty("category_ru") String categoryRu,
     @Nullable @JsonProperty("position") Integer position,
     @NotNull @JsonProperty("is_visible") Boolean isVisible
 ) {}

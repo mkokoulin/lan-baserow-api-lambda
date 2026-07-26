@@ -6,5 +6,7 @@ public record Faq(
     String questionRu,
     String answerEn,
     String answerRu,
+    String categoryEn,
+    String categoryRu,
     Integer position
 ) {}

@@ -16,6 +16,8 @@ public class BaserowFaqMapper {
             row.questionRu(),
             row.answerEn(),
             row.answerRu(),
+            row.categoryEn(),
+            row.categoryRu(),
             row.position()
         );
     }
