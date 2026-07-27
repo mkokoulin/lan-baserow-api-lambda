@@ -14,6 +14,7 @@ import com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper;
 import com.lan.app.repository.EventRepository;
 import com.lan.app.service.EventCapacityService;
 
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
@@ -37,6 +38,10 @@ public class BaserowEventsEventRepository implements EventRepository {
         this.capacityService = capacityService;
     }
 
+    // Cached (quarkus.cache.caffeine.events.* in application.properties) — this is the hot path
+    // hit on every /events page load. get() below stays uncached: it backs the sold-out check
+    // in EventRegistrationService.create(), which needs a fresh count, not a stale cached one.
+    @CacheResult(cacheName = "events")
     public List<Event> list() {
         var row = eventClient.list(eventTableId);
         // One Baserow round trip for all registrations instead of one per event (was 2N calls

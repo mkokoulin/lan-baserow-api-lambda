@@ -11,6 +11,7 @@ import com.lan.app.infrastructure.baserow.client.BaserowEventsFestivalClient;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventsFestivalMapper;
 import com.lan.app.repository.EventsFestivalRepository;
 
+import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
@@ -31,7 +32,8 @@ public class BaserowEventsFestivalRepository implements EventsFestivalRepository
         this.mapper = mapper;
     }
 
-     public List<Festival> list() {
+    @CacheResult(cacheName = "festivals")
+    public List<Festival> list() {
         var row = client.list(festivaleTableId);
         return row.results().stream().map(mapper::toDomain).toList();
     }
