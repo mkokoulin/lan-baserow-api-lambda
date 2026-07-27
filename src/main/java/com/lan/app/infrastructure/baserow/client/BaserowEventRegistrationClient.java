@@ -60,6 +60,17 @@ public interface BaserowEventRegistrationClient {
         @QueryParam("filter__event_id__link_row_has") int eventRowId
     );
 
+    // Unfiltered — used to compute guest counts for every event in one round trip
+    // instead of one Baserow call per event (see BaserowEventRegistrationRepository#countGuestsByEvent).
+    // Same page-size ceiling as findByEventRowIdRaw — fine at this system's scale.
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "200")
+    BaserowListResponse<BaserowRegistrationRow> listAllRaw(
+        @PathParam("tableId") int tableId
+    );
+
     @GET
     @ClientQueryParam(name = "user_field_names", value = "true")
     @Path("/{tableId}/{rowId}/")

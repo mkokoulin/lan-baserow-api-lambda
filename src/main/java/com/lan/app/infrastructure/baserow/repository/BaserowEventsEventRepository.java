@@ -1,6 +1,7 @@
 package com.lan.app.infrastructure.baserow.repository;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -38,17 +39,24 @@ public class BaserowEventsEventRepository implements EventRepository {
 
     public List<Event> list() {
         var row = eventClient.list(eventTableId);
-        return row.results().stream().map(this::toDomainWithCapacity).toList();
+        // One Baserow round trip for all registrations instead of one per event (was 2N calls
+        // for N events via capacityService.isSoldOut/remainingCapacity — timed out the site's
+        // 5s fetch once the events table grew).
+        var guestCounts = capacityService.registeredGuestCountsByEvent();
+        return row.results().stream().map(r -> toDomainWithCapacity(r, guestCounts)).toList();
     }
 
     public Event get(UUID externalId) {
         var row = eventClient.findUniqueByExternalId(eventTableId, externalId);
-        return toDomainWithCapacity(row);
-    }
-
-    private Event toDomainWithCapacity(BaserowEventRow row) {
         boolean soldOut = capacityService.isSoldOut(row.maxCapacity(), row.id());
         Integer availableSpots = capacityService.remainingCapacity(row.maxCapacity(), row.id());
+        return mapper.toDomain(row, soldOut, availableSpots);
+    }
+
+    private Event toDomainWithCapacity(BaserowEventRow row, Map<Integer, Integer> guestCounts) {
+        int registeredCount = guestCounts.getOrDefault(row.id(), 0);
+        boolean soldOut = row.maxCapacity() != null && row.maxCapacity() - registeredCount <= 0;
+        Integer availableSpots = row.maxCapacity() == null ? null : Math.max(0, row.maxCapacity() - registeredCount);
         return mapper.toDomain(row, soldOut, availableSpots);
     }
 }

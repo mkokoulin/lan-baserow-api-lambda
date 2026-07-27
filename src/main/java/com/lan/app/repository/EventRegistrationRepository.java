@@ -5,6 +5,7 @@ import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.Id;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,4 +17,6 @@ public interface EventRegistrationRepository {
     Optional<Long> markPaid(UUID externalId);
     Optional<EventRegistrationItem> findByExternalId(UUID regExternalId);
     int countGuests(int eventRowId);
+    /** Guest counts for every event, keyed by event row id, in a single Baserow round trip. */
+    Map<Integer, Integer> countGuestsByEvent();
 }

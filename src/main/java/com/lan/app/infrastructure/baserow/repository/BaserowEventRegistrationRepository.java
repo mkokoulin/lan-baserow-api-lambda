@@ -18,7 +18,9 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.logging.Logger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -159,6 +161,18 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         // fetchRecipientsForEvent) — fine at this system's scale, would need pagination beyond that.
         var registrations = execute(() -> client.findByEventRowIdRaw(registrationsTableId, eventRowId).results());
         return registrations.stream().mapToInt(com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow::guestCount).sum();
+    }
+
+    @Override
+    public Map<Integer, Integer> countGuestsByEvent() {
+        var registrations = execute(() -> client.listAllRaw(registrationsTableId).results());
+        var counts = new HashMap<Integer, Integer>();
+        for (var reg : registrations) {
+            if (reg.eventId() == null || reg.eventId().isEmpty()) continue;
+            int eventRowId = reg.eventId().getFirst().id();
+            counts.merge(eventRowId, reg.guestCount(), Integer::sum);
+        }
+        return counts;
     }
 
     @Override

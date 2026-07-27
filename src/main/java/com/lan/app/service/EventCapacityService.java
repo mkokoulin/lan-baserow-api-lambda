@@ -4,6 +4,8 @@ import com.lan.app.repository.EventRegistrationRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.Map;
+
 @ApplicationScoped
 public class EventCapacityService {
 
@@ -15,6 +17,11 @@ public class EventCapacityService {
 
     public int registeredGuestCount(int eventRowId) {
         return registrationRepo.countGuests(eventRowId);
+    }
+
+    /** Guest counts for every event in one Baserow round trip — use when listing all events. */
+    public Map<Integer, Integer> registeredGuestCountsByEvent() {
+        return registrationRepo.countGuestsByEvent();
     }
 
     public boolean isSoldOut(Integer maxCapacity, int eventRowId) {
