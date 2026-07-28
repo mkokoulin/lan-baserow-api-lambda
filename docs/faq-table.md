@@ -15,6 +15,7 @@ Table ID: `1097501` (already wired into `application.properties` and `template.y
 | `category_ru` | Single line text              | no       | Section heading used to group FAQ entries on the page, Russian. Same grouping rules as `category_en` |
 | `position`    | Number (integer)              | no       | Sort order, ascending. Leave blank to fall back to row order      |
 | `is_visible`  | Boolean                       | yes      | Only rows with `is_visible = true` are returned by the API        |
+| `blog_post`   | Link to table (→ blog/news table) | no   | Optional. Tag a FAQ entry with a specific blog post to also show it under that article. Leave empty to keep the entry general-only (still shown on `/faq`) |
 
 \* Baserow has no native UUID field type. Use a single line text field named
 `external_id` and fill it with a UUID v4 per row (e.g. generate with
@@ -43,8 +44,9 @@ Table ID: `1097501` (already wired into `application.properties` and `template.y
 Base URL: `/coworking/v1/faq` (same auth as `/coworking/v1/initiatives` —
 requires `admin` or `web-users` role).
 
-- `GET /coworking/v1/faq` — list all visible FAQ entries, ordered by `position`.
+- `GET /coworking/v1/faq` — list all visible FAQ entries, ordered by `position`. Includes entries tagged with a `blog_post` too — the general FAQ page doesn't filter by that field.
 - `GET /coworking/v1/faq/{externalId}` — get a single entry by its UUID.
+- `GET /coworking/v1/blog/{externalId}/faq` — list the FAQ entries tagged (via `blog_post`) with the blog post identified by `externalId`, ordered by `position`. Empty array if none are tagged.
 
 Response shape (`FaqResponse`):
 

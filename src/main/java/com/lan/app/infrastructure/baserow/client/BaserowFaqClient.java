@@ -48,6 +48,16 @@ public interface BaserowFaqClient {
 
     @GET
     @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "filter__is_visible__boolean", value = "true")
+    @ClientQueryParam(name = "order_by", value = "position")
+    BaserowListResponse<BaserowFaqRow> listByBlogPostRowId(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__blog_post__link_row_has") int blogPostRowId
+    );
+
+    @GET
+    @Path("/{tableId}/")
     @ClientQueryParam(name = "size", value = "1")
     @ClientQueryParam(name = "user_field_names", value = "true")
     @ClientQueryParam(name = "filter__is_visible__boolean", value = "true")

@@ -40,4 +40,9 @@ public class BaserowCoworkingNewRepository implements CoworkingNewRepository {
         var row = client.findUniqueByExternalId(tableId, externalId);
         return mapper.toDomain(row);
     }
+
+    @Override
+    public int getRowIdByExternalId(UUID externalId) {
+        return client.findUniqueByExternalId(tableId, externalId).id();
+    }
 }

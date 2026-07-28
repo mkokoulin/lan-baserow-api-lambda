@@ -8,4 +8,5 @@ import com.lan.app.domain.model.CoworkingNew;
 public interface CoworkingNewRepository {
     List<CoworkingNew> list();
     CoworkingNew get(UUID externalId);
+    int getRowIdByExternalId(UUID externalId);
 }

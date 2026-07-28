@@ -40,4 +40,10 @@ public class BaserowFaqRepository implements FaqRepository {
         var row = client.findUniqueByExternalId(faqTableId, externalId);
         return mapper.toDomain(row);
     }
+
+    @Override
+    public List<Faq> listByBlogPostRowId(int blogPostRowId) {
+        var row = client.listByBlogPostRowId(faqTableId, blogPostRowId);
+        return row.results().stream().map(mapper::toDomain).toList();
+    }
 }

@@ -8,4 +8,5 @@ import com.lan.app.domain.model.Faq;
 public interface FaqRepository {
     List<Faq> list();
     Faq get(UUID externalId);
+    List<Faq> listByBlogPostRowId(int blogPostRowId);
 }
