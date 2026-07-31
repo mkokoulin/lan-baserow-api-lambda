@@ -8,4 +8,5 @@ import com.lan.app.domain.model.Event;
 public interface EventRepository {
     List<Event> list();
     Event get(UUID externalId);
+    Event getByRowId(int rowId);
 }

@@ -48,7 +48,7 @@ class EventRegistrationResourceTest {
     static EventRegistration registration(UUID regExternalId) {
         return new EventRegistration(
             new Id(10, regExternalId), new Id(1, EVENT_ID), new Id(2, GUEST_ID),
-            2, "comment", "website", false
+            2, "comment", "website", false, false
         );
     }
 
@@ -167,7 +167,7 @@ class EventRegistrationResourceTest {
         void withoutChatId_returnsEventName() {
             UUID regId = UUID.randomUUID();
             when(service.findByExternalId(regId))
-                .thenReturn(Optional.of(new EventRegistrationItem("Мастер-класс", Instant.now())));
+                .thenReturn(Optional.of(new EventRegistrationItem(regId, "Мастер-класс", Instant.now(), 1, false)));
 
             given()
                 .contentType(ContentType.JSON)

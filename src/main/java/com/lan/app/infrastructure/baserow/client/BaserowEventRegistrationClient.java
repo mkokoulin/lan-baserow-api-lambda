@@ -4,6 +4,8 @@ import com.baserow.client.BaserowAuthHeaders;
 import com.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationCancelledRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationGuestCountRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;
@@ -86,5 +88,23 @@ public interface BaserowEventRegistrationClient {
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId,
         @NotNull UpdateRegistrationIsPaidRequest body
+    );
+
+    @PATCH
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowRegistrationRow updateIsCancelled(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull UpdateRegistrationCancelledRequest body
+    );
+
+    @PATCH
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowRegistrationRow updateGuestCount(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull UpdateRegistrationGuestCountRequest body
     );
 }

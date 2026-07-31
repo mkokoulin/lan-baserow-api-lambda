@@ -26,6 +26,7 @@ public record BaserowRegistrationRow(
     @NotNull @JsonProperty("guest_count") Integer guestCount,
     @JsonProperty("guest_comment") String guestComment,
     @JsonProperty("source") BaserowSingleSelect source,
-    @JsonProperty("is_paid") boolean isPaid
+    @JsonProperty("is_paid") boolean isPaid,
+    @JsonProperty("is_cancelled") Boolean isCancelled
 ) {
 }

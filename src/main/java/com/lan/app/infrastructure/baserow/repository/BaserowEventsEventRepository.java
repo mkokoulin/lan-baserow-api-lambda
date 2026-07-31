@@ -58,6 +58,14 @@ public class BaserowEventsEventRepository implements EventRepository {
         return mapper.toDomain(row, soldOut, availableSpots);
     }
 
+    @Override
+    public Event getByRowId(int rowId) {
+        var row = eventClient.getByRowId(eventTableId, rowId);
+        boolean soldOut = capacityService.isSoldOut(row.maxCapacity(), row.id());
+        Integer availableSpots = capacityService.remainingCapacity(row.maxCapacity(), row.id());
+        return mapper.toDomain(row, soldOut, availableSpots);
+    }
+
     private Event toDomainWithCapacity(BaserowEventRow row, Map<Integer, Integer> guestCounts) {
         int registeredCount = guestCounts.getOrDefault(row.id(), 0);
         boolean soldOut = row.maxCapacity() != null && row.maxCapacity() - registeredCount <= 0;

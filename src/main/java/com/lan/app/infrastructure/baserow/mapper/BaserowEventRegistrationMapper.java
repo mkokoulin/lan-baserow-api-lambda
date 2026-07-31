@@ -40,7 +40,8 @@ public class BaserowEventRegistrationMapper {
             row.guestCount(),
             row.guestComment(),
             row.source() != null ? row.source().value() : null,
-            row.isPaid()
+            row.isPaid(),
+            row.isCancelled() != null && row.isCancelled()
         );
     }
 

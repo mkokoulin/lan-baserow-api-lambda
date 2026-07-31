@@ -1,7 +1,9 @@
 package com.lan.app.api.resource;
 
+import com.lan.app.api.dto.request.GuestCountUpdateRequest;
 import com.lan.app.api.dto.request.NotificationActionRequest;
 import com.lan.app.api.dto.request.NotificationResultRequest;
+import com.lan.app.api.dto.response.BotRegistrationActionResponse;
 import com.lan.app.api.dto.response.BotRegistrationDto;
 import com.lan.app.api.dto.response.EventCapacityAlertDueResponse;
 import com.lan.app.api.dto.response.EventNotificationDueResponse;
@@ -22,6 +24,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponses;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.List;
+import java.util.UUID;
 
 @Path("/events/v1/bot")
 @Produces(MediaType.APPLICATION_JSON)
@@ -70,10 +73,58 @@ public class BotResource {
         }
 
         List<BotRegistrationDto> result = service.findByChatId(chatId).stream()
-                .map(item -> new BotRegistrationDto(item.eventName(), item.dateStart()))
+                .map(item -> new BotRegistrationDto(
+                    item.externalId() != null ? item.externalId().toString() : null,
+                    item.eventName(), item.dateStart(), item.guestCount(), item.isCancelled()))
                 .toList();
 
         return Response.ok(result).build();
+    }
+
+    @POST
+    @Path("/registrations/{regId}/cancel")
+    @Operation(
+        operationId = "botCancelRegistration",
+        summary = "Cancel an event registration",
+        description = "Soft-cancels a registration (sets is_cancelled) so the guest's seat is freed up. " +
+            "Rejects with 409 if the registration is already cancelled or the event has already started."
+    )
+    public Response cancelRegistration(@PathParam("regId") String regId) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(regId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        var result = service.cancel(uuid);
+        return Response.ok(toActionResponse(result)).build();
+    }
+
+    @PATCH
+    @Path("/registrations/{regId}/guest-count")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+        operationId = "botUpdateRegistrationGuestCount",
+        summary = "Change the number of guests on an event registration",
+        description = "Rejects with 409 if the registration is cancelled, the event has already started, " +
+            "or the requested guest count exceeds the event's remaining capacity."
+    )
+    public Response updateGuestCount(@PathParam("regId") String regId, GuestCountUpdateRequest req) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(regId);
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        var result = service.updateGuestCount(uuid, req.guestCount());
+        return Response.ok(toActionResponse(result)).build();
+    }
+
+    private BotRegistrationActionResponse toActionResponse(com.lan.app.domain.model.RegistrationActionResult result) {
+        return new BotRegistrationActionResponse(
+            result.eventName(), result.dateStart(), result.previousGuestCount(), result.guestCount(),
+            result.guestFirstName(), result.guestLastName(), result.guestPhone(), result.guestTelegram()
+        );
     }
 
     @GET

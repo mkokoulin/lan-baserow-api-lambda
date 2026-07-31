@@ -4,10 +4,13 @@ import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.Id;
+import com.lan.app.domain.model.RegistrationActionResult;
 import com.lan.app.infrastructure.baserow.client.BaserowEventClient;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationCancelledRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationGuestCountRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventRegistrationMapper;
 import com.lan.app.repository.EventRegistrationRepository;
@@ -88,6 +91,7 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
                 guestCount,
                 comment,
                 source,
+                false,
                 false
             );
         }
@@ -160,7 +164,10 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         // NOTE: page size is hardcoded to 200 (same limitation as BaserowEventNotificationRepository's
         // fetchRecipientsForEvent) — fine at this system's scale, would need pagination beyond that.
         var registrations = execute(() -> client.findByEventRowIdRaw(registrationsTableId, eventRowId).results());
-        return registrations.stream().mapToInt(com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow::guestCount).sum();
+        return registrations.stream()
+            .filter(reg -> reg.isCancelled() == null || !reg.isCancelled())
+            .mapToInt(com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow::guestCount)
+            .sum();
     }
 
     @Override
@@ -169,10 +176,64 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         var counts = new HashMap<Integer, Integer>();
         for (var reg : registrations) {
             if (reg.eventId() == null || reg.eventId().isEmpty()) continue;
+            if (reg.isCancelled() != null && reg.isCancelled()) continue;
             int eventRowId = reg.eventId().getFirst().id();
             counts.merge(eventRowId, reg.guestCount(), Integer::sum);
         }
         return counts;
+    }
+
+    @Override
+    public Optional<RegistrationActionResult> cancel(UUID externalId) {
+        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, externalId));
+        if (response.results().isEmpty()) {
+            log.warnf("Registration not found for externalId=%s", externalId);
+            return Optional.empty();
+        }
+        var reg = response.results().getFirst();
+        execute(() -> client.updateIsCancelled(registrationsTableId, reg.id(), new UpdateRegistrationCancelledRequest(true)));
+        return Optional.of(buildActionResult(reg, reg.guestCount(), reg.guestCount()));
+    }
+
+    @Override
+    public Optional<RegistrationActionResult> updateGuestCount(UUID externalId, int newGuestCount) {
+        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, externalId));
+        if (response.results().isEmpty()) {
+            log.warnf("Registration not found for externalId=%s", externalId);
+            return Optional.empty();
+        }
+        var reg = response.results().getFirst();
+        execute(() -> client.updateGuestCount(registrationsTableId, reg.id(), new UpdateRegistrationGuestCountRequest(newGuestCount)));
+        return Optional.of(buildActionResult(reg, reg.guestCount(), newGuestCount));
+    }
+
+    private RegistrationActionResult buildActionResult(
+            com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow reg, int previousGuestCount, int newGuestCount) {
+        String eventName = null;
+        java.time.Instant dateStart = null;
+        if (reg.eventId() != null && !reg.eventId().isEmpty()) {
+            try {
+                var eventRow = execute(() -> eventClient.getByRowId(eventTableId, reg.eventId().getFirst().id()));
+                eventName = eventRow.name();
+                dateStart = com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(eventRow.dateStart());
+            } catch (Exception e) {
+                log.warnf("Could not fetch event for registration row %d: %s", reg.id(), e.getMessage());
+            }
+        }
+        String firstName = null, lastName = null, phone = null, telegram = null;
+        if (reg.guestId() != null && !reg.guestId().isEmpty()) {
+            try {
+                var guest = execute(() -> guestClient.getByRowId(guestsTableId, reg.guestId().getFirst().id()));
+                firstName = guest.firstName();
+                lastName = guest.lastName();
+                phone = guest.phone();
+                telegram = guest.telegram();
+            } catch (Exception e) {
+                log.warnf("Could not fetch guest for registration row %d: %s", reg.id(), e.getMessage());
+            }
+        }
+        return new RegistrationActionResult(eventName, dateStart, previousGuestCount, newGuestCount,
+            firstName, lastName, phone, telegram);
     }
 
     @Override
@@ -192,8 +253,13 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         int eventRowId = reg.eventId().getFirst().id();
         try {
             var eventRow = execute(() -> eventClient.getByRowId(eventTableId, eventRowId));
-            return Optional.of(new EventRegistrationItem(eventRow.name(),
-                com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(eventRow.dateStart())));
+            return Optional.of(new EventRegistrationItem(
+                reg.externalId(),
+                eventRow.name(),
+                com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper.parseBaserowDate(eventRow.dateStart()),
+                reg.guestCount(),
+                reg.isCancelled() != null && reg.isCancelled()
+            ));
         } catch (Exception e) {
             log.warnf("Could not fetch event rowId=%d for %s: %s", eventRowId, context, e.getMessage());
             return Optional.empty();

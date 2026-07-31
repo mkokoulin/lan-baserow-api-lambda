@@ -107,7 +107,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             id, UUID.randomUUID(),
             List.of(new BaserowLinkToTable(EVENT_ROW_ID, "e")),
             List.of(new BaserowLinkToTable(guestRowId, "g")),
-            iso(createdAt), 1, "", null, false
+            iso(createdAt), 1, "", null, false, false
         );
     }
 
@@ -346,7 +346,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubEvents(event());
             var noGuest = new BaserowRegistrationRow(
                 1, UUID.randomUUID(), List.of(new BaserowLinkToTable(EVENT_ROW_ID, "e")),
-                List.of(), iso(EVENT_START.minusDays(4)), 1, "", null, false
+                List.of(), iso(EVENT_START.minusDays(4)), 1, "", null, false, false
             );
             stubRegistrations(noGuest);
 
@@ -365,7 +365,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubNoExistingAnchor();
             var noCreatedAt = new BaserowRegistrationRow(
                 1, UUID.randomUUID(), List.of(new BaserowLinkToTable(EVENT_ROW_ID, "e")),
-                List.of(new BaserowLinkToTable(101, "g")), null, 1, "", null, false
+                List.of(new BaserowLinkToTable(101, "g")), null, 1, "", null, false, false
             );
             stubRegistrations(noCreatedAt);
             stubGuest(101, 555101L);

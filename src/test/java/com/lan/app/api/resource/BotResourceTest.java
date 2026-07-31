@@ -1,9 +1,12 @@
 package com.lan.app.api.resource;
 
+import com.lan.app.domain.exception.BusinessConflictException;
+import com.lan.app.domain.exception.RegistrationNotFoundException;
 import com.lan.app.domain.model.EventCapacityAlert;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.NotificationRecipient;
+import com.lan.app.domain.model.RegistrationActionResult;
 import com.lan.app.service.EventCapacityAlertService;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
@@ -16,9 +19,12 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,15 +59,20 @@ class BotResourceTest {
         @DisplayName("есть регистрации → 200 массив")
         void withRegistrations_returnsList() {
             Instant date = Instant.parse("2026-05-10T18:00:00Z");
-            when(service.findByChatId(123L)).thenReturn(List.of(new EventRegistrationItem("Событие", date)));
+            UUID regId = UUID.randomUUID();
+            when(service.findByChatId(123L))
+                .thenReturn(List.of(new EventRegistrationItem(regId, "Событие", date, 2, false)));
 
             given()
                 .queryParam("chatId", 123L)
                 .when().get(BASE_PATH + "/my-registrations")
                 .then()
                 .statusCode(200)
-                .body("$",               hasSize(1))
-                .body("[0].event_name",  equalTo("Событие"));
+                .body("$",                    hasSize(1))
+                .body("[0].registration_id",  equalTo(regId.toString()))
+                .body("[0].event_name",       equalTo("Событие"))
+                .body("[0].guest_count",      equalTo(2))
+                .body("[0].is_cancelled",     equalTo(false));
         }
 
         @Test
@@ -257,6 +268,112 @@ class BotResourceTest {
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /events/v1/bot/registrations/{regId}/cancel")
+    class CancelRegistration {
+
+        @Test
+        @DisplayName("некорректный regId → 400")
+        void invalidRegId_returns400() {
+            given()
+                .when().post(BASE_PATH + "/registrations/not-a-uuid/cancel")
+                .then()
+                .statusCode(400);
+        }
+
+        @Test
+        @DisplayName("успешно → 200 с деталями отменённой регистрации")
+        void success_returns200() {
+            UUID regId = UUID.randomUUID();
+            Instant date = Instant.parse("2026-05-10T18:00:00Z");
+            when(service.cancel(regId)).thenReturn(
+                new RegistrationActionResult("Событие", date, 2, 2, "Ivan", "Petrov", "+7900", "ivan"));
+
+            given()
+                .when().post(BASE_PATH + "/registrations/" + regId + "/cancel")
+                .then()
+                .statusCode(200)
+                .body("event_name",   equalTo("Событие"))
+                .body("guest_count",  equalTo(2));
+        }
+
+        @Test
+        @DisplayName("регистрация не найдена → 404")
+        void notFound_returns404() {
+            UUID regId = UUID.randomUUID();
+            when(service.cancel(regId)).thenThrow(new RegistrationNotFoundException(regId.toString()));
+
+            given()
+                .when().post(BASE_PATH + "/registrations/" + regId + "/cancel")
+                .then()
+                .statusCode(404);
+        }
+
+        @Test
+        @DisplayName("уже отменена / событие уже началось → 409")
+        void conflict_returns409() {
+            UUID regId = UUID.randomUUID();
+            when(service.cancel(regId)).thenThrow(
+                new BusinessConflictException("Registration is already cancelled.", Map.of()));
+
+            given()
+                .when().post(BASE_PATH + "/registrations/" + regId + "/cancel")
+                .then()
+                .statusCode(409)
+                .body("code", equalTo("BUSINESS_CONFLICT"));
+        }
+    }
+
+    @Nested
+    @DisplayName("PATCH /events/v1/bot/registrations/{regId}/guest-count")
+    class UpdateGuestCount {
+
+        @Test
+        @DisplayName("некорректный regId → 400")
+        void invalidRegId_returns400() {
+            given()
+                .contentType(ContentType.JSON)
+                .body("{ \"guest_count\": 3 }")
+                .when().patch(BASE_PATH + "/registrations/not-a-uuid/guest-count")
+                .then()
+                .statusCode(400);
+        }
+
+        @Test
+        @DisplayName("достаточно мест → 200 с обновлённым количеством гостей")
+        void success_returns200() {
+            UUID regId = UUID.randomUUID();
+            Instant date = Instant.parse("2026-05-10T18:00:00Z");
+            when(service.updateGuestCount(regId, 4)).thenReturn(
+                new RegistrationActionResult("Событие", date, 2, 4, "Ivan", "Petrov", "+7900", "ivan"));
+
+            given()
+                .contentType(ContentType.JSON)
+                .body("{ \"guest_count\": 4 }")
+                .when().patch(BASE_PATH + "/registrations/" + regId + "/guest-count")
+                .then()
+                .statusCode(200)
+                .body("previous_guest_count", equalTo(2))
+                .body("guest_count",          equalTo(4));
+        }
+
+        @Test
+        @DisplayName("не хватает мест → 409")
+        void notEnoughCapacity_returns409() {
+            UUID regId = UUID.randomUUID();
+            when(service.updateGuestCount(any(), org.mockito.ArgumentMatchers.anyInt())).thenThrow(
+                new BusinessConflictException("Not enough seats left.", Map.of("availableSpots", 1)));
+
+            given()
+                .contentType(ContentType.JSON)
+                .body("{ \"guest_count\": 10 }")
+                .when().patch(BASE_PATH + "/registrations/" + regId + "/guest-count")
+                .then()
+                .statusCode(409)
+                .body("details.availableSpots", equalTo(1));
         }
     }
 }

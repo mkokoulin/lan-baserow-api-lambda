@@ -1,8 +1,11 @@
 package com.lan.app.service;
 
 import com.lan.app.domain.exception.BusinessConflictException;
+import com.lan.app.domain.exception.RegistrationNotFoundException;
+import com.lan.app.domain.exception.ValidationException;
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
+import com.lan.app.domain.model.RegistrationActionResult;
 import com.lan.app.repository.EventGuestRepository;
 import com.lan.app.repository.EventRegistrationRepository;
 import com.lan.app.repository.EventRepository;
@@ -10,6 +13,7 @@ import com.lan.app.service.command.CreateEventRegistrationCommand;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.jboss.logging.Logger;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -107,5 +111,56 @@ public class EventRegistrationService {
         } catch (Exception e) {
             log.warnf("Failed to store chatId=%d for reg=%s: %s", chatId, regExternalId, e.getMessage());
         }
+    }
+
+    public RegistrationActionResult cancel(UUID regExternalId) {
+        requireActiveRegistration(regExternalId);
+        return registrationRepo.cancel(regExternalId)
+            .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+    }
+
+    public RegistrationActionResult updateGuestCount(UUID regExternalId, int newGuestCount) {
+        if (newGuestCount < 1) {
+            throw new ValidationException("guestCount must be at least 1.");
+        }
+        var item = requireActiveRegistration(regExternalId);
+
+        int eventRowId = registrationRepo.getEventRowIdByExternalId(regExternalId)
+            .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+        var event = eventRepo.getByRowId(eventRowId);
+        if (event.maxCapacity() != null) {
+            int currentTotal = capacityService.registeredGuestCount(eventRowId);
+            int remainingExcludingSelf = event.maxCapacity() - (currentTotal - item.guestCount());
+            if (newGuestCount > remainingExcludingSelf) {
+                throw new BusinessConflictException(
+                    "Not enough seats left for the requested guest count.",
+                    Map.of(
+                        "registrationId", regExternalId.toString(),
+                        "availableSpots", Math.max(0, remainingExcludingSelf)
+                    )
+                );
+            }
+        }
+
+        return registrationRepo.updateGuestCount(regExternalId, newGuestCount)
+            .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+    }
+
+    private EventRegistrationItem requireActiveRegistration(UUID regExternalId) {
+        var item = registrationRepo.findByExternalId(regExternalId)
+            .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+        if (item.isCancelled()) {
+            throw new BusinessConflictException(
+                "Registration is already cancelled.",
+                Map.of("registrationId", regExternalId.toString())
+            );
+        }
+        if (item.dateStart() == null || !item.dateStart().isAfter(Instant.now())) {
+            throw new BusinessConflictException(
+                "Event has already started; registration can no longer be modified.",
+                Map.of("registrationId", regExternalId.toString())
+            );
+        }
+        return item;
     }
 }

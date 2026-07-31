@@ -1,11 +1,14 @@
 package com.lan.app.service;
 
 import com.lan.app.domain.exception.BusinessConflictException;
+import com.lan.app.domain.exception.RegistrationNotFoundException;
+import com.lan.app.domain.exception.ValidationException;
 import com.lan.app.domain.model.Event;
 import com.lan.app.domain.model.EventGuest;
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.Id;
+import com.lan.app.domain.model.RegistrationActionResult;
 import com.lan.app.repository.EventGuestRepository;
 import com.lan.app.repository.EventRegistrationRepository;
 import com.lan.app.repository.EventRepository;
@@ -70,7 +73,7 @@ class EventRegistrationServiceTest {
             when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(false));
             when(capacityService.remainingCapacity(10, EVENT_ID.internalId())).thenReturn(5);
             when(guestRepo.get(GUEST_EXTERNAL_ID)).thenReturn(guest());
-            var expected = new EventRegistration(new Id(3, UUID.randomUUID()), EVENT_ID, GUEST_ID, 2, "comment", "web", false);
+            var expected = new EventRegistration(new Id(3, UUID.randomUUID()), EVENT_ID, GUEST_ID, 2, "comment", "web", false, false);
             when(registrationRepo.create(EVENT_ID, GUEST_ID, 2, "comment", "web")).thenReturn(expected);
 
             var result = service.create(cmd);
@@ -116,7 +119,7 @@ class EventRegistrationServiceTest {
             service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
             Long chatId = 123L;
             when(guestRepo.findByTelegramChatId(chatId)).thenReturn(Optional.of(guest()));
-            var item = new EventRegistrationItem("Событие", Instant.now());
+            var item = new EventRegistrationItem(UUID.randomUUID(), "Событие", Instant.now(), 2, false);
             when(registrationRepo.findByGuestRowId(GUEST_ID.internalId())).thenReturn(List.of(item));
 
             var result = service.findByChatId(chatId);
@@ -186,6 +189,117 @@ class EventRegistrationServiceTest {
             when(registrationRepo.getGuestRowIdByExternalId(regId)).thenThrow(new RuntimeException("boom"));
 
             assertDoesNotThrow(() -> service.storeTelegramChatId(regId, 999L));
+        }
+    }
+
+    @Nested
+    class Cancel {
+
+        static final UUID REG_ID = UUID.randomUUID();
+
+        @Test
+        @DisplayName("активная регистрация на будущее событие → отменяется")
+        void active_getsCancelled() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var item = new EventRegistrationItem(REG_ID, "Событие", Instant.now().plusSeconds(3600), 2, false);
+            var expected = new RegistrationActionResult("Событие", item.dateStart(), 2, 2, "Ivan", "Petrov", "+7900", "ivan");
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.of(item));
+            when(registrationRepo.cancel(REG_ID)).thenReturn(Optional.of(expected));
+
+            var result = service.cancel(REG_ID);
+
+            assertEquals(expected, result);
+        }
+
+        @Test
+        @DisplayName("регистрация не найдена → RegistrationNotFoundException")
+        void notFound_throws() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.empty());
+
+            assertThrows(RegistrationNotFoundException.class, () -> service.cancel(REG_ID));
+            verify(registrationRepo, never()).cancel(any());
+        }
+
+        @Test
+        @DisplayName("уже отменена → BusinessConflictException")
+        void alreadyCancelled_throwsConflict() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var item = new EventRegistrationItem(REG_ID, "Событие", Instant.now().plusSeconds(3600), 2, true);
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.of(item));
+
+            assertThrows(BusinessConflictException.class, () -> service.cancel(REG_ID));
+            verify(registrationRepo, never()).cancel(any());
+        }
+
+        @Test
+        @DisplayName("событие уже началось → BusinessConflictException")
+        void eventStarted_throwsConflict() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var item = new EventRegistrationItem(REG_ID, "Событие", Instant.now().minusSeconds(3600), 2, false);
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.of(item));
+
+            assertThrows(BusinessConflictException.class, () -> service.cancel(REG_ID));
+            verify(registrationRepo, never()).cancel(any());
+        }
+    }
+
+    @Nested
+    class UpdateGuestCount {
+
+        static final UUID REG_ID = UUID.randomUUID();
+
+        @Test
+        @DisplayName("достаточно мест → количество гостей обновляется")
+        void enoughCapacity_updates() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var item = new EventRegistrationItem(REG_ID, "Событие", Instant.now().plusSeconds(3600), 2, false);
+            var expected = new RegistrationActionResult("Событие", item.dateStart(), 2, 4, "Ivan", "Petrov", "+7900", "ivan");
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.of(item));
+            when(registrationRepo.getEventRowIdByExternalId(REG_ID)).thenReturn(Optional.of(EVENT_ID.internalId()));
+            when(eventRepo.getByRowId(EVENT_ID.internalId())).thenReturn(event(false));
+            when(capacityService.registeredGuestCount(EVENT_ID.internalId())).thenReturn(6);
+            when(registrationRepo.updateGuestCount(REG_ID, 4)).thenReturn(Optional.of(expected));
+
+            var result = service.updateGuestCount(REG_ID, 4);
+
+            assertEquals(expected, result);
+        }
+
+        @Test
+        @DisplayName("не хватает мест → BusinessConflictException, изменение не применяется")
+        void notEnoughCapacity_throwsConflict() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var item = new EventRegistrationItem(REG_ID, "Событие", Instant.now().plusSeconds(3600), 2, false);
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.of(item));
+            when(registrationRepo.getEventRowIdByExternalId(REG_ID)).thenReturn(Optional.of(EVENT_ID.internalId()));
+            when(eventRepo.getByRowId(EVENT_ID.internalId())).thenReturn(event(false));
+            when(capacityService.registeredGuestCount(EVENT_ID.internalId())).thenReturn(9);
+
+            var ex = assertThrows(BusinessConflictException.class, () -> service.updateGuestCount(REG_ID, 4));
+
+            assertEquals(3, ex.details().get("availableSpots"));
+            verify(registrationRepo, never()).updateGuestCount(any(), anyInt());
+        }
+
+        @Test
+        @DisplayName("новое количество меньше 1 → ValidationException")
+        void lessThanOne_throwsValidation() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+
+            assertThrows(ValidationException.class, () -> service.updateGuestCount(REG_ID, 0));
+            verifyNoInteractions(registrationRepo);
+        }
+
+        @Test
+        @DisplayName("уже отменена → BusinessConflictException")
+        void cancelled_throwsConflict() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var item = new EventRegistrationItem(REG_ID, "Событие", Instant.now().plusSeconds(3600), 2, true);
+            when(registrationRepo.findByExternalId(REG_ID)).thenReturn(Optional.of(item));
+
+            assertThrows(BusinessConflictException.class, () -> service.updateGuestCount(REG_ID, 4));
+            verify(registrationRepo, never()).updateGuestCount(any(), anyInt());
         }
     }
 }

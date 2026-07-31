@@ -763,7 +763,8 @@ class CoworkingGuestResourceTest {
         void withRegistrations_returnsList() {
             Instant eventDate = Instant.parse("2026-03-01T10:00:00Z");
             when(registrationService.findByGuestExternalId(GUEST_ID))
-                .thenReturn(List.of(new EventRegistrationItem("Мастер-класс по дереву", eventDate)));
+                .thenReturn(List.of(new EventRegistrationItem(
+                    java.util.UUID.randomUUID(), "Мастер-класс по дереву", eventDate, 1, false)));
 
             given()
                 .when().get(BASE_PATH + "/" + GUEST_ID + "/event-history")
