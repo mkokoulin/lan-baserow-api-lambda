@@ -62,9 +62,10 @@ class EventGuestServiceTest {
         }
 
         @Test
-        @DisplayName("chatId отсутствует (null) → создаёт нового гостя без поиска")
-        void nullChatId_createsGuestWithoutLookup() {
+        @DisplayName("chatId отсутствует (null) → пропускает поиск по chatId, но всё равно проверяет по телефону")
+        void nullChatId_skipsChatIdLookupButStillChecksPhone() {
             service = new EventGuestService(repo);
+            when(repo.findByPhone("+7900")).thenReturn(Optional.empty());
             var created = guest();
             when(repo.create("Ivan", "Petrov", "+7900", "ivan", "telegram-bot", null)).thenReturn(created);
 
@@ -72,6 +73,34 @@ class EventGuestServiceTest {
 
             assertEquals(created, result);
             verify(repo, never()).findByTelegramChatId(any());
+        }
+
+        @Test
+        @DisplayName("chatId не найден, но телефон уже привязан к существующему гостю → возвращает его (регистрация через сайт, chatId ещё неизвестен)")
+        void unknownChatId_existingPhone_reusesExistingGuest() {
+            service = new EventGuestService(repo);
+            when(repo.findByTelegramChatId(555L)).thenReturn(Optional.empty());
+            var existing = guest();
+            when(repo.findByPhone("+7900")).thenReturn(Optional.of(existing));
+
+            var result = service.create("Ivan", "Petrov", "+7900", "ivan", "telegram-bot", 555L);
+
+            assertEquals(existing, result);
+            verify(repo, never()).create(any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("телефон пустой/null → поиск по телефону не выполняется")
+        void blankPhone_skipsPhoneLookup() {
+            service = new EventGuestService(repo);
+            when(repo.findByTelegramChatId(555L)).thenReturn(Optional.empty());
+            var created = guest();
+            when(repo.create("Ivan", "Petrov", "", "ivan", "telegram-bot", 555L)).thenReturn(created);
+
+            var result = service.create("Ivan", "Petrov", "", "ivan", "telegram-bot", 555L);
+
+            assertEquals(created, result);
+            verify(repo, never()).findByPhone(any());
         }
     }
 }

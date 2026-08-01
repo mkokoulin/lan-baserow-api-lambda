@@ -9,5 +9,6 @@ public interface EventGuestRepository {
     EventGuest get(UUID externalId);
     EventGuest create(String firstName, String lastName, String phone, String telegram, String source, Long chatId);
     Optional<EventGuest> findByTelegramChatId(Long chatId);
+    Optional<EventGuest> findByPhone(String phone);
     void storeTelegramChatId(int guestRowId, Long chatId);
 }

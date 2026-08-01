@@ -58,6 +58,36 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
     }
 
     @Override
+    public Optional<EventGuest> findByPhone(String phone) {
+        for (String candidate : phoneVariants(phone)) {
+            var resp = execute(() -> client.findByPhoneRaw(guestsTableId, candidate));
+            if (resp.count() > 0 && !resp.results().isEmpty()) {
+                return Optional.of(mapper.toDomain(resp.results().getFirst()));
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Produces candidate phone strings for Baserow's equal filter.
+     * Uses %2B instead of + because JAX-RS passes + unencoded and Django decodes it as a space.
+     * @Encoded on the client method prevents double-encoding of %2B.
+     */
+    private static java.util.List<String> phoneVariants(String phone) {
+        if (phone == null) return java.util.List.of();
+        String digits = phone.replaceAll("[^\\d]", "");
+        if (digits.startsWith("374") && digits.length() == 11) {
+            String local = digits.substring(3);
+            return java.util.List.of("%2B" + digits, digits, local);
+        }
+        if (digits.length() == 8) {
+            String full = "374" + digits;
+            return java.util.List.of("%2B" + full, full, digits);
+        }
+        return java.util.List.of(phone.replace("+", "%2B"), phone);
+    }
+
+    @Override
     public void storeTelegramChatId(int guestRowId, Long chatId) {
         log.infof("PATCH telegram_chat_id=%d for guestRowId=%d tableId=%d", chatId, guestRowId, guestsTableId);
         try {

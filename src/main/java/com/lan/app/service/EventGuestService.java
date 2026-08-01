@@ -26,6 +26,15 @@ public class EventGuestService {
                 return existing.get();
             }
         }
+        // The site doesn't know the guest's chatId until they confirm via the bot's deep link,
+        // so a phone match is often the only way to catch a returning guest at creation time —
+        // this is what actually stops a second site registration from ever creating a duplicate.
+        if (phone != null && !phone.isBlank()) {
+            var existing = repo.findByPhone(phone);
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
         return repo.create(firstName, lastName, phone, telegram, source, chatId);
     }
 }
