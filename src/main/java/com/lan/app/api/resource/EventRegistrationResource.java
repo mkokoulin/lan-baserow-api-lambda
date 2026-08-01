@@ -141,12 +141,17 @@ public class EventRegistrationResource {
         if (chatId != null) {
             var cached = confirmStore.getGuestRowId(regId);
             log.infof("confirm regId=%s chatId=%d cacheHit=%b", regId, chatId, cached.isPresent());
+            java.util.UUID regExternalId = null;
+            try {
+                regExternalId = java.util.UUID.fromString(regId);
+            } catch (IllegalArgumentException ignored) {}
+            java.util.UUID finalRegExternalId = regExternalId;
             cached.ifPresentOrElse(
-                guestRowId -> service.storeTelegramChatIdForGuest(guestRowId, chatId),
+                guestRowId -> service.storeTelegramChatIdForGuest(finalRegExternalId, guestRowId, chatId),
                 () -> {
-                    try {
-                        service.storeTelegramChatId(java.util.UUID.fromString(regId), chatId);
-                    } catch (IllegalArgumentException ignored) {}
+                    if (finalRegExternalId != null) {
+                        service.storeTelegramChatId(finalRegExternalId, chatId);
+                    }
                 }
             );
         }

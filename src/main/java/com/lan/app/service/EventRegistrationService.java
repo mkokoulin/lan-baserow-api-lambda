@@ -81,12 +81,8 @@ public class EventRegistrationService {
         return registrationRepo.findByGuestRowId(guest.id().internalId());
     }
 
-    public void storeTelegramChatIdForGuest(int guestRowId, Long chatId) {
-        try {
-            guestRepo.storeTelegramChatId(guestRowId, chatId);
-        } catch (Exception e) {
-            log.warnf("Failed to store chatId=%d for guestRowId=%d: %s", chatId, guestRowId, e.getMessage());
-        }
+    public void storeTelegramChatIdForGuest(UUID regExternalId, int guestRowId, Long chatId) {
+        linkChatId(regExternalId, guestRowId, chatId);
     }
 
     public Optional<Long> markPaid(UUID regExternalId) {
@@ -105,11 +101,31 @@ public class EventRegistrationService {
         try {
             registrationRepo.getGuestRowIdByExternalId(regExternalId)
                     .ifPresentOrElse(
-                            guestRowId -> guestRepo.storeTelegramChatId(guestRowId, chatId),
+                            guestRowId -> linkChatId(regExternalId, guestRowId, chatId),
                             () -> log.warnf("No guest found for reg=%s, chatId not stored", regExternalId)
                     );
         } catch (Exception e) {
             log.warnf("Failed to store chatId=%d for reg=%s: %s", chatId, regExternalId, e.getMessage());
+        }
+    }
+
+    /**
+     * Links chatId to guestRowId — unless a different guest row already owns that chatId (e.g. the
+     * guest registered for a previous event and already has a canonical row), in which case this
+     * registration is repointed to the existing guest instead of creating a second chatId-linked
+     * duplicate that GET /events/v1/bot/my-registrations would never see.
+     */
+    private void linkChatId(UUID regExternalId, int guestRowId, Long chatId) {
+        try {
+            var existing = guestRepo.findByTelegramChatId(chatId);
+            if (existing.isPresent() && existing.get().id().internalId() != guestRowId && regExternalId != null) {
+                registrationRepo.relinkGuest(regExternalId, existing.get().id().internalId());
+            } else {
+                guestRepo.storeTelegramChatId(guestRowId, chatId);
+            }
+        } catch (Exception e) {
+            log.warnf("Failed to link chatId=%d for guestRowId=%d (reg=%s): %s",
+                chatId, guestRowId, regExternalId, e.getMessage());
         }
     }
 

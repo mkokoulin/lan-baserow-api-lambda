@@ -201,7 +201,7 @@ class EventRegistrationResourceTest {
                 .then()
                 .statusCode(200);
 
-            verify(service).storeTelegramChatIdForGuest(42, 12345L);
+            verify(service).storeTelegramChatIdForGuest(UUID.fromString(regId), 42, 12345L);
             verify(service, org.mockito.Mockito.never()).storeTelegramChatId(any(UUID.class), any());
         }
 

@@ -145,12 +145,55 @@ class EventRegistrationServiceTest {
     class StoreTelegramChatIdForGuest {
 
         @Test
+        @DisplayName("гость с этим chatId ещё не существует → chatId сохраняется на переданный guestRowId")
+        void noExistingGuest_storesChatIdOnGivenRow() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            UUID regId = UUID.randomUUID();
+            when(guestRepo.findByTelegramChatId(123L)).thenReturn(Optional.empty());
+
+            service.storeTelegramChatIdForGuest(regId, 1, 123L);
+
+            verify(guestRepo).storeTelegramChatId(1, 123L);
+            verify(registrationRepo, never()).relinkGuest(any(), anyInt());
+        }
+
+        @Test
+        @DisplayName("chatId уже привязан к ДРУГОЙ строке гостя → регистрация перелинковывается на существующего гостя, дубликат не трогается")
+        void existingGuestOnDifferentRow_relinksRegistrationInstead() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            UUID regId = UUID.randomUUID();
+            var existingGuest = new EventGuest(new Id(99, UUID.randomUUID()), "Ann", "Smith", "ann", "+7900", "web", 123L);
+            when(guestRepo.findByTelegramChatId(123L)).thenReturn(Optional.of(existingGuest));
+
+            service.storeTelegramChatIdForGuest(regId, 1, 123L);
+
+            verify(registrationRepo).relinkGuest(regId, 99);
+            verify(guestRepo, never()).storeTelegramChatId(anyInt(), any());
+        }
+
+        @Test
+        @DisplayName("chatId уже привязан к ТОЙ ЖЕ строке гостя → повторно ничего не делает")
+        void existingGuestOnSameRow_doesNothingExtra() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            UUID regId = UUID.randomUUID();
+            var existingGuest = new EventGuest(new Id(1, UUID.randomUUID()), "Ann", "Smith", "ann", "+7900", "web", 123L);
+            when(guestRepo.findByTelegramChatId(123L)).thenReturn(Optional.of(existingGuest));
+
+            service.storeTelegramChatIdForGuest(regId, 1, 123L);
+
+            verify(guestRepo).storeTelegramChatId(1, 123L);
+            verify(registrationRepo, never()).relinkGuest(any(), anyInt());
+        }
+
+        @Test
         @DisplayName("repo кидает исключение → проглатывается, не пробрасывается наружу")
         void repoThrows_isSwallowed() {
             service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            UUID regId = UUID.randomUUID();
+            when(guestRepo.findByTelegramChatId(123L)).thenReturn(Optional.empty());
             doThrow(new RuntimeException("boom")).when(guestRepo).storeTelegramChatId(1, 123L);
 
-            assertDoesNotThrow(() -> service.storeTelegramChatIdForGuest(1, 123L));
+            assertDoesNotThrow(() -> service.storeTelegramChatIdForGuest(regId, 1, 123L));
         }
     }
 

@@ -11,6 +11,7 @@ import com.lan.app.infrastructure.baserow.client.BaserowEventRegistrationClient;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationCancelledRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationGuestCountRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationGuestLinkRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventRegistrationMapper;
 import com.lan.app.repository.EventRegistrationRepository;
@@ -234,6 +235,18 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
         }
         return new RegistrationActionResult(eventName, dateStart, previousGuestCount, newGuestCount,
             firstName, lastName, phone, telegram);
+    }
+
+    @Override
+    public void relinkGuest(UUID regExternalId, int newGuestRowId) {
+        var response = execute(() -> client.findByExternalIdRaw(registrationsTableId, regExternalId));
+        if (response.results().isEmpty()) {
+            log.warnf("Registration not found for externalId=%s, cannot relink guest", regExternalId);
+            return;
+        }
+        var reg = response.results().getFirst();
+        execute(() -> client.updateGuestLink(registrationsTableId, reg.id(),
+            new UpdateRegistrationGuestLinkRequest(List.of(newGuestRowId))));
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.lan.app.infrastructure.baserow.dto.BaserowRegistrationRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventRegistrationRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationCancelledRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationGuestCountRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationGuestLinkRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateRegistrationIsPaidRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.validation.Valid;
@@ -106,5 +107,14 @@ public interface BaserowEventRegistrationClient {
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId,
         @NotNull UpdateRegistrationGuestCountRequest body
+    );
+
+    @PATCH
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @Path("/{tableId}/{rowId}/")
+    BaserowRegistrationRow updateGuestLink(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull UpdateRegistrationGuestLinkRequest body
     );
 }

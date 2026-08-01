@@ -23,4 +23,6 @@ public interface EventRegistrationRepository {
     Map<Integer, Integer> countGuestsByEvent();
     Optional<RegistrationActionResult> cancel(UUID externalId);
     Optional<RegistrationActionResult> updateGuestCount(UUID externalId, int newGuestCount);
+    /** Repoints this registration's guest link to a different (already-existing) guest row — used to fold a freshly-created duplicate guest back onto the canonical one for a chatId. */
+    void relinkGuest(UUID regExternalId, int newGuestRowId);
 }
