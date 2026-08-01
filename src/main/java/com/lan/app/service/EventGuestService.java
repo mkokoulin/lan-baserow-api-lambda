@@ -20,6 +20,12 @@ public class EventGuestService {
     }
 
     public EventGuest create(String firstName, String lastName, String phone, String telegram, String source, Long chatId) {
+        if (chatId != null) {
+            var existing = repo.findByTelegramChatId(chatId);
+            if (existing.isPresent()) {
+                return existing.get();
+            }
+        }
         return repo.create(firstName, lastName, phone, telegram, source, chatId);
     }
 }
