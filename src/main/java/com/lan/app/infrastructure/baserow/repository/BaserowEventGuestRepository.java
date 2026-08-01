@@ -59,32 +59,27 @@ public class BaserowEventGuestRepository extends AbstractBaserowRepository imple
 
     @Override
     public Optional<EventGuest> findByPhone(String phone) {
-        for (String candidate : phoneVariants(phone)) {
-            var resp = execute(() -> client.findByPhoneRaw(guestsTableId, candidate));
-            if (resp.count() > 0 && !resp.results().isEmpty()) {
-                return Optional.of(mapper.toDomain(resp.results().getFirst()));
-            }
-        }
-        return Optional.empty();
+        String needle = normalizedLocalDigits(phone);
+        if (needle.isEmpty()) return Optional.empty();
+        var all = execute(() -> client.listAllRaw(guestsTableId).results());
+        return all.stream()
+            .filter(row -> needle.equals(normalizedLocalDigits(row.phone())))
+            .findFirst()
+            .map(mapper::toDomain);
     }
 
     /**
-     * Produces candidate phone strings for Baserow's equal filter.
-     * Uses %2B instead of + because JAX-RS passes + unencoded and Django decodes it as a space.
-     * @Encoded on the client method prevents double-encoding of %2B.
+     * Reduces a phone number to its bare local-number digits, ignoring formatting (spaces,
+     * dashes, "+") and the Armenian country code, so "+374 91 083 182", "37491083182" and
+     * "91083182" all compare equal regardless of how each was typed/stored.
      */
-    private static java.util.List<String> phoneVariants(String phone) {
-        if (phone == null) return java.util.List.of();
+    private static String normalizedLocalDigits(String phone) {
+        if (phone == null) return "";
         String digits = phone.replaceAll("[^\\d]", "");
-        if (digits.startsWith("374") && digits.length() == 11) {
-            String local = digits.substring(3);
-            return java.util.List.of("%2B" + digits, digits, local);
+        if (digits.startsWith("374") && digits.length() > 8) {
+            return digits.substring(digits.length() - 8);
         }
-        if (digits.length() == 8) {
-            String full = "374" + digits;
-            return java.util.List.of("%2B" + full, full, digits);
-        }
-        return java.util.List.of(phone.replace("+", "%2B"), phone);
+        return digits;
     }
 
     @Override

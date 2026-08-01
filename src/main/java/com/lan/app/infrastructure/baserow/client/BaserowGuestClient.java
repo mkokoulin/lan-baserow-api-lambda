@@ -68,6 +68,18 @@ public interface BaserowGuestClient {
         @Encoded @QueryParam("filter__phone__equal") String phone
     );
 
+    // Unfiltered — used when phone numbers must be matched by normalized digits rather than an
+    // exact string (Baserow's equal filter can't tolerate formatting differences like "+374 91
+    // 083 182" vs "37491083182"). Same page-size ceiling as other listAllRaw calls in this
+    // codebase — fine at this system's scale.
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "200")
+    BaserowListResponse<BaserowGuestRow> listAllRaw(
+        @PathParam("tableId") int tableId
+    );
+
     @POST
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
