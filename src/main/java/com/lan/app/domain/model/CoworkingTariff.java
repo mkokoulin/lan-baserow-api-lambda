@@ -11,5 +11,8 @@ public record CoworkingTariff(
     boolean filterCoffeeAndTea,
     boolean printoutScan,
     boolean luggageStorage,
-    CoworkingTariffType type
+    CoworkingTariffType type,
+    Integer discount,
+    String discountDescriptionRu,
+    String discountDescriptionEn
 ) {}

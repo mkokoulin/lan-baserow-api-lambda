@@ -17,7 +17,10 @@ public class ApiCoworkingTariffMapper {
             r.filterCoffeeAndTea(),
             r.printoutScan(),
             r.luggageStorage(),
-            r.type()
+            r.type(),
+            r.discount(),
+            r.discountDescriptionRu(),
+            r.discountDescriptionEn()
         );
     }
 }

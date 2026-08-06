@@ -18,7 +18,10 @@ public class BaserowCoworkingTariffMapper {
             row.filterCoffeeOrTea(),
             row.printoutScan(),
             row.luggageStorage(),
-            CoworkingTariffType.fromString(row.type() != null ? row.type().value() : null)
+            CoworkingTariffType.fromString(row.type() != null ? row.type().value() : null),
+            row.discount(),
+            row.discountDescriptionRu(),
+            row.discountDescriptionEn()
         );
     }
 }

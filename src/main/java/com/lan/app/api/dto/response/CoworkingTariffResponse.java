@@ -75,6 +75,24 @@ public record CoworkingTariffResponse(
         required = true,
         enumeration = {"long", "short"}
     )
-    CoworkingTariffType type
+    CoworkingTariffType type,
+
+    @Schema(
+        description = "Discount amount in AMD subtracted from the price; absent or null if no discount is active",
+        examples = "5000"
+    )
+    Integer discount,
+
+    @Schema(
+        description = "Localized (RU) description of the discount, shown as a tooltip; omit/empty to hide the tooltip icon",
+        examples = "Скидка при продлении абонемента"
+    )
+    String discountDescriptionRu,
+
+    @Schema(
+        description = "Localized (EN) description of the discount, shown as a tooltip; omit/empty to hide the tooltip icon",
+        examples = "Discount on subscription renewal"
+    )
+    String discountDescriptionEn
 ) {
 }

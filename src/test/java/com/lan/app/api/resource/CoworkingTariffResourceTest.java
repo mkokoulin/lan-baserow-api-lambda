@@ -30,7 +30,8 @@ class CoworkingTariffResourceTest {
 
     static CoworkingTariff tariff() {
         return new CoworkingTariff(
-            TARIFF_ID, "Day Pass", 1500, "2 hours", false, true, false, true, CoworkingTariffType.SHORT
+            TARIFF_ID, "Day Pass", 1500, "2 hours", false, true, false, true, CoworkingTariffType.SHORT,
+            500, "Скидка на день", "Day discount"
         );
     }
 
@@ -61,7 +62,10 @@ class CoworkingTariffResourceTest {
                 .body("[0].filterCoffeeAndTea", equalTo(true))
                 .body("[0].printoutScan",   equalTo(false))
                 .body("[0].luggageStorage", equalTo(true))
-                .body("[0].type",           equalTo("SHORT"));
+                .body("[0].type",           equalTo("SHORT"))
+                .body("[0].discount",       equalTo(500))
+                .body("[0].discountDescriptionRu", equalTo("Скидка на день"))
+                .body("[0].discountDescriptionEn", equalTo("Day discount"));
         }
 
         @Test

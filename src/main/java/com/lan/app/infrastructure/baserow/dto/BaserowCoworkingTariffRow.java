@@ -18,6 +18,9 @@ public record BaserowCoworkingTariffRow(
     @NotNull @JsonProperty("filter_coffee_or_tea") boolean filterCoffeeOrTea,
     @NotNull @JsonProperty("printout_scan") boolean printoutScan,
     @NotNull @JsonProperty("luggage_storage") boolean luggageStorage,
-    @Nullable @JsonProperty("type") BaserowSingleSelect type
+    @Nullable @JsonProperty("type") BaserowSingleSelect type,
+    @Nullable @JsonProperty("discount") Integer discount,
+    @Nullable @JsonProperty("discount_description_ru") String discountDescriptionRu,
+    @Nullable @JsonProperty("discount_description_en") String discountDescriptionEn
 ) {
 }
