@@ -113,9 +113,10 @@ public class EventRegistrationResource {
     ) {
         var command = mapper.toCommand(req);
         var created = service.create(command);
-        confirmStore.storeGuestRowId(created.id().externalId().toString(), created.guestId().internalId());
-        return Response.created(URI.create("/events/registrations/" + created.id().externalId()))
-            .entity(mapper.toResponse(created))
+        var registration = created.registration();
+        confirmStore.storeGuestRowId(registration.id().externalId().toString(), registration.guestId().internalId());
+        return Response.created(URI.create("/events/registrations/" + registration.id().externalId()))
+            .entity(mapper.toResponse(registration, created.isFirstRegistration()))
             .build();
     }
 

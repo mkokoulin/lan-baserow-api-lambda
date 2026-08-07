@@ -7,6 +7,7 @@ import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.Id;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
+import com.lan.app.service.EventRegistrationService.EventRegistrationCreated;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -61,7 +62,7 @@ class EventRegistrationResourceTest {
         @DisplayName("валидный запрос → 201 с Location")
         void validRequest_returns201() {
             UUID regId = UUID.randomUUID();
-            when(service.create(any())).thenReturn(registration(regId));
+            when(service.create(any())).thenReturn(new EventRegistrationCreated(registration(regId), true));
 
             given()
                 .contentType(ContentType.JSON)

@@ -41,7 +41,10 @@ public class EventRegistrationService {
         this.capacityService = capacityService;
     }
 
-    public EventRegistration create(CreateEventRegistrationCommand cmd) {
+    /** Result of creating a registration, including whether it's the guest's first-ever event registration. */
+    public record EventRegistrationCreated(EventRegistration registration, boolean isFirstRegistration) {}
+
+    public EventRegistrationCreated create(CreateEventRegistrationCommand cmd) {
         var event = eventRepo.get(cmd.eventId());
         if (event.soldOut()) {
             throw new BusinessConflictException(
@@ -61,13 +64,16 @@ public class EventRegistrationService {
         }
         var guest = guestRepo.get(cmd.guestId());
 
-        return registrationRepo.create(
+        boolean isFirstRegistration = registrationRepo.findByGuestRowId(guest.id().internalId()).isEmpty();
+
+        var created = registrationRepo.create(
             event.id(),
             guest.id(),
             cmd.guestCount(),
             cmd.comment(),
             cmd.source()
         );
+        return new EventRegistrationCreated(created, isFirstRegistration);
     }
 
     public List<EventRegistrationItem> findByChatId(Long chatId) {

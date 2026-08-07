@@ -19,7 +19,7 @@ public class EventRegistrationMapper {
         );
     }
 
-    public EventRegistrationResponse toResponse(EventRegistration registration) {
+    public EventRegistrationResponse toResponse(EventRegistration registration, boolean isFirstRegistration) {
         var eventIdStr = registration.eventId().externalId() != null
             ? registration.eventId().externalId().toString()
             : String.valueOf(registration.eventId().internalId());
@@ -34,7 +34,8 @@ public class EventRegistrationMapper {
             guestIdStr,
             registration.comment(),
             registration.guestCount(),
-            registration.isPaid()
+            registration.isPaid(),
+            isFirstRegistration
         );
     }
 }

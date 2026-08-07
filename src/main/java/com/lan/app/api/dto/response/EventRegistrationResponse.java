@@ -48,6 +48,12 @@ public record EventRegistrationResponse(
         description = "Whether this registration has been marked as paid",
         examples = "false"
     )
-    boolean isPaid
+    boolean isPaid,
+
+    @Schema(
+        description = "Whether this is the guest's first-ever registration for any event",
+        examples = "false"
+    )
+    boolean isFirstRegistration
 ) {
 }

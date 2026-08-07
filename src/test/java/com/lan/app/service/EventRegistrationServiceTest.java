@@ -73,12 +73,32 @@ class EventRegistrationServiceTest {
             when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(false));
             when(capacityService.remainingCapacity(10, EVENT_ID.internalId())).thenReturn(5);
             when(guestRepo.get(GUEST_EXTERNAL_ID)).thenReturn(guest());
+            when(registrationRepo.findByGuestRowId(GUEST_ID.internalId())).thenReturn(List.of());
             var expected = new EventRegistration(new Id(3, UUID.randomUUID()), EVENT_ID, GUEST_ID, 2, "comment", "web", false, false);
             when(registrationRepo.create(EVENT_ID, GUEST_ID, 2, "comment", "web")).thenReturn(expected);
 
             var result = service.create(cmd);
 
-            assertEquals(expected, result);
+            assertEquals(expected, result.registration());
+            assertTrue(result.isFirstRegistration());
+        }
+
+        @Test
+        @DisplayName("у гостя уже есть регистрации → isFirstRegistration = false")
+        void guestHasPriorRegistrations_notFirstRegistration() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var cmd = new CreateEventRegistrationCommand(EVENT_EXTERNAL_ID, GUEST_EXTERNAL_ID, "comment", 2, "web");
+            when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(false));
+            when(capacityService.remainingCapacity(10, EVENT_ID.internalId())).thenReturn(5);
+            when(guestRepo.get(GUEST_EXTERNAL_ID)).thenReturn(guest());
+            when(registrationRepo.findByGuestRowId(GUEST_ID.internalId())).thenReturn(
+                List.of(new EventRegistrationItem(UUID.randomUUID(), "Прошлое событие", Instant.now(), 1, false)));
+            var expected = new EventRegistration(new Id(3, UUID.randomUUID()), EVENT_ID, GUEST_ID, 2, "comment", "web", false, false);
+            when(registrationRepo.create(EVENT_ID, GUEST_ID, 2, "comment", "web")).thenReturn(expected);
+
+            var result = service.create(cmd);
+
+            assertFalse(result.isFirstRegistration());
         }
 
         @Test
