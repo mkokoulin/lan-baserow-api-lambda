@@ -8,6 +8,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Set;
 
 import com.lan.app.domain.model.Event;
 import com.lan.app.domain.model.Id;
@@ -22,6 +23,7 @@ public class BaserowEventMapper {
     private static final Logger log = Logger.getLogger(BaserowEventMapper.class);
     // Armenia is UTC+4 year-round (no DST since 2012)
     private static final ZoneOffset YEREVAN = ZoneOffset.ofHours(4);
+    private static final Set<String> VALID_LANGUAGES = Set.of("ru", "en", "hy");
 
     public Event toDomain(BaserowEventRow event, boolean soldOut, Integer availableSpots) {
         var notifications = event.notifications() != null
@@ -53,8 +55,19 @@ public class BaserowEventMapper {
             imageUrl,
             event.maxCapacity(),
             soldOut,
-            availableSpots
+            availableSpots,
+            normalizeLanguage(event.language())
         );
+    }
+
+    /**
+     * Only ru/en/hy are recognized; anything else (blank, typo, unset Baserow field) maps to
+     * null so the frontend simply hides the language badge instead of showing garbage.
+     */
+    private static String normalizeLanguage(String raw) {
+        if (raw == null) return null;
+        String normalized = raw.trim().toLowerCase();
+        return VALID_LANGUAGES.contains(normalized) ? normalized : null;
     }
 
     /**

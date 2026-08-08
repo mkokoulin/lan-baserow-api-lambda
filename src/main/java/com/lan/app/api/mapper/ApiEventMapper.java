@@ -30,7 +30,8 @@ public class ApiEventMapper {
             event.imageUrl(),
             event.maxCapacity(),
             event.soldOut(),
-            event.availableSpots()
+            event.availableSpots(),
+            event.language()
         );
     }
 }

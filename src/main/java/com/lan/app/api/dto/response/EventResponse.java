@@ -176,6 +176,14 @@ public record EventResponse(
         examples = "12",
         nullable = true
     )
-    Integer availableSpots
+    Integer availableSpots,
+
+    @Schema(
+        description = "Language the event is conducted in. Null when unset or not one of the recognized " +
+            "values (ru, en, hy) — the frontend hides the language indicator in that case.",
+        examples = "ru",
+        nullable = true
+    )
+    String language
 ) {
 }

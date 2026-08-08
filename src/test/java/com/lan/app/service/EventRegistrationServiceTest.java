@@ -54,7 +54,7 @@ class EventRegistrationServiceTest {
         return new Event(
             EVENT_ID, "Событие", Instant.now(), Instant.now(), "d",
             null, null, null, null, true, List.of(), null, null,
-            true, true, false, BigDecimal.ZERO, null, 10, soldOut, null
+            true, true, false, BigDecimal.ZERO, null, 10, soldOut, null, null
         );
     }
 

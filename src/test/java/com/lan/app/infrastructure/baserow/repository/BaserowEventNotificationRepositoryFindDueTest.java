@@ -98,7 +98,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
         return new BaserowEventRow(
             EVENT_ROW_ID, UUID.randomUUID(), "LAN Party",
             iso(EVENT_START), null, "desc", null, URI.create("https://example.com"),
-            null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null
+            null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null, null
         );
     }
 
@@ -283,7 +283,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             var badEvent = new BaserowEventRow(
                 EVENT_ROW_ID, UUID.randomUUID(), "Broken Event",
                 "not-a-date", null, "desc", null, URI.create("https://example.com"),
-                null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null
+                null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null, null
             );
             stubEvents(badEvent);
 
@@ -315,7 +315,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             var farFutureEvent = new BaserowEventRow(
                 otherEventRowId, UUID.randomUUID(), "Far Future Event",
                 iso(EVENT_START.plusDays(30)), null, "desc", null, URI.create("https://example.com"),
-                null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null
+                null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null, null
             );
             stubEvents(event(), farFutureEvent);
             stubNoExistingAnchor();

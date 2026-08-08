@@ -26,5 +26,6 @@ public record Event(
     String imageUrl,
     Integer maxCapacity,
     boolean soldOut,
-    Integer availableSpots
+    Integer availableSpots,
+    String language
 ) {}

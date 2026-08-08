@@ -30,5 +30,6 @@ public record BaserowEventRow(
     @JsonProperty("requires_prepayment") Boolean requiresPrepayment,
     @JsonProperty("price") java.math.BigDecimal price,
     @JsonProperty("image") List<BaserowFile> image,
-    @JsonProperty("max_capacity") Integer maxCapacity
+    @JsonProperty("max_capacity") Integer maxCapacity,
+    @JsonProperty("language") String language
 ) {}
