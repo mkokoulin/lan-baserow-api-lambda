@@ -56,7 +56,7 @@ public class BaserowEventMapper {
             event.maxCapacity(),
             soldOut,
             availableSpots,
-            normalizeLanguage(event.language())
+            normalizeLanguage(event.language() != null ? event.language().value() : null)
         );
     }
 

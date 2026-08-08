@@ -1,6 +1,7 @@
 package com.lan.app.infrastructure.baserow.dto;
 import com.baserow.dto.BaserowFile;
 import com.baserow.dto.BaserowLinkToTable;
+import com.baserow.dto.BaserowSingleSelect;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
@@ -31,5 +32,5 @@ public record BaserowEventRow(
     @JsonProperty("price") java.math.BigDecimal price,
     @JsonProperty("image") List<BaserowFile> image,
     @JsonProperty("max_capacity") Integer maxCapacity,
-    @JsonProperty("language") String language
+    @JsonProperty("language") BaserowSingleSelect language
 ) {}
