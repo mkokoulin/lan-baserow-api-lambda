@@ -1,6 +1,7 @@
 package com.lan.app.api.resource;
 
 import com.lan.app.api.dto.request.GuestCountUpdateRequest;
+import com.lan.app.api.dto.request.HeardAboutSourceAnswerRequest;
 import com.lan.app.api.dto.request.NotificationActionRequest;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.api.dto.response.BotRegistrationActionResponse;
@@ -8,10 +9,13 @@ import com.lan.app.api.dto.response.BotRegistrationDto;
 import com.lan.app.api.dto.response.DigestSubscriberDto;
 import com.lan.app.api.dto.response.EventCapacityAlertDueResponse;
 import com.lan.app.api.dto.response.EventNotificationDueResponse;
+import com.lan.app.api.dto.response.EventSurveyDueResponse;
+import com.lan.app.api.dto.response.HeardAboutSourceDueResponse;
 import com.lan.app.api.dto.response.RecipientDto;
 import com.lan.app.service.EventCapacityAlertService;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
+import com.lan.app.service.HeardAboutSourceService;
 import com.lan.app.service.WeeklyDigestService;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.*;
@@ -38,17 +42,20 @@ public class BotResource {
     private final EventNotificationService notificationService;
     private final EventCapacityAlertService capacityAlertService;
     private final WeeklyDigestService weeklyDigestService;
+    private final HeardAboutSourceService heardAboutSourceService;
 
     public BotResource(
         EventRegistrationService service,
         EventNotificationService notificationService,
         EventCapacityAlertService capacityAlertService,
-        WeeklyDigestService weeklyDigestService
+        WeeklyDigestService weeklyDigestService,
+        HeardAboutSourceService heardAboutSourceService
     ) {
         this.service = service;
         this.notificationService = notificationService;
         this.capacityAlertService = capacityAlertService;
         this.weeklyDigestService = weeklyDigestService;
+        this.heardAboutSourceService = heardAboutSourceService;
     }
 
     @GET
@@ -272,6 +279,78 @@ public class BotResource {
     @Operation(operationId = "botWeeklyDigestUnsubscribe", summary = "Opt a guest out of the weekly events digest")
     public Response unsubscribeFromWeeklyDigest(@PathParam("guestRowId") int guestRowId) {
         weeklyDigestService.unsubscribe(guestRowId);
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/event-surveys/due")
+    @Operation(
+        operationId = "botDueEventSurveys",
+        summary = "Return post-event feedback surveys that are due to be sent now",
+        description = "Returns guests who confirmed attendance (via the day-before/day-of reminder) for an " +
+            "event that ended the previous day, and haven't been sent the feedback survey yet. Each " +
+            "returned recipient is immediately marked as surveyed to prevent double-delivery."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "List of due survey recipients (may be empty)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = EventSurveyDueResponse.class)
+            )
+        )
+    })
+    public Response dueEventSurveys() {
+        var due = notificationService.findSurveyDue().stream()
+            .map(s -> new EventSurveyDueResponse(s.eventRowId(), s.eventName(), s.guestRowId(), s.registrationRowId(), s.chatId()))
+            .toList();
+        return Response.ok(due).build();
+    }
+
+    @GET
+    @Path("/heard-about-source/due")
+    @Operation(
+        operationId = "botDueHeardAboutSource",
+        summary = "Return guests due for the \"how did you hear about us?\" survey",
+        description = "Returns guests with a linked Telegram chat whose Guests-table row was created " +
+            "24h+ ago, haven't already been surveyed, and where the current time is within coworking " +
+            "working hours (weekdays 10:00-22:00, weekends 10:00-16:00, Yerevan). Each returned guest " +
+            "is immediately marked as surveyed to prevent double-delivery."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "List of due survey recipients (may be empty)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = HeardAboutSourceDueResponse.class)
+            )
+        )
+    })
+    public Response dueHeardAboutSource() {
+        var due = heardAboutSourceService.findDue().stream()
+            .map(r -> new HeardAboutSourceDueResponse(r.chatId(), r.guestRowId()))
+            .toList();
+        return Response.ok(due).build();
+    }
+
+    @POST
+    @Path("/heard-about-source/{guestRowId}/answer")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+        operationId = "botSaveHeardAboutSourceAnswer",
+        summary = "Record a guest's \"how did you hear about us?\" answer",
+        description = "Called once the guest has tapped a source button and optionally answered (or " +
+            "skipped) the follow-up comment prompt."
+    )
+    public Response saveHeardAboutSourceAnswer(
+        @PathParam("guestRowId") int guestRowId,
+        HeardAboutSourceAnswerRequest req
+    ) {
+        String source = req != null ? req.source() : null;
+        String comment = req != null ? req.comment() : null;
+        heardAboutSourceService.saveAnswer(guestRowId, source, comment);
         return Response.ok().build();
     }
 }

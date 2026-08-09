@@ -33,6 +33,15 @@ public record CreateReviewRequest(
         description = "Review text",
         examples = "Great coworking space, very comfortable!"
     )
-    String text
+    String text,
+
+    @Schema(description = "Optional Baserow row id of the event this review is about")
+    Integer eventRowId,
+
+    @Schema(description = "Optional Baserow row id of the guest who submitted this review")
+    Integer guestRowId,
+
+    @Schema(description = "Optional Baserow row id of the event registration this review is about")
+    Integer registrationRowId
 ) {
 }

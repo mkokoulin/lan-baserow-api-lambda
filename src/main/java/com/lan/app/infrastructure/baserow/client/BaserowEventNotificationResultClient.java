@@ -5,6 +5,7 @@ import com.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.BaserowEventNotificationResultRow;
 import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationResultRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateNotificationResultActionRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateSurveySentRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -45,5 +46,14 @@ public interface BaserowEventNotificationResultClient {
         @PathParam("tableId") int tableId,
         @PathParam("rowId") int rowId,
         UpdateNotificationResultActionRequest body
+    );
+
+    @PATCH
+    @Path("/{tableId}/{rowId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    BaserowEventNotificationResultRow updateSurveySent(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        UpdateSurveySentRequest body
     );
 }

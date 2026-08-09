@@ -2,6 +2,7 @@ package com.lan.app.api.resource;
 
 import com.lan.app.domain.model.Review;
 import com.lan.app.service.ReviewService;
+import com.lan.app.service.command.CreateReviewCommand;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -15,6 +16,8 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -86,6 +89,59 @@ class CoworkingReviewResourceTest {
                 .header("Location", containsString(review().id().toString()))
                 .body("authorName", equalTo("Ivan Petrov"))
                 .body("rating",     equalTo(5));
+        }
+
+        @Test
+        @DisplayName("с eventRowId/guestRowId/registrationRowId → доходят до CreateReviewCommand")
+        void withEventLinks_passesThroughToCommand() {
+            when(service.create(org.mockito.ArgumentMatchers.any())).thenReturn(review());
+
+            given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "authorName": "Ivan Petrov",
+                        "rating": 5,
+                        "text": "Great event!",
+                        "eventRowId": 42,
+                        "guestRowId": 101,
+                        "registrationRowId": 7
+                    }
+                """)
+                .when().post(BASE_PATH)
+                .then()
+                .statusCode(201);
+
+            var captor = org.mockito.ArgumentCaptor.forClass(CreateReviewCommand.class);
+            org.mockito.Mockito.verify(service).create(captor.capture());
+            assertEquals(42, captor.getValue().eventRowId());
+            assertEquals(101, captor.getValue().guestRowId());
+            assertEquals(7, captor.getValue().registrationRowId());
+        }
+
+        @Test
+        @DisplayName("без event-полей (обычный отзыв) → CreateReviewCommand с null-ссылками")
+        void withoutEventLinks_commandHasNullLinks() {
+            when(service.create(org.mockito.ArgumentMatchers.any())).thenReturn(review());
+
+            given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "authorName": "Ivan Petrov",
+                        "rating": 5,
+                        "text": "Great place!"
+                    }
+                """)
+                .when().post(BASE_PATH)
+                .then()
+                .statusCode(201);
+
+            var captor = org.mockito.ArgumentCaptor.forClass(CreateReviewCommand.class);
+            org.mockito.Mockito.verify(service).create(captor.capture());
+            assertNull(captor.getValue().eventRowId());
+            assertNull(captor.getValue().guestRowId());
+            assertNull(captor.getValue().registrationRowId());
         }
 
         @Test

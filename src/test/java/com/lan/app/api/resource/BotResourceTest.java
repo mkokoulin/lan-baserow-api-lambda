@@ -7,6 +7,7 @@ import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.NotificationRecipient;
 import com.lan.app.domain.model.DigestSubscriber;
+import com.lan.app.domain.model.EventSurveyDue;
 import com.lan.app.domain.model.RegistrationActionResult;
 import com.lan.app.service.EventCapacityAlertService;
 import com.lan.app.service.EventNotificationService;
@@ -427,6 +428,41 @@ class BotResourceTest {
                 .then()
                 .statusCode(409)
                 .body("details.availableSpots", equalTo(1));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /events/v1/bot/event-surveys/due")
+    class DueEventSurveys {
+
+        @Test
+        @DisplayName("есть получатели → 200 с маппингом полей")
+        void withRecipients_returnsMappedList() {
+            when(notificationService.findSurveyDue())
+                .thenReturn(List.of(new EventSurveyDue(42, "Событие", 101, 7, 555000111L)));
+
+            given()
+                .when().get(BASE_PATH + "/event-surveys/due")
+                .then()
+                .statusCode(200)
+                .body("$",                    hasSize(1))
+                .body("[0].eventRowId",        equalTo(42))
+                .body("[0].eventName",         equalTo("Событие"))
+                .body("[0].guestRowId",        equalTo(101))
+                .body("[0].registrationRowId", equalTo(7))
+                .body("[0].chatId",            equalTo(555000111));
+        }
+
+        @Test
+        @DisplayName("нет получателей → 200 пустой массив")
+        void noRecipients_returnsEmptyList() {
+            when(notificationService.findSurveyDue()).thenReturn(List.of());
+
+            given()
+                .when().get(BASE_PATH + "/event-surveys/due")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(0));
         }
     }
 }

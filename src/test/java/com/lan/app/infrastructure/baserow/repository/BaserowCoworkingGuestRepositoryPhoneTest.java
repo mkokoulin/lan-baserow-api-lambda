@@ -45,7 +45,7 @@ class BaserowCoworkingGuestRepositoryPhoneTest {
         return new BaserowGuestRow(
             661,
             UUID.fromString("ca80b87b-b328-422f-8099-723a6ad79ebf"),
-            "Misha", "K", phone, "sprmk", 299019145L, null, null
+            "Misha", "K", phone, "sprmk", 299019145L, null, null, null, null, null, null
         );
     }
 
@@ -175,7 +175,7 @@ class BaserowCoworkingGuestRepositoryPhoneTest {
             when(client.patchChatId(TABLE_ID, 661, new LinkChatIdRowRequest(CHAT_ID)))
                 .thenReturn(new BaserowGuestRow(661, found.externalId(),
                     found.firstName(), found.lastName(), found.phone(),
-                    found.telegram(), CHAT_ID, null, null));
+                    found.telegram(), CHAT_ID, null, null, null, null, null, null));
 
             var result = repo.linkChatIdByPhone(PHONE_E164, CHAT_ID);
 

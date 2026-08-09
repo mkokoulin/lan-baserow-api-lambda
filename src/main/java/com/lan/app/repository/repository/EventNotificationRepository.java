@@ -3,6 +3,7 @@ package com.lan.app.repository.repository;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventNotificationPreview;
+import com.lan.app.domain.model.EventSurveyDue;
 
 import java.util.List;
 
@@ -14,4 +15,5 @@ public interface EventNotificationRepository {
     void markFailed(int rowId);
     void saveResults(int notificationRowId, List<NotificationResultRequest> results);
     void recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action);
+    List<EventSurveyDue> findSurveyDue();
 }

@@ -97,7 +97,10 @@ public class CoworkingReviewResource {
         var created = service.create(new CreateReviewCommand(
             request.authorName(),
             request.rating(),
-            request.text()
+            request.text(),
+            request.eventRowId(),
+            request.guestRowId(),
+            request.registrationRowId()
         ));
         var response = mapper.toResponse(created);
         return Response.created(URI.create("/v1/reviews/" + created.id()))

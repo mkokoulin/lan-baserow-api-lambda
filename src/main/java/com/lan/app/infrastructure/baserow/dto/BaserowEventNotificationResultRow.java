@@ -15,5 +15,6 @@ public record BaserowEventNotificationResultRow(
     @JsonProperty("status") BaserowSingleSelect status,
     @JsonProperty("action") BaserowSingleSelect action,
     @JsonProperty("failure_reason") String failureReason,
-    @JsonProperty("sent_at") String sentAt
+    @JsonProperty("sent_at") String sentAt,
+    @JsonProperty("survey_sent") Boolean surveySent
 ) {}

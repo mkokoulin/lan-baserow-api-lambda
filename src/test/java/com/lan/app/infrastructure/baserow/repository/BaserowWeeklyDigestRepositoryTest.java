@@ -37,7 +37,7 @@ class BaserowWeeklyDigestRepositoryTest {
     static BaserowGuestRow guest(int rowId, Long chatId, Boolean digestSubscribed) {
         return new BaserowGuestRow(
             rowId, UUID.randomUUID(), "Guest", String.valueOf(rowId), "+374",
-            "guest" + rowId, chatId, null, digestSubscribed
+            "guest" + rowId, chatId, null, digestSubscribed, null, null, null, null
         );
     }
 

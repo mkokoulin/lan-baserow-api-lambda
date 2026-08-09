@@ -32,7 +32,7 @@ class BaserowEventGuestRepositoryPhoneTest {
     BaserowGuestClient client;
 
     static BaserowGuestRow row(int id, String phone) {
-        return new BaserowGuestRow(id, UUID.randomUUID(), "Misha", "K", phone, "sprmk", null, null, null);
+        return new BaserowGuestRow(id, UUID.randomUUID(), "Misha", "K", phone, "sprmk", null, null, null, null, null, null, null);
     }
 
     static <T> BaserowListResponse<T> listOf(T... items) {

@@ -4,6 +4,7 @@ import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventNotificationPreview;
+import com.lan.app.domain.model.EventSurveyDue;
 import com.lan.app.domain.model.NotificationRecipient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventClient;
 import com.lan.app.infrastructure.baserow.client.BaserowEventNotificationClient;
@@ -17,6 +18,7 @@ import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationResultRowRe
 import com.lan.app.infrastructure.baserow.dto.CreateEventNotificationRowRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateEventNotificationStatusRequest;
 import com.lan.app.infrastructure.baserow.dto.UpdateNotificationResultActionRequest;
+import com.lan.app.infrastructure.baserow.dto.UpdateSurveySentRequest;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -49,6 +51,12 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
     // automated and is followed up manually.
     private static final double WAVE_A_SEND_TIME_SECONDS = 14 * 3600.0;              // day before, 14:00 Yerevan
     private static final double WAVE_B_SEND_TIME_SECONDS = 10 * 3600.0 + 15 * 60.0;  // day of, 10:15 Yerevan
+
+    // Post-event feedback survey — sent only to guests who confirmed attendance (action=CONFIRMED
+    // on their notification-result row), one day after the event, 14:00 Yerevan.
+    private static final int SURVEY_OFFSET_DAYS = 1;
+    private static final double SURVEY_SEND_TIME_SECONDS = 14 * 3600.0;              // day after, 14:00 Yerevan
+    private static final String CONFIRMED_ACTION = "CONFIRMED";
     private static final String MESSAGE_RU = "Привет! ⚡️ Напоминаем, что сегодня ({event_date}) встречаемся на «{event_name}» в LAN. Подтвердите, пожалуйста, ваше участие, чтобы мы правильно рассчитали количество мест:";
     private static final String MESSAGE_EN = "Hi! ⚡️ Just a reminder that today ({event_date}) we're meeting for \"{event_name}\" at LAN. Please confirm your participation so we can accurately calculate the number of seats:";
 
@@ -263,6 +271,108 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
             applyPlaceholders(MESSAGE_RU, event.name(), eventStart),
             event.name()
         ));
+    }
+
+    // One day after an event, surveys guests who confirmed attendance (action=CONFIRMED on their
+    // notification-result row from the reminder flow) — the only signal of intent-to-attend this
+    // system has, real check-in data doesn't exist. Idempotency: survey_sent is patched to true on
+    // the same result row as soon as a recipient is returned here, mirroring how
+    // event-capacity-alerts/due marks itself immediately rather than requiring a separate mark-sent
+    // call.
+    @Override
+    public List<EventSurveyDue> findSurveyDue() {
+        var now = Instant.now(clock);
+        var nowYerevan = ZonedDateTime.now(clock);
+
+        if (!isWorkingHour(nowYerevan)) {
+            return List.of();
+        }
+
+        var events = execute(() -> eventClient.list(eventsTableId)).results();
+        var result = new ArrayList<EventSurveyDue>();
+
+        for (var event : events) {
+            Instant eventStart = BaserowEventMapper.parseBaserowDate(event.dateStart());
+            if (eventStart == null) continue;
+
+            Instant surveyTime = computeScheduledTimeAfter(eventStart, SURVEY_OFFSET_DAYS, SURVEY_SEND_TIME_SECONDS);
+            if (!isDue(surveyTime, now)) continue;
+
+            try {
+                result.addAll(collectSurveyRecipients(event.id(), event.name(), now));
+            } catch (Exception e) {
+                log.warnf("Failed to process survey for event rowId=%d: %s", event.id(), e.getMessage());
+            }
+        }
+
+        return result;
+    }
+
+    // Only guests with a CONFIRMED result row for this event's anchor notification, whose survey
+    // hasn't already been sent. If no anchor row exists, reminders were never sent for this event,
+    // so no CONFIRMED signal is possible — the whole event is skipped.
+    private List<EventSurveyDue> collectSurveyRecipients(int eventRowId, String eventName, Instant now) {
+        var result = new ArrayList<EventSurveyDue>();
+
+        Integer anchorRowId = findExistingAnchorRow(eventRowId);
+        if (anchorRowId == null) return result;
+
+        List<BaserowRegistrationRow> registrations;
+        try {
+            registrations = execute(() -> registrationClient.findByEventRowIdRaw(registrationsTableId, eventRowId).results());
+        } catch (Exception e) {
+            log.warnf("Could not fetch registrations for event rowId=%d: %s", eventRowId, e.getMessage());
+            return result;
+        }
+
+        var seenGuestRowIds = new java.util.HashSet<Integer>();
+
+        for (var reg : registrations) {
+            if (Boolean.TRUE.equals(reg.isCancelled())) continue;
+            if (reg.guestId() == null || reg.guestId().isEmpty()) continue;
+
+            int guestRowId = reg.guestId().getFirst().id();
+            if (!seenGuestRowIds.add(guestRowId)) continue;
+
+            try {
+                var resultRows = execute(() ->
+                    resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, anchorRowId, guestRowId)
+                ).results();
+
+                var confirmedRow = resultRows.stream()
+                    .filter(r -> r.action() != null && CONFIRMED_ACTION.equals(r.action().value()))
+                    .filter(r -> !Boolean.TRUE.equals(r.surveySent()))
+                    .findFirst();
+                if (confirmedRow.isEmpty()) continue;
+
+                var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
+                if (guest.telegramChatId() == null) continue;
+
+                execute(() -> resultClient.updateSurveySent(
+                    notificationResultsTableId, confirmedRow.get().id(), new UpdateSurveySentRequest(true)
+                ));
+
+                result.add(new EventSurveyDue(eventRowId, eventName, guestRowId, reg.id(), guest.telegramChatId()));
+            } catch (Exception e) {
+                log.warnf("Could not resolve survey recipient guestRowId=%d for event rowId=%d: %s",
+                    guestRowId, eventRowId, e.getMessage());
+            }
+        }
+        return result;
+    }
+
+    private Integer findExistingAnchorRow(int eventRowId) {
+        var existing = execute(() -> client.findByEventIdRaw(eventNotificationsTableId, eventRowId)).results();
+        return existing.isEmpty() ? null : existing.getFirst().id();
+    }
+
+    // offsetDays counts calendar days after the event's Yerevan-local date (1 = day after);
+    // sendTimeSeconds is the Yerevan-local time of day to send, as seconds since midnight.
+    private Instant computeScheduledTimeAfter(Instant eventStart, int offsetDays, double sendTimeSeconds) {
+        long secondsOfDay = (long) sendTimeSeconds % 86400;
+        LocalTime sendTime = LocalTime.ofSecondOfDay(secondsOfDay);
+        LocalDate targetDate = eventStart.atZone(YEREVAN).toLocalDate().plusDays(offsetDays);
+        return ZonedDateTime.of(targetDate, sendTime, YEREVAN).toInstant();
     }
 
     @Override

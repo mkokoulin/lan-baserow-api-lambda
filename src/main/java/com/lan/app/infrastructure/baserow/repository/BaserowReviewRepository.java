@@ -41,7 +41,10 @@ public class BaserowReviewRepository implements ReviewRepository {
         var row = client.create(reviewsTableId, new CreateReviewRowRequest(
             cmd.authorName(),
             cmd.rating(),
-            cmd.text()
+            cmd.text(),
+            cmd.eventRowId() != null ? List.of(cmd.eventRowId()) : null,
+            cmd.guestRowId() != null ? List.of(cmd.guestRowId()) : null,
+            cmd.registrationRowId() != null ? List.of(cmd.registrationRowId()) : null
         ));
         return mapper.toDomain(row);
     }

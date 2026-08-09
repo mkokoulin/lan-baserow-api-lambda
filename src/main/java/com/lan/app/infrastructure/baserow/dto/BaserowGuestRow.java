@@ -16,5 +16,9 @@ public record BaserowGuestRow(
     @JsonProperty("telegram") String telegram,
     @JsonProperty("telegram_chat_id") Long telegramChatId,
     @JsonProperty("source") BaserowSingleSelect source,
-    @JsonProperty("digest_subscribed") Boolean digestSubscribed
+    @JsonProperty("digest_subscribed") Boolean digestSubscribed,
+    @JsonProperty("created_at") String createdAt,
+    @JsonProperty("heard_about_source") BaserowSingleSelect heardAboutSource,
+    @JsonProperty("heard_about_comment") String heardAboutComment,
+    @JsonProperty("heard_about_survey_sent") Boolean heardAboutSurveySent
 ) {}

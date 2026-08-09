@@ -112,7 +112,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
     }
 
     private static BaserowGuestRow guest(int rowId, Long chatId) {
-        return new BaserowGuestRow(rowId, UUID.randomUUID(), "Guest", String.valueOf(rowId), "+374", null, chatId, null, null);
+        return new BaserowGuestRow(rowId, UUID.randomUUID(), "Guest", String.valueOf(rowId), "+374", null, chatId, null, null, null, null, null, null);
     }
 
     private static <T> BaserowListResponse<T> listOf(T... items) {
@@ -136,7 +136,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
     private void stubAlreadyNotified(int guestRowId, boolean already) {
         when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, ANCHOR_ROW_ID, guestRowId))
             .thenReturn(already
-                ? listOf(new BaserowEventNotificationResultRow(1, List.of(), List.of(), null, null, null, null))
+                ? listOf(new BaserowEventNotificationResultRow(1, List.of(), List.of(), null, null, null, null, null))
                 : listOf());
     }
 

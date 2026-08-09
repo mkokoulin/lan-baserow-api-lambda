@@ -3,6 +3,7 @@ package com.lan.app.service;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventNotificationPreview;
+import com.lan.app.domain.model.EventSurveyDue;
 import com.lan.app.repository.repository.EventNotificationRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -39,5 +40,9 @@ public class EventNotificationService {
 
     public void recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
         repo.recordGuestAction(notificationRowId, guestRowId, registrationRowId, action);
+    }
+
+    public List<EventSurveyDue> findSurveyDue() {
+        return repo.findSurveyDue();
     }
 }
