@@ -6,10 +6,12 @@ import com.lan.app.domain.model.EventCapacityAlert;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventRegistrationItem;
 import com.lan.app.domain.model.NotificationRecipient;
+import com.lan.app.domain.model.DigestSubscriber;
 import com.lan.app.domain.model.RegistrationActionResult;
 import com.lan.app.service.EventCapacityAlertService;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
+import com.lan.app.service.WeeklyDigestService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
@@ -41,6 +43,9 @@ class BotResourceTest {
 
     @InjectMock
     EventCapacityAlertService capacityAlertService;
+
+    @InjectMock
+    WeeklyDigestService weeklyDigestService;
 
     @Nested
     @DisplayName("GET /events/v1/bot/my-registrations")
@@ -268,6 +273,54 @@ class BotResourceTest {
                 .then()
                 .statusCode(200)
                 .body("$", hasSize(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /events/v1/bot/weekly-digest/subscribers")
+    class WeeklyDigestSubscribers {
+
+        @Test
+        @DisplayName("есть подписчики → 200 с маппингом полей")
+        void withSubscribers_returnsMappedList() {
+            when(weeklyDigestService.findSubscribers())
+                .thenReturn(List.of(new DigestSubscriber(661, 555000111L)));
+
+            given()
+                .when().get(BASE_PATH + "/weekly-digest/subscribers")
+                .then()
+                .statusCode(200)
+                .body("$",               hasSize(1))
+                .body("[0].chatId",      equalTo(555000111))
+                .body("[0].guestRowId",  equalTo(661));
+        }
+
+        @Test
+        @DisplayName("нет подписчиков → 200 пустой массив")
+        void noSubscribers_returnsEmptyList() {
+            when(weeklyDigestService.findSubscribers()).thenReturn(List.of());
+
+            given()
+                .when().get(BASE_PATH + "/weekly-digest/subscribers")
+                .then()
+                .statusCode(200)
+                .body("$", hasSize(0));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /events/v1/bot/weekly-digest/{guestRowId}/unsubscribe")
+    class WeeklyDigestUnsubscribe {
+
+        @Test
+        @DisplayName("успешно → 200, сервис вызван с нужным guestRowId")
+        void success_returns200() {
+            given()
+                .when().post(BASE_PATH + "/weekly-digest/661/unsubscribe")
+                .then()
+                .statusCode(200);
+
+            verify(weeklyDigestService).unsubscribe(661);
         }
     }
 

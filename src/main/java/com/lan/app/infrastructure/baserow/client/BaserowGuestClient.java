@@ -105,4 +105,13 @@ public interface BaserowGuestClient {
         @PathParam("rowId") int rowId,
         @NotNull LinkChatIdRowRequest body
     );
+
+    @PATCH
+    @Path("/{tableId}/{rowId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    BaserowGuestRow patchDigestSubscribed(
+        @PathParam("tableId") int tableId,
+        @PathParam("rowId") int rowId,
+        @NotNull UpdateDigestSubscriptionRequest body
+    );
 }

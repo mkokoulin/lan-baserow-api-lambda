@@ -112,7 +112,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
     }
 
     private static BaserowGuestRow guest(int rowId, Long chatId) {
-        return new BaserowGuestRow(rowId, UUID.randomUUID(), "Guest", String.valueOf(rowId), "+374", null, chatId, null);
+        return new BaserowGuestRow(rowId, UUID.randomUUID(), "Guest", String.valueOf(rowId), "+374", null, chatId, null, null);
     }
 
     private static <T> BaserowListResponse<T> listOf(T... items) {

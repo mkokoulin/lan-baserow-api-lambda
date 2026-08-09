@@ -5,12 +5,14 @@ import com.lan.app.api.dto.request.NotificationActionRequest;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.api.dto.response.BotRegistrationActionResponse;
 import com.lan.app.api.dto.response.BotRegistrationDto;
+import com.lan.app.api.dto.response.DigestSubscriberDto;
 import com.lan.app.api.dto.response.EventCapacityAlertDueResponse;
 import com.lan.app.api.dto.response.EventNotificationDueResponse;
 import com.lan.app.api.dto.response.RecipientDto;
 import com.lan.app.service.EventCapacityAlertService;
 import com.lan.app.service.EventNotificationService;
 import com.lan.app.service.EventRegistrationService;
+import com.lan.app.service.WeeklyDigestService;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
@@ -35,15 +37,18 @@ public class BotResource {
     private final EventRegistrationService service;
     private final EventNotificationService notificationService;
     private final EventCapacityAlertService capacityAlertService;
+    private final WeeklyDigestService weeklyDigestService;
 
     public BotResource(
         EventRegistrationService service,
         EventNotificationService notificationService,
-        EventCapacityAlertService capacityAlertService
+        EventCapacityAlertService capacityAlertService,
+        WeeklyDigestService weeklyDigestService
     ) {
         this.service = service;
         this.notificationService = notificationService;
         this.capacityAlertService = capacityAlertService;
+        this.weeklyDigestService = weeklyDigestService;
     }
 
     @GET
@@ -235,5 +240,38 @@ public class BotResource {
             .map(a -> new EventCapacityAlertDueResponse(a.eventName(), a.registeredCount(), a.maxCapacity()))
             .toList();
         return Response.ok(due).build();
+    }
+
+    @GET
+    @Path("/weekly-digest/subscribers")
+    @Operation(
+        operationId = "botWeeklyDigestSubscribers",
+        summary = "Return guests currently opted in to the weekly events digest",
+        description = "Returns guests with a linked Telegram chat who have not explicitly unsubscribed " +
+            "from the weekly digest (opt-out model — a guest with no preference set is included)."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "List of subscribed guests (may be empty)",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(type = SchemaType.ARRAY, implementation = DigestSubscriberDto.class)
+            )
+        )
+    })
+    public Response weeklyDigestSubscribers() {
+        var subscribers = weeklyDigestService.findSubscribers().stream()
+            .map(s -> new DigestSubscriberDto(s.chatId(), s.guestRowId()))
+            .toList();
+        return Response.ok(subscribers).build();
+    }
+
+    @POST
+    @Path("/weekly-digest/{guestRowId}/unsubscribe")
+    @Operation(operationId = "botWeeklyDigestUnsubscribe", summary = "Opt a guest out of the weekly events digest")
+    public Response unsubscribeFromWeeklyDigest(@PathParam("guestRowId") int guestRowId) {
+        weeklyDigestService.unsubscribe(guestRowId);
+        return Response.ok().build();
     }
 }
