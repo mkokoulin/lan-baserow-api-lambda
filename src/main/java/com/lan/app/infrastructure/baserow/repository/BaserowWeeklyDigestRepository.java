@@ -40,4 +40,9 @@ public class BaserowWeeklyDigestRepository extends AbstractBaserowRepository imp
     public void unsubscribe(int guestRowId) {
         execute(() -> client.patchDigestSubscribed(guestsTableId, guestRowId, new UpdateDigestSubscriptionRequest(false)));
     }
+
+    @Override
+    public void subscribe(int guestRowId) {
+        execute(() -> client.patchDigestSubscribed(guestsTableId, guestRowId, new UpdateDigestSubscriptionRequest(true)));
+    }
 }

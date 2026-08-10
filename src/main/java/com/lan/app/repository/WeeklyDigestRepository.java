@@ -7,4 +7,5 @@ import java.util.List;
 public interface WeeklyDigestRepository {
     List<DigestSubscriber> findSubscribers();
     void unsubscribe(int guestRowId);
+    void subscribe(int guestRowId);
 }

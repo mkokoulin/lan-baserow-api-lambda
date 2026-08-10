@@ -1,5 +1,6 @@
 package com.lan.app.api.resource;
 
+import com.lan.app.api.dto.request.CreateEventGuestRequest;
 import com.lan.app.api.dto.request.GuestCountUpdateRequest;
 import com.lan.app.api.dto.request.HeardAboutSourceAnswerRequest;
 import com.lan.app.api.dto.request.NotificationActionRequest;
@@ -18,6 +19,7 @@ import com.lan.app.service.EventRegistrationService;
 import com.lan.app.service.HeardAboutSourceService;
 import com.lan.app.service.WeeklyDigestService;
 import jakarta.annotation.security.PermitAll;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -279,6 +281,21 @@ public class BotResource {
     @Operation(operationId = "botWeeklyDigestUnsubscribe", summary = "Opt a guest out of the weekly events digest")
     public Response unsubscribeFromWeeklyDigest(@PathParam("guestRowId") int guestRowId) {
         weeklyDigestService.unsubscribe(guestRowId);
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/weekly-digest/subscribe")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Operation(
+        operationId = "botWeeklyDigestSubscribe",
+        summary = "Opt a guest into the weekly events digest",
+        description = "Upserts a guest by chatId/phone (same semantics as event guest creation) and marks " +
+            "them as subscribed. Lets the bot offer a self-service \"subscribe\" button without needing to " +
+            "already know the guest's Baserow row id."
+    )
+    public Response subscribeToWeeklyDigest(@Valid CreateEventGuestRequest req) {
+        weeklyDigestService.subscribe(req.firstName(), req.lastName(), req.phone(), req.telegram(), req.source(), req.chatId());
         return Response.ok().build();
     }
 

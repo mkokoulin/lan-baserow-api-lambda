@@ -326,6 +326,41 @@ class BotResourceTest {
     }
 
     @Nested
+    @DisplayName("POST /events/v1/bot/weekly-digest/subscribe")
+    class WeeklyDigestSubscribe {
+
+        @Test
+        @DisplayName("успешно → 200, сервис вызван с полями из запроса")
+        void success_returns200() {
+            given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    { "first_name": "User", "phone": "tg:555000111", "telegram": null, "source": "telegram-bot", "chat_id": 555000111 }
+                """)
+                .when().post(BASE_PATH + "/weekly-digest/subscribe")
+                .then()
+                .statusCode(200);
+
+            verify(weeklyDigestService).subscribe("User", null, "tg:555000111", null, "telegram-bot", 555000111L);
+        }
+
+        @Test
+        @DisplayName("отсутствует обязательное поле → 400, сервис не вызывается")
+        void missingRequiredField_returns400() {
+            given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    { "chat_id": 555000111 }
+                """)
+                .when().post(BASE_PATH + "/weekly-digest/subscribe")
+                .then()
+                .statusCode(400);
+
+            org.mockito.Mockito.verifyNoInteractions(weeklyDigestService);
+        }
+    }
+
+    @Nested
     @DisplayName("POST /events/v1/bot/registrations/{regId}/cancel")
     class CancelRegistration {
 
