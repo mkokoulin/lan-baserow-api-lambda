@@ -28,9 +28,12 @@ import jakarta.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface BaserowEventClient {
 
+    // Same page-size ceiling as other listAllRaw calls in this codebase (Baserow's default page
+    // size is 100, not the full table) — fine at this system's scale.
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "200")
     BaserowListResponse<BaserowEventRow> listAll(
         @PathParam("tableId") int tableId
     );
