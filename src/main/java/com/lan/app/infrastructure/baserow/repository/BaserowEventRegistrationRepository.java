@@ -1,4 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
+import com.baserow.exception.BaserowUnavailableException;
 import com.baserow.repository.AbstractBaserowRepository;
 
 import com.lan.app.domain.model.EventRegistration;
@@ -192,7 +193,13 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
             return Optional.empty();
         }
         var reg = response.results().getFirst();
-        execute(() -> client.updateIsCancelled(registrationsTableId, reg.id(), new UpdateRegistrationCancelledRequest(true)));
+        var updated = execute(() -> client.updateIsCancelled(registrationsTableId, reg.id(), new UpdateRegistrationCancelledRequest(true)));
+        if (updated.isCancelled() == null || !updated.isCancelled()) {
+            log.errorf("Baserow did not persist is_cancelled=true for registration rowId=%d externalId=%s",
+                reg.id(), externalId);
+            throw new BaserowUnavailableException(
+                "Baserow did not confirm the cancellation for registration rowId=" + reg.id() + ".", null);
+        }
         return Optional.of(buildActionResult(reg, reg.guestCount(), reg.guestCount()));
     }
 
@@ -204,7 +211,13 @@ public class BaserowEventRegistrationRepository extends AbstractBaserowRepositor
             return Optional.empty();
         }
         var reg = response.results().getFirst();
-        execute(() -> client.updateGuestCount(registrationsTableId, reg.id(), new UpdateRegistrationGuestCountRequest(newGuestCount)));
+        var updated = execute(() -> client.updateGuestCount(registrationsTableId, reg.id(), new UpdateRegistrationGuestCountRequest(newGuestCount)));
+        if (updated.guestCount() == null || updated.guestCount() != newGuestCount) {
+            log.errorf("Baserow did not persist guest_count=%d for registration rowId=%d externalId=%s",
+                newGuestCount, reg.id(), externalId);
+            throw new BaserowUnavailableException(
+                "Baserow did not confirm the guest count update for registration rowId=" + reg.id() + ".", null);
+        }
         return Optional.of(buildActionResult(reg, reg.guestCount(), newGuestCount));
     }
 
