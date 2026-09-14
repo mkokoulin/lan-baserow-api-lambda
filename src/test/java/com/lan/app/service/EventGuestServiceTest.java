@@ -102,5 +102,19 @@ class EventGuestServiceTest {
             assertEquals(created, result);
             verify(repo, never()).findByPhone(any());
         }
+
+        @Test
+        @DisplayName("телефон-плейсхолдер (код страны + нули) → поиск по телефону не выполняется, гость не склеивается с чужим")
+        void placeholderPhone_skipsPhoneLookup() {
+            service = new EventGuestService(repo);
+            when(repo.findByTelegramChatId(555L)).thenReturn(Optional.empty());
+            var created = guest();
+            when(repo.create("Marina", "Guest", "374000000000", "marina_tg", "site", 555L)).thenReturn(created);
+
+            var result = service.create("Marina", "Guest", "374000000000", "marina_tg", "site", 555L);
+
+            assertEquals(created, result);
+            verify(repo, never()).findByPhone(any());
+        }
     }
 }
