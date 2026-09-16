@@ -184,6 +184,13 @@ public record EventResponse(
         examples = "ru",
         nullable = true
     )
-    String language
+    String language,
+
+    @Schema(
+        description = "Number of likes the event has received. Never negative, defaults to 0.",
+        examples = "12",
+        required = true
+    )
+    long likesCount
 ) {
 }

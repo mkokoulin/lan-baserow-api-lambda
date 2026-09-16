@@ -31,7 +31,8 @@ public class ApiEventMapper {
             event.maxCapacity(),
             event.soldOut(),
             event.availableSpots(),
-            event.language()
+            event.language(),
+            event.likesCount()
         );
     }
 }

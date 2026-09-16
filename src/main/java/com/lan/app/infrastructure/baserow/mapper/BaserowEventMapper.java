@@ -25,7 +25,7 @@ public class BaserowEventMapper {
     private static final ZoneOffset YEREVAN = ZoneOffset.ofHours(4);
     private static final Set<String> VALID_LANGUAGES = Set.of("ru", "en", "hy");
 
-    public Event toDomain(BaserowEventRow event, boolean soldOut, Integer availableSpots) {
+    public Event toDomain(BaserowEventRow event, boolean soldOut, Integer availableSpots, long likesCount) {
         var notifications = event.notifications() != null
             ? event.notifications().stream().map(n -> String.valueOf(n.id())).toList()
             : List.<String>of();
@@ -56,7 +56,8 @@ public class BaserowEventMapper {
             event.maxCapacity(),
             soldOut,
             availableSpots,
-            normalizeLanguage(event.language() != null ? event.language().value() : null)
+            normalizeLanguage(event.language() != null ? event.language().value() : null),
+            likesCount
         );
     }
 

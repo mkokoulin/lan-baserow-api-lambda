@@ -13,6 +13,7 @@ import com.lan.app.infrastructure.baserow.dto.BaserowEventRow;
 import com.lan.app.infrastructure.baserow.mapper.BaserowEventMapper;
 import com.lan.app.repository.EventRepository;
 import com.lan.app.service.EventCapacityService;
+import com.lan.app.service.EventLikeService;
 
 import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,17 +26,20 @@ public class BaserowEventsEventRepository implements EventRepository {
     private final BaserowEventClient eventClient;
     private final BaserowEventMapper mapper;
     private final EventCapacityService capacityService;
+    private final EventLikeService likeService;
 
     BaserowEventsEventRepository(
         @ConfigProperty(name = "baserow.events.events-table-id") int eventTableId,
         @RestClient BaserowEventClient eventClient,
         BaserowEventMapper mapper,
-        EventCapacityService capacityService
+        EventCapacityService capacityService,
+        EventLikeService likeService
     ) {
         this.eventTableId = eventTableId;
         this.eventClient = eventClient;
         this.mapper = mapper;
         this.capacityService = capacityService;
+        this.likeService = likeService;
     }
 
     // Cached (quarkus.cache.caffeine.events.* in application.properties) — this is the hot path
@@ -46,16 +50,18 @@ public class BaserowEventsEventRepository implements EventRepository {
         var row = eventClient.list(eventTableId);
         // One Baserow round trip for all registrations instead of one per event (was 2N calls
         // for N events via capacityService.isSoldOut/remainingCapacity — timed out the site's
-        // 5s fetch once the events table grew).
+        // 5s fetch once the events table grew). Likes are aggregated the same way.
         var guestCounts = capacityService.registeredGuestCountsByEvent();
-        return row.results().stream().map(r -> toDomainWithCapacity(r, guestCounts)).toList();
+        var likeCounts = likeService.countsByEvent();
+        return row.results().stream().map(r -> toDomainWithCapacity(r, guestCounts, likeCounts)).toList();
     }
 
     public Event get(UUID externalId) {
         var row = eventClient.findUniqueByExternalId(eventTableId, externalId);
         boolean soldOut = capacityService.isSoldOut(row.maxCapacity(), row.id());
         Integer availableSpots = capacityService.remainingCapacity(row.maxCapacity(), row.id());
-        return mapper.toDomain(row, soldOut, availableSpots);
+        long likesCount = likeService.count(row.externalId());
+        return mapper.toDomain(row, soldOut, availableSpots, likesCount);
     }
 
     @Override
@@ -63,13 +69,15 @@ public class BaserowEventsEventRepository implements EventRepository {
         var row = eventClient.getByRowId(eventTableId, rowId);
         boolean soldOut = capacityService.isSoldOut(row.maxCapacity(), row.id());
         Integer availableSpots = capacityService.remainingCapacity(row.maxCapacity(), row.id());
-        return mapper.toDomain(row, soldOut, availableSpots);
+        long likesCount = likeService.count(row.externalId());
+        return mapper.toDomain(row, soldOut, availableSpots, likesCount);
     }
 
-    private Event toDomainWithCapacity(BaserowEventRow row, Map<Integer, Integer> guestCounts) {
+    private Event toDomainWithCapacity(BaserowEventRow row, Map<Integer, Integer> guestCounts, Map<UUID, Long> likeCounts) {
         int registeredCount = guestCounts.getOrDefault(row.id(), 0);
         boolean soldOut = row.maxCapacity() != null && row.maxCapacity() - registeredCount <= 0;
         Integer availableSpots = row.maxCapacity() == null ? null : Math.max(0, row.maxCapacity() - registeredCount);
-        return mapper.toDomain(row, soldOut, availableSpots);
+        long likesCount = likeCounts.getOrDefault(row.externalId(), 0L);
+        return mapper.toDomain(row, soldOut, availableSpots, likesCount);
     }
 }

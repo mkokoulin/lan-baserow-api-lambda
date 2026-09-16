@@ -27,5 +27,6 @@ public record Event(
     Integer maxCapacity,
     boolean soldOut,
     Integer availableSpots,
-    String language
+    String language,
+    long likesCount
 ) {}

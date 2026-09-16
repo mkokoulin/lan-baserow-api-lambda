@@ -45,7 +45,7 @@ class EventCapacityAlertServiceTest {
             true, List.of(), null, null,
             true, true, false,
             BigDecimal.ZERO, null,
-            maxCapacity, soldOut, null, null
+            maxCapacity, soldOut, null, null, 0
         );
     }
 
@@ -169,7 +169,7 @@ class EventCapacityAlertServiceTest {
                 new Id(99, UUID.randomUUID()), "Другое событие",
                 Instant.now(), Instant.now(), "d", null, null, null, null,
                 true, List.of(), null, null, true, true, false,
-                BigDecimal.ZERO, null, 5, true, 0, null
+                BigDecimal.ZERO, null, 5, true, 0, null, 0
             );
 
             when(eventRepo.list()).thenReturn(List.of(qualifies, skippedNoCapacity, stillSoldOut));
