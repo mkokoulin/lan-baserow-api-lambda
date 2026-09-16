@@ -16,7 +16,8 @@ public class EventLikeService {
         this.repo = repo;
     }
 
-    public Map<UUID, Long> countsByEvent() {
+    /** Keyed by the internal Baserow row id of the event, not its external UUID. */
+    public Map<Integer, Long> countsByEvent() {
         return repo.countsByEvent();
     }
 

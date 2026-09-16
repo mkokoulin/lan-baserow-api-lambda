@@ -73,11 +73,11 @@ public class BaserowEventsEventRepository implements EventRepository {
         return mapper.toDomain(row, soldOut, availableSpots, likesCount);
     }
 
-    private Event toDomainWithCapacity(BaserowEventRow row, Map<Integer, Integer> guestCounts, Map<UUID, Long> likeCounts) {
+    private Event toDomainWithCapacity(BaserowEventRow row, Map<Integer, Integer> guestCounts, Map<Integer, Long> likeCounts) {
         int registeredCount = guestCounts.getOrDefault(row.id(), 0);
         boolean soldOut = row.maxCapacity() != null && row.maxCapacity() - registeredCount <= 0;
         Integer availableSpots = row.maxCapacity() == null ? null : Math.max(0, row.maxCapacity() - registeredCount);
-        long likesCount = likeCounts.getOrDefault(row.externalId(), 0L);
+        long likesCount = likeCounts.getOrDefault(row.id(), 0L);
         return mapper.toDomain(row, soldOut, availableSpots, likesCount);
     }
 }

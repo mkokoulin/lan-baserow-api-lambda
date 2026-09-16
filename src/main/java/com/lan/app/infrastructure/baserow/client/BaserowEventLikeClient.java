@@ -1,8 +1,6 @@
 package com.lan.app.infrastructure.baserow.client;
 import com.baserow.client.BaserowAuthHeaders;
 
-import java.util.UUID;
-
 import org.eclipse.microprofile.rest.client.annotation.RegisterProvider;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
@@ -44,7 +42,7 @@ public interface BaserowEventLikeClient {
     @ClientQueryParam(name = "size", value = "1")
     BaserowListResponse<BaserowEventLikeRow> findByEvent(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__event_external_id__equal") UUID eventExternalId
+        @QueryParam("filter__event_id__link_row_has") int eventRowId
     );
 
     @GET
@@ -53,7 +51,7 @@ public interface BaserowEventLikeClient {
     @ClientQueryParam(name = "size", value = "1")
     BaserowListResponse<BaserowEventLikeRow> findByEventAndAnon(
         @PathParam("tableId") int tableId,
-        @QueryParam("filter__event_external_id__equal") UUID eventExternalId,
+        @QueryParam("filter__event_id__link_row_has") int eventRowId,
         @QueryParam("filter__anon_id__equal") String anonId
     );
 

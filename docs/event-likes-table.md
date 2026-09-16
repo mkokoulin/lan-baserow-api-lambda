@@ -4,14 +4,21 @@ Table ID: `1202668` (already wired into `application.properties` and `template.y
 
 ## Fields
 
-| Field name          | Baserow field type | Required | Notes |
-|----------------------|---------------------|----------|-------|
-| `event_external_id`  | Single line text (UUID) | yes | The `external_id` of the row in the `Events` table this like belongs to. Plain text, not a "Link to table" field — nothing addresses a like by its own id, so a link-row lookup would only add an extra Baserow round trip for no benefit. |
-| `anon_id`             | Single line text        | yes | Random UUID generated client-side in the visitor's browser (`localStorage`), used to dedupe one like per browser. Not a real user identity — see `docs/faq-table.md` for the general `external_id`-as-UUID convention this table intentionally does *not* follow (this table has no `external_id` of its own). |
-| `created_at`          | **Created on** (Baserow special field type) | yes | Auto-filled by Baserow on row creation, read-only — do not include it in create requests. Mirrors the `reviews` table's `created_at` field. |
+| Field name  | Baserow field type | Required | Notes |
+|-------------|---------------------|----------|-------|
+| `anon_id`   | Single line text (primary field) | yes | Random UUID generated client-side in the visitor's browser (`localStorage`), used to dedupe one like per browser. Not a real user identity. Primary field only because Baserow requires *some* field to be primary and doesn't allow "Link to table" to hold that role — no semantic significance beyond that. |
+| `event_id`  | **Link to table** → `events`, single relationship (Allow multiple relationships off) | yes | Which event this like belongs to, by Baserow's internal row id — not the event's external UUID. The backend resolves the event's `external_id` (UUID, what the API and frontend use) to this internal row id via `BaserowEventClient.findUniqueByExternalId` before every like/unlike/count call. Creating this field with "Create related field in linked table" on also adds a reverse "event_likes" column to the `events` table, so organizers can see likes directly against an event row in Baserow. |
+| `created_at` | **Created on** (Baserow special field type) | yes | Auto-filled by Baserow on row creation, read-only — do not include it in create requests. Mirrors the `reviews` table's `created_at` field. |
 
 No `is_visible` / moderation field — likes aren't curated content, they're a
 raw signal for organizers deciding whether to run an event again.
+
+Note: an earlier version of this table used `event_external_id` as a plain
+text UUID column (and a Baserow field literally typed **UUID**, which is a
+system-generated, non-writable identifier — not a place to store our own
+UUID). Both turned out to be dead ends: the **UUID** field type rejects
+writes (400 on create), and even switching it to plain text would have kept
+likes invisible from the `events` side. Link-to-table fixes both.
 
 ## API
 

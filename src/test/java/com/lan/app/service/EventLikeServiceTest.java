@@ -18,6 +18,7 @@ import static org.mockito.Mockito.when;
 class EventLikeServiceTest {
 
     static final UUID EVENT_ID = UUID.randomUUID();
+    static final int EVENT_ROW_ID = 7;
     static final String ANON_ID = "anon-123";
 
     @Mock
@@ -27,9 +28,9 @@ class EventLikeServiceTest {
     @DisplayName("countsByEvent делегирует в repo")
     void countsByEvent_delegates() {
         var service = new EventLikeService(repo);
-        when(repo.countsByEvent()).thenReturn(Map.of(EVENT_ID, 3L));
+        when(repo.countsByEvent()).thenReturn(Map.of(EVENT_ROW_ID, 3L));
 
-        assertEquals(Map.of(EVENT_ID, 3L), service.countsByEvent());
+        assertEquals(Map.of(EVENT_ROW_ID, 3L), service.countsByEvent());
     }
 
     @Test
