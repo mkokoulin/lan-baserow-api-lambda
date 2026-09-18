@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ApplicationScoped
 public class EventRegistrationService {
@@ -28,6 +29,15 @@ public class EventRegistrationService {
     private final EventGuestRepository guestRepo;
     private final EventRegistrationRepository registrationRepo;
     private final EventCapacityService capacityService;
+
+    // Baserow has no atomic check-and-insert, so concurrent registrations for the same event can
+    // each read "capacity available" before either write lands and both get accepted, overselling
+    // the event. Serializing create() per event closes that race for this JVM instance.
+    private final Map<UUID, Object> eventLocks = new ConcurrentHashMap<>();
+
+    private Object lockFor(UUID eventExternalId) {
+        return eventLocks.computeIfAbsent(eventExternalId, id -> new Object());
+    }
 
     public EventRegistrationService(
         EventRepository eventRepo,
@@ -45,35 +55,38 @@ public class EventRegistrationService {
     public record EventRegistrationCreated(EventRegistration registration, boolean isFirstRegistration) {}
 
     public EventRegistrationCreated create(CreateEventRegistrationCommand cmd) {
-        var event = eventRepo.get(cmd.eventId());
-        if (event.soldOut()) {
-            throw new BusinessConflictException(
-                "Event is sold out.",
-                Map.of("eventId", event.id().externalId().toString(), "availableSpots", 0)
-            );
-        }
-        Integer remaining = capacityService.remainingCapacity(event.maxCapacity(), event.id().internalId());
-        if (remaining != null && cmd.guestCount() > remaining) {
-            throw new BusinessConflictException(
-                "Not enough seats left for the requested guest count.",
-                Map.of(
-                    "eventId", event.id().externalId().toString(),
-                    "availableSpots", remaining
-                )
-            );
-        }
-        var guest = guestRepo.get(cmd.guestId());
+        synchronized (lockFor(cmd.eventId())) {
+            var event = eventRepo.get(cmd.eventId());
+            if (event.soldOut()) {
+                throw new BusinessConflictException(
+                    "Event is sold out.",
+                    Map.of("eventId", event.id().externalId().toString(), "availableSpots", 0)
+                );
+            }
+            Integer remaining = capacityService.remainingCapacity(event.maxCapacity(), event.id().internalId());
+            if (remaining != null && cmd.guestCount() > remaining) {
+                throw new BusinessConflictException(
+                    "Not enough seats left for the requested guest count.",
+                    Map.of(
+                        "eventId", event.id().externalId().toString(),
+                        "availableSpots", remaining
+                    )
+                );
+            }
+            var guest = guestRepo.get(cmd.guestId());
 
-        boolean isFirstRegistration = registrationRepo.findByGuestRowId(guest.id().internalId()).isEmpty();
+            boolean isFirstRegistration = registrationRepo.findByGuestRowId(guest.id().internalId()).isEmpty();
 
-        var created = registrationRepo.create(
-            event.id(),
-            guest.id(),
-            cmd.guestCount(),
-            cmd.comment(),
-            cmd.source()
-        );
-        return new EventRegistrationCreated(created, isFirstRegistration);
+            var created = registrationRepo.create(
+                event.id(),
+                guest.id(),
+                cmd.guestCount(),
+                cmd.comment(),
+                cmd.source()
+            );
+            eventRepo.invalidateListCache();
+            return new EventRegistrationCreated(created, isFirstRegistration);
+        }
     }
 
     public List<EventRegistrationItem> findByChatId(Long chatId) {
@@ -137,8 +150,10 @@ public class EventRegistrationService {
 
     public RegistrationActionResult cancel(UUID regExternalId) {
         requireActiveRegistration(regExternalId);
-        return registrationRepo.cancel(regExternalId)
+        var result = registrationRepo.cancel(regExternalId)
             .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+        eventRepo.invalidateListCache();
+        return result;
     }
 
     public RegistrationActionResult updateGuestCount(UUID regExternalId, int newGuestCount) {
@@ -150,22 +165,26 @@ public class EventRegistrationService {
         int eventRowId = registrationRepo.getEventRowIdByExternalId(regExternalId)
             .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
         var event = eventRepo.getByRowId(eventRowId);
-        if (event.maxCapacity() != null) {
-            int currentTotal = capacityService.registeredGuestCount(eventRowId);
-            int remainingExcludingSelf = event.maxCapacity() - (currentTotal - item.guestCount());
-            if (newGuestCount > remainingExcludingSelf) {
-                throw new BusinessConflictException(
-                    "Not enough seats left for the requested guest count.",
-                    Map.of(
-                        "registrationId", regExternalId.toString(),
-                        "availableSpots", Math.max(0, remainingExcludingSelf)
-                    )
-                );
+        synchronized (lockFor(event.id().externalId())) {
+            if (event.maxCapacity() != null) {
+                int currentTotal = capacityService.registeredGuestCount(eventRowId);
+                int remainingExcludingSelf = event.maxCapacity() - (currentTotal - item.guestCount());
+                if (newGuestCount > remainingExcludingSelf) {
+                    throw new BusinessConflictException(
+                        "Not enough seats left for the requested guest count.",
+                        Map.of(
+                            "registrationId", regExternalId.toString(),
+                            "availableSpots", Math.max(0, remainingExcludingSelf)
+                        )
+                    );
+                }
             }
-        }
 
-        return registrationRepo.updateGuestCount(regExternalId, newGuestCount)
-            .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+            var result = registrationRepo.updateGuestCount(regExternalId, newGuestCount)
+                .orElseThrow(() -> new RegistrationNotFoundException(regExternalId.toString()));
+            eventRepo.invalidateListCache();
+            return result;
+        }
     }
 
     private EventRegistrationItem requireActiveRegistration(UUID regExternalId) {

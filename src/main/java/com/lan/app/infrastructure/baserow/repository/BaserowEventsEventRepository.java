@@ -15,6 +15,7 @@ import com.lan.app.repository.EventRepository;
 import com.lan.app.service.EventCapacityService;
 import com.lan.app.service.EventLikeService;
 
+import io.quarkus.cache.CacheInvalidateAll;
 import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -62,6 +63,11 @@ public class BaserowEventsEventRepository implements EventRepository {
         Integer availableSpots = capacityService.remainingCapacity(row.maxCapacity(), row.id());
         long likesCount = likeService.count(row.externalId());
         return mapper.toDomain(row, soldOut, availableSpots, likesCount);
+    }
+
+    @Override
+    @CacheInvalidateAll(cacheName = "events")
+    public void invalidateListCache() {
     }
 
     @Override
