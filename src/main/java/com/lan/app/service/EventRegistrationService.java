@@ -2,6 +2,7 @@ package com.lan.app.service;
 
 import com.lan.app.domain.exception.BusinessConflictException;
 import com.lan.app.domain.exception.RegistrationNotFoundException;
+import com.lan.app.domain.exception.ResourceNotFoundException;
 import com.lan.app.domain.exception.ValidationException;
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
@@ -57,6 +58,9 @@ public class EventRegistrationService {
     public EventRegistrationCreated create(CreateEventRegistrationCommand cmd) {
         synchronized (lockFor(cmd.eventId())) {
             var event = eventRepo.get(cmd.eventId());
+            if (!event.isVisible()) {
+                throw new ResourceNotFoundException("Event", event.id().externalId());
+            }
             if (event.soldOut()) {
                 throw new BusinessConflictException(
                     "Event is sold out.",

@@ -2,6 +2,7 @@ package com.lan.app.service;
 
 import com.lan.app.domain.exception.BusinessConflictException;
 import com.lan.app.domain.exception.RegistrationNotFoundException;
+import com.lan.app.domain.exception.ResourceNotFoundException;
 import com.lan.app.domain.exception.ValidationException;
 import com.lan.app.domain.model.Event;
 import com.lan.app.domain.model.EventGuest;
@@ -51,10 +52,14 @@ class EventRegistrationServiceTest {
     static final Id GUEST_ID = new Id(2, GUEST_EXTERNAL_ID);
 
     static Event event(boolean soldOut) {
+        return event(soldOut, true);
+    }
+
+    static Event event(boolean soldOut, boolean isVisible) {
         return new Event(
             EVENT_ID, "Событие", Instant.now(), Instant.now(), "d",
             null, null, null, null, true, List.of(), null, null,
-            true, true, false, BigDecimal.ZERO, null, 10, soldOut, null, null, 0
+            true, isVisible, false, BigDecimal.ZERO, null, 10, soldOut, null, null, 0
         );
     }
 
@@ -99,6 +104,19 @@ class EventRegistrationServiceTest {
             var result = service.create(cmd);
 
             assertFalse(result.isFirstRegistration());
+        }
+
+        @Test
+        @DisplayName("событие скрыто (isVisible=false) → ResourceNotFoundException, регистрация не создаётся")
+        void notVisible_throwsNotFound() {
+            service = new EventRegistrationService(eventRepo, guestRepo, registrationRepo, capacityService);
+            var cmd = new CreateEventRegistrationCommand(EVENT_EXTERNAL_ID, GUEST_EXTERNAL_ID, "comment", 2, "web");
+            when(eventRepo.get(EVENT_EXTERNAL_ID)).thenReturn(event(false, false));
+
+            assertThrows(ResourceNotFoundException.class, () -> service.create(cmd));
+
+            verifyNoInteractions(guestRepo);
+            verify(registrationRepo, never()).create(any(), any(), anyInt(), any(), any());
         }
 
         @Test
