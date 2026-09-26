@@ -451,4 +451,110 @@ class BaserowEventNotificationRepositoryFindDueTest {
             verifyNoInteractions(guestClient);
         }
     }
+
+    @Nested
+    @DisplayName("cancellation edge cases")
+    class CancellationEdgeCases {
+
+        @Test
+        @DisplayName("event where every registration is cancelled -> no notification is produced at all, no anchor row created")
+        void allRegistrationsCancelled_producesNoNotificationAndNoAnchor() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            stubRegistrations(
+                registration(1, 101, EVENT_START.minusDays(4), true),
+                registration(2, 102, EVENT_START.minusDays(4), true)
+            );
+
+            var due = repo.findDue();
+
+            assertThat(due, empty());
+            verifyNoInteractions(guestClient, notificationClient, resultClient);
+        }
+
+        @Test
+        @DisplayName("guest's earlier registration was cancelled, a later re-registration for the same event is still active -> notified once via the active one")
+        void cancelledThenReRegistered_stillNotifiedViaActiveRegistration() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            stubNoExistingAnchor();
+            // Cancelled row appears first in the list, active row second — order shouldn't matter,
+            // and the cancelled row must not consume the guest's dedup slot before the active one runs.
+            stubRegistrations(
+                registration(1, 101, EVENT_START.minusDays(4), true),
+                registration(2, 101, EVENT_START.minusDays(4), false)
+            );
+            stubGuest(101, 555101L);
+            stubAlreadyNotified(101, false);
+
+            var due = repo.findDue();
+
+            assertThat(due, hasSize(1));
+            assertThat(due.get(0).recipients(), hasSize(1));
+            assertEquals(2, due.get(0).recipients().get(0).registrationRowId());
+        }
+
+        @Test
+        @DisplayName("guest's active registration is listed first, a second cancelled registration for the same event comes after -> still one notification, not skipped by the later cancelled row")
+        void activeThenCancelledDuplicate_stillNotifiedOnce() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            stubNoExistingAnchor();
+            stubRegistrations(
+                registration(1, 101, EVENT_START.minusDays(4), false),
+                registration(2, 101, EVENT_START.minusDays(4), true)
+            );
+            stubGuest(101, 555101L);
+            stubAlreadyNotified(101, false);
+
+            var due = repo.findDue();
+
+            assertThat(due, hasSize(1));
+            assertThat(due.get(0).recipients(), hasSize(1));
+            assertEquals(1, due.get(0).recipients().get(0).registrationRowId());
+        }
+
+        @Test
+        @DisplayName("one guest cancelled, another guest still active on the same event -> only the active guest is notified")
+        void mixOfCancelledAndActiveGuests_onlyActiveGuestNotified() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            stubNoExistingAnchor();
+            stubRegistrations(
+                registration(1, 101, EVENT_START.minusDays(4), true),  // cancelled
+                registration(2, 102, EVENT_START.minusDays(4), false) // active
+            );
+            stubGuest(102, 555102L);
+            stubAlreadyNotified(102, false);
+
+            var due = repo.findDue();
+
+            assertThat(due, hasSize(1));
+            assertThat(due.get(0).recipients(), hasSize(1));
+            assertEquals(102, due.get(0).recipients().get(0).guestRowId());
+            verify(guestClient, never()).getByRowId(GUESTS_TABLE, 101);
+        }
+
+        @Test
+        @DisplayName("guest already notified for wave A, then cancels before wave B -> wave B skips them without touching guest/result lookups")
+        void cancelledAfterEarlierWaveAlreadySent_skippedOnLaterWave() {
+            pinNow(EVENT_START.withHour(10).withMinute(30)); // wave B window
+
+            stubEvents(event());
+            stubExistingAnchor();
+            // Registered in time for wave A, already notified then, but is now cancelled by the
+            // time wave B's poll runs.
+            stubRegistrations(registration(1, 101, EVENT_START.minusDays(4), true));
+
+            var due = repo.findDue();
+
+            assertThat(due, empty());
+            verifyNoInteractions(guestClient);
+            verify(resultClient, never()).findByNotificationAndGuestRaw(anyInt(), anyInt(), anyInt());
+        }
+    }
 }
