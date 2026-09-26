@@ -557,4 +557,79 @@ class BaserowEventNotificationRepositoryFindDueTest {
             verify(resultClient, never()).findByNotificationAndGuestRaw(anyInt(), anyInt(), anyInt());
         }
     }
+
+    @Nested
+    @DisplayName("poll resilience — one guest/event failing must not take down the rest of the poll")
+    class PollResilience {
+
+        @Test
+        @DisplayName("one guest's lookup throws -> the other eligible guest on the same event is still notified")
+        void oneGuestLookupThrows_otherGuestStillNotified() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            stubNoExistingAnchor();
+            stubRegistrations(
+                registration(1, 101, EVENT_START.minusDays(4)),
+                registration(2, 102, EVENT_START.minusDays(4))
+            );
+            when(guestClient.getByRowId(GUESTS_TABLE, 101)).thenThrow(new RuntimeException("Baserow 500"));
+            stubGuest(102, 555102L);
+            stubAlreadyNotified(101, false);
+            stubAlreadyNotified(102, false);
+
+            var due = repo.findDue();
+
+            assertThat(due, hasSize(1));
+            assertThat(due.get(0).recipients(), hasSize(1));
+            assertEquals(102, due.get(0).recipients().get(0).guestRowId());
+        }
+
+        @Test
+        @DisplayName("alreadyNotified lookup throws -> fails open (treated as not-yet-notified), guest is still sent the reminder")
+        void alreadyNotifiedLookupThrows_failsOpenAndStillNotifies() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            stubNoExistingAnchor();
+            stubRegistrations(registration(1, 101, EVENT_START.minusDays(4)));
+            stubGuest(101, 555101L);
+            when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, ANCHOR_ROW_ID, 101))
+                .thenThrow(new RuntimeException("Baserow 500"));
+
+            var due = repo.findDue();
+
+            assertThat(due, hasSize(1));
+            assertThat(due.get(0).recipients(), hasSize(1));
+            assertEquals(101, due.get(0).recipients().get(0).guestRowId());
+        }
+
+        @Test
+        @DisplayName("registrations lookup throws entirely for one event -> that event yields no recipients, but a second due event is still processed")
+        void registrationsLookupThrowsForOneEvent_otherEventStillProcessed() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            int otherEventRowId = 9999;
+            var otherEvent = new BaserowEventRow(
+                otherEventRowId, UUID.randomUUID(), "Other Event",
+                iso(EVENT_START), null, "desc", null, URI.create("https://example.com"),
+                null, null, true, List.of(), null, 1, true, true, false, null, List.of(), null, null
+            );
+            stubEvents(event(), otherEvent);
+            stubNoExistingAnchor();
+            when(notificationClient.findByEventIdRaw(EVENT_NOTIFICATIONS_TABLE, otherEventRowId)).thenReturn(listOf());
+
+            when(registrationClient.findByEventRowIdRaw(REGISTRATIONS_TABLE, EVENT_ROW_ID))
+                .thenThrow(new RuntimeException("Baserow 500"));
+            when(registrationClient.findByEventRowIdRaw(REGISTRATIONS_TABLE, otherEventRowId))
+                .thenReturn(listOf(registration(1, 101, EVENT_START.minusDays(4))));
+            stubGuest(101, 555101L);
+            stubAlreadyNotified(101, false);
+
+            var due = repo.findDue();
+
+            assertThat(due, hasSize(1));
+            assertEquals("Other Event", due.get(0).eventName());
+        }
+    }
 }
