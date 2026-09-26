@@ -103,11 +103,15 @@ class BaserowEventNotificationRepositoryFindDueTest {
     }
 
     private static BaserowRegistrationRow registration(int id, int guestRowId, ZonedDateTime createdAt) {
+        return registration(id, guestRowId, createdAt, false);
+    }
+
+    private static BaserowRegistrationRow registration(int id, int guestRowId, ZonedDateTime createdAt, boolean isCancelled) {
         return new BaserowRegistrationRow(
             id, UUID.randomUUID(),
             List.of(new BaserowLinkToTable(EVENT_ROW_ID, "e")),
             List.of(new BaserowLinkToTable(guestRowId, "g")),
-            iso(createdAt), 1, "", null, false, false
+            iso(createdAt), 1, "", null, false, isCancelled
         );
     }
 
@@ -396,6 +400,21 @@ class BaserowEventNotificationRepositoryFindDueTest {
             assertThat(due, hasSize(1));
             assertThat(due.get(0).recipients(), hasSize(1));
             verify(guestClient, times(1)).getByRowId(GUESTS_TABLE, 101);
+        }
+
+        @Test
+        @DisplayName("cancelled registration is skipped, even though it would otherwise be eligible")
+        void skipsCancelledRegistration() {
+            pinNow(EVENT_START.minusDays(1).withHour(15).withMinute(0));
+
+            stubEvents(event());
+            var cancelled = registration(1, 101, EVENT_START.minusDays(4), true);
+            stubRegistrations(cancelled);
+
+            var due = repo.findDue();
+
+            assertThat(due, empty());
+            verifyNoInteractions(guestClient, notificationClient);
         }
 
         @Test

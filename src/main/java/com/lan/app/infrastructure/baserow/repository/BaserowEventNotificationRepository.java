@@ -204,6 +204,7 @@ public class BaserowEventNotificationRepository extends AbstractBaserowRepositor
         }
 
         for (var reg : registrations) {
+            if (Boolean.TRUE.equals(reg.isCancelled())) continue;
             if (reg.guestId() == null || reg.guestId().isEmpty()) continue;
 
             Instant registeredAt = BaserowEventMapper.parseBaserowDate(reg.createdAt());
