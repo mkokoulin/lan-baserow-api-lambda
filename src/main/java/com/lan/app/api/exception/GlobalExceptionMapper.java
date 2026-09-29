@@ -158,7 +158,10 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
 
         // JAX-RS HTTP exceptions (405, 406, 415, etc.) pass through with their own status code
         if (exception instanceof WebApplicationException e) {
-            int status = e.getResponse().getStatus();
+            int status;
+            try (var response = e.getResponse()) {
+                status = response.getStatus();
+            }
             LOG.warnf("JAX-RS HTTP %d: %s", status, e.getMessage());
             return buildResponse(Response.Status.fromStatusCode(status), ErrorCode.INTERNAL_SERVER_ERROR,
                 e.getMessage() != null ? e.getMessage() : "HTTP " + status, Map.of());

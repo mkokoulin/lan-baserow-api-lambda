@@ -65,7 +65,12 @@ public class BaserowCoworkingActiveTariffRepository implements CoworkingActiveTa
         } catch (BaserowNotFoundException e) {
             throw e;
         } catch (WebApplicationException e) {
-            if (e.getResponse() != null && e.getResponse().getStatus() == 404) {
+            var response = e.getResponse();
+            boolean notFound = response != null && response.getStatus() == 404;
+            if (response != null) {
+                response.close();
+            }
+            if (notFound) {
                 throw new BaserowNotFoundException("Coworking active tariff", externalId);
             }
             throw new BaserowUnavailableException("Baserow request failed.", e);
