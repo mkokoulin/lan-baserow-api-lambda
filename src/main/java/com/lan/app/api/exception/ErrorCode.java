@@ -3,6 +3,7 @@ package com.lan.app.api.exception;
 public enum ErrorCode {
     RESOURCE_NOT_FOUND,
     BUSINESS_CONFLICT,
+    EVENT_SOLD_OUT,
     VALIDATION_ERROR,
     BASEROW_INCOMPLETE_ROW,
     BASEROW_UNAVAILABLE,

@@ -8,6 +8,7 @@ import com.lan.app.domain.exception.ExternalServiceException;
 import com.lan.app.domain.exception.ExternalServiceRateLimitedException;
 import com.lan.app.domain.exception.ExternalServiceUnauthorizedException;
 import com.lan.app.domain.exception.ExternalServiceUnavailableException;
+import com.lan.app.domain.exception.EventSoldOutException;
 import com.lan.app.domain.exception.GuestNotFoundException;
 import com.lan.app.domain.exception.NotificationNotFoundException;
 import com.lan.app.domain.exception.RegistrationConflictException;
@@ -89,6 +90,11 @@ public class GlobalExceptionMapper implements ExceptionMapper<Throwable> {
         }
 
         // 409 — conflict
+        if (exception instanceof EventSoldOutException e) {
+            return buildResponse(Response.Status.CONFLICT, ErrorCode.EVENT_SOLD_OUT,
+                e.getMessage(), e.details());
+        }
+
         if (exception instanceof BusinessConflictException e) {
             return buildResponse(Response.Status.CONFLICT, ErrorCode.BUSINESS_CONFLICT,
                 e.getMessage(), e.details());

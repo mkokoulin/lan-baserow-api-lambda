@@ -1,6 +1,7 @@
 package com.lan.app.service;
 
 import com.lan.app.domain.exception.BusinessConflictException;
+import com.lan.app.domain.exception.EventSoldOutException;
 import com.lan.app.domain.exception.RegistrationNotFoundException;
 import com.lan.app.domain.exception.ResourceNotFoundException;
 import com.lan.app.domain.exception.ValidationException;
@@ -62,14 +63,14 @@ public class EventRegistrationService {
                 throw new ResourceNotFoundException("Event", event.id().externalId());
             }
             if (event.soldOut()) {
-                throw new BusinessConflictException(
+                throw new EventSoldOutException(
                     "Event is sold out.",
                     Map.of("eventId", event.id().externalId().toString(), "availableSpots", 0)
                 );
             }
             Integer remaining = capacityService.remainingCapacity(event.maxCapacity(), event.id().internalId());
             if (remaining != null && cmd.guestCount() > remaining) {
-                throw new BusinessConflictException(
+                throw new EventSoldOutException(
                     "Not enough seats left for the requested guest count.",
                     Map.of(
                         "eventId", event.id().externalId().toString(),
