@@ -1,6 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
 
-import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.domain.model.CoworkingSiteBooking;
 import com.lan.app.infrastructure.baserow.client.BaserowCoworkingSiteBookingClient;
 import com.lan.app.infrastructure.baserow.mapper.BaserowCoworkingSiteBookingMapper;
@@ -11,7 +10,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @ApplicationScoped
-public class BaserowCoworkingSiteBookingRepository extends AbstractBaserowRepository implements CoworkingSiteBookingRepository {
+public class BaserowCoworkingSiteBookingRepository extends RetryingBaserowRepository implements CoworkingSiteBookingRepository {
 
     private final int siteBookingsTableId;
     private final BaserowCoworkingSiteBookingClient client;

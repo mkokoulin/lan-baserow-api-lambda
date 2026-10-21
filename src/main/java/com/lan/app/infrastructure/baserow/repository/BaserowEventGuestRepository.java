@@ -1,5 +1,4 @@
 package com.lan.app.infrastructure.baserow.repository;
-import com.baserow.repository.AbstractBaserowRepository;
 
 import com.lan.app.domain.model.EventGuest;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
@@ -17,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
-public class BaserowEventGuestRepository extends AbstractBaserowRepository implements EventGuestRepository {
+public class BaserowEventGuestRepository extends RetryingBaserowRepository implements EventGuestRepository {
 
     private static final Logger log = Logger.getLogger(BaserowEventGuestRepository.class);
 

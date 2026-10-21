@@ -1,5 +1,4 @@
 package com.lan.app.infrastructure.baserow.repository;
-import com.baserow.repository.AbstractBaserowRepository;
 
 import com.lan.app.domain.model.CoworkingMeetingRoomBooking;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
@@ -17,7 +16,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.UUID;
 
 @ApplicationScoped
-public class BaserowCoworkingMeetingRoomBookingRepository extends AbstractBaserowRepository implements CoworkingMeetingRoomBookingRepository {
+public class BaserowCoworkingMeetingRoomBookingRepository extends RetryingBaserowRepository implements CoworkingMeetingRoomBookingRepository {
 
     private static final String ENTITY_NAME = "Coworking meeting room booking";
 

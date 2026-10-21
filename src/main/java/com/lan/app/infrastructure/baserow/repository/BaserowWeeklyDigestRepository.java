@@ -1,6 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
 
-import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.domain.model.DigestSubscriber;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.dto.UpdateDigestSubscriptionRequest;
@@ -12,7 +11,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import java.util.List;
 
 @ApplicationScoped
-public class BaserowWeeklyDigestRepository extends AbstractBaserowRepository implements WeeklyDigestRepository {
+public class BaserowWeeklyDigestRepository extends RetryingBaserowRepository implements WeeklyDigestRepository {
 
     private final int guestsTableId;
     private final BaserowGuestClient client;

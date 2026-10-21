@@ -1,5 +1,4 @@
 package com.lan.app.infrastructure.baserow.repository;
-import com.baserow.repository.AbstractBaserowRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
@@ -29,7 +28,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
-public class BaserowPaymentRepository extends AbstractBaserowRepository implements PaymentRepository {
+public class BaserowPaymentRepository extends RetryingBaserowRepository implements PaymentRepository {
 
     private static final Logger log = Logger.getLogger(BaserowPaymentRepository.class);
     private static final String BASEROW_API = "https://api.baserow.io";

@@ -1,6 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
 
-import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.domain.model.HeardAboutSourceRecipient;
 import com.lan.app.infrastructure.baserow.client.BaserowGuestClient;
 import com.lan.app.infrastructure.baserow.dto.UpdateHeardAboutSourceRequest;
@@ -27,7 +26,7 @@ import java.util.List;
 // interval combined with the isDue()/isWorkingHour() gate is what defers a guest whose 24h mark
 // falls outside working hours to the next opening, without any extra "reschedule" logic.
 @ApplicationScoped
-public class BaserowHeardAboutSourceRepository extends AbstractBaserowRepository
+public class BaserowHeardAboutSourceRepository extends RetryingBaserowRepository
         implements HeardAboutSourceRepository {
 
     private static final Logger log = Logger.getLogger(BaserowHeardAboutSourceRepository.class);

@@ -1,6 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
 import com.baserow.exception.BaserowUnavailableException;
-import com.baserow.repository.AbstractBaserowRepository;
 
 import com.lan.app.domain.model.EventRegistration;
 import com.lan.app.domain.model.EventRegistrationItem;
@@ -30,7 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
-public class BaserowEventRegistrationRepository extends AbstractBaserowRepository
+public class BaserowEventRegistrationRepository extends RetryingBaserowRepository
         implements EventRegistrationRepository {
 
     private static final Logger log = Logger.getLogger(BaserowEventRegistrationRepository.class);

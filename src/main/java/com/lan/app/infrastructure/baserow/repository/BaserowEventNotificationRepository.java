@@ -1,6 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
 
-import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.api.dto.request.NotificationResultRequest;
 import com.lan.app.domain.model.EventNotificationDue;
 import com.lan.app.domain.model.EventNotificationPreview;
@@ -38,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ApplicationScoped
-public class BaserowEventNotificationRepository extends AbstractBaserowRepository
+public class BaserowEventNotificationRepository extends RetryingBaserowRepository
         implements EventNotificationRepository {
 
     private static final Logger log = Logger.getLogger(BaserowEventNotificationRepository.class);

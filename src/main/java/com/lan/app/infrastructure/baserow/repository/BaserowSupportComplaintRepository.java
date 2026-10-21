@@ -1,6 +1,5 @@
 package com.lan.app.infrastructure.baserow.repository;
 
-import com.baserow.repository.AbstractBaserowRepository;
 import com.lan.app.domain.model.SupportComplaint;
 import com.lan.app.infrastructure.baserow.client.BaserowSupportComplaintClient;
 import com.lan.app.infrastructure.baserow.mapper.BaserowSupportComplaintMapper;
@@ -11,7 +10,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @ApplicationScoped
-public class BaserowSupportComplaintRepository extends AbstractBaserowRepository implements SupportComplaintRepository {
+public class BaserowSupportComplaintRepository extends RetryingBaserowRepository implements SupportComplaintRepository {
 
     private final int complaintsTableId;
     private final BaserowSupportComplaintClient client;
