@@ -1,9 +1,13 @@
 package com.lan.app.infrastructure.baserow.repository;
 
 import com.baserow.exception.BaserowRateLimitedException;
+import com.baserow.exception.BaserowUnavailableException;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+
+import java.net.SocketTimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,6 +57,51 @@ class RetryingBaserowRepositoryTest {
         }));
 
         assertEquals(1, attempts[0]);
+    }
+
+    @Test
+    void executeIdempotentRetriesOnceOnTimeoutAndSucceeds() {
+        var attempts = new int[]{0};
+
+        var result = repo.executeIdempotent(() -> {
+            attempts[0]++;
+            if (attempts[0] < 2) {
+                throw timeoutException();
+            }
+            return "ok";
+        });
+
+        assertEquals("ok", result);
+        assertEquals(2, attempts[0]);
+    }
+
+    @Test
+    void executeIdempotentGivesUpAfterOneTimeoutRetry() {
+        var attempts = new int[]{0};
+
+        assertThrows(BaserowUnavailableException.class, () -> repo.executeIdempotent(() -> {
+            attempts[0]++;
+            throw timeoutException();
+        }));
+
+        // initial attempt + 1 retry
+        assertEquals(2, attempts[0]);
+    }
+
+    @Test
+    void plainExecuteDoesNotRetryOnTimeout() {
+        var attempts = new int[]{0};
+
+        assertThrows(BaserowUnavailableException.class, () -> repo.execute(() -> {
+            attempts[0]++;
+            throw timeoutException();
+        }));
+
+        assertEquals(1, attempts[0]);
+    }
+
+    private static ProcessingException timeoutException() {
+        return new ProcessingException(new SocketTimeoutException("timeout"));
     }
 
     private static WebApplicationException webException(int status) {

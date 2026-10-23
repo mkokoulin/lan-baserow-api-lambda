@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @ApplicationScoped
-public class BaserowCoworkingTariffRepository implements CoworkingTariffRepository {
+public class BaserowCoworkingTariffRepository extends RetryingBaserowRepository implements CoworkingTariffRepository {
 
     private final int coworkingTariffTableId;
 
@@ -30,12 +30,12 @@ public class BaserowCoworkingTariffRepository implements CoworkingTariffReposito
     }
 
     public List<CoworkingTariff> list() {
-        var row = coworkingTariffClient.list(coworkingTariffTableId);
+        var row = executeIdempotent(() -> coworkingTariffClient.list(coworkingTariffTableId));
         return row.results().stream().map(mapper::toDomain).toList();
     }
 
     public CoworkingTariff get(UUID externalId) {
-        var row = coworkingTariffClient.findUniqueByExternalId(coworkingTariffTableId, externalId);
+        var row = executeIdempotent(() -> coworkingTariffClient.findUniqueByExternalId(coworkingTariffTableId, externalId));
         return mapper.toDomain(row);
     }
 }
