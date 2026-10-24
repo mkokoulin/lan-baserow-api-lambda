@@ -73,11 +73,13 @@ public class BaserowHeardAboutSourceRepository extends RetryingBaserowRepository
             return List.of();
         }
 
-        var guests = execute(() -> guestClient.listAllRaw(guestsTableId)).results();
+        var guests = execute(() -> guestClient.listUnsurveyedHeardAboutRaw(guestsTableId)).results();
         var result = new ArrayList<HeardAboutSourceRecipient>();
 
         for (var guest : guests) {
             if (guest.telegramChatId() == null) continue;
+            // listUnsurveyedHeardAboutRaw() already filters this server-side; re-checking here is
+            // just a cheap in-memory guard against a stale/edge-case row, not another Baserow call.
             if (Boolean.TRUE.equals(guest.heardAboutSurveySent())) continue;
 
             Instant createdAt = BaserowEventMapper.parseBaserowDate(guest.createdAt());

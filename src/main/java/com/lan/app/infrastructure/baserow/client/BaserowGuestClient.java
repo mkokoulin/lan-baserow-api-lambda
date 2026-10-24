@@ -80,6 +80,18 @@ public interface BaserowGuestClient {
         @PathParam("tableId") int tableId
     );
 
+    // Same page-size ceiling as listAllRaw, but scoped server-side to guests who still need the
+    // heard-about survey — unlike listAllRaw this stays bounded as the guest table grows, since
+    // once a guest's survey is sent they're permanently excluded instead of re-downloaded forever.
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "200")
+    @ClientQueryParam(name = "filter__heard_about_survey_sent__boolean", value = "false")
+    BaserowListResponse<BaserowGuestRow> listUnsurveyedHeardAboutRaw(
+        @PathParam("tableId") int tableId
+    );
+
     @POST
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")

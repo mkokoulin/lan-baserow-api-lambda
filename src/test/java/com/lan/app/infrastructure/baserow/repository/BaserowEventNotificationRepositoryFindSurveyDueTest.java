@@ -140,10 +140,13 @@ class BaserowEventNotificationRepositoryFindSurveyDueTest {
         when(notificationClient.findByEventIdRaw(EVENT_NOTIFICATIONS_TABLE, EVENT_ROW_ID)).thenReturn(listOf());
     }
 
+    // findSurveyDue() now fetches every result row for the anchor in one call instead of one
+    // find-by-guest call per registration — stub the batch endpoint, tagging the row with the
+    // guest link so the repository's groupingBy(guest) finds it.
     private void stubResultRow(int guestRowId, String action, Boolean surveySent) {
-        when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, ANCHOR_ROW_ID, guestRowId)).thenReturn(
+        when(resultClient.findByNotificationRaw(RESULTS_TABLE, ANCHOR_ROW_ID)).thenReturn(
             listOf(new BaserowEventNotificationResultRow(
-                1, List.of(), List.of(),
+                1, List.of(), List.of(new BaserowLinkToTable(guestRowId, "g")),
                 null,
                 action == null ? null : new BaserowSingleSelect(1, action, "green"),
                 null, null, surveySent
@@ -152,7 +155,7 @@ class BaserowEventNotificationRepositoryFindSurveyDueTest {
     }
 
     private void stubNoResultRow(int guestRowId) {
-        when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, ANCHOR_ROW_ID, guestRowId)).thenReturn(listOf());
+        when(resultClient.findByNotificationRaw(RESULTS_TABLE, ANCHOR_ROW_ID)).thenReturn(listOf());
     }
 
     @Nested

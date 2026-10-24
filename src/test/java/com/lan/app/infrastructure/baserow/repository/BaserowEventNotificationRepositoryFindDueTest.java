@@ -137,11 +137,19 @@ class BaserowEventNotificationRepositoryFindDueTest {
         when(guestClient.getByRowId(GUESTS_TABLE, guestRowId)).thenReturn(guest(guestRowId, chatId));
     }
 
-    private void stubAlreadyNotified(int guestRowId, boolean already) {
-        when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, ANCHOR_ROW_ID, guestRowId))
-            .thenReturn(already
-                ? listOf(new BaserowEventNotificationResultRow(1, List.of(), List.of(), null, null, null, null, null))
-                : listOf());
+    // findDue() now fetches every result row for the anchor in one call instead of one
+    // find-by-guest call per registration — stub the batch endpoint with the full set of
+    // already-notified guest row ids for the test.
+    private void stubAlreadyNotified(int... notifiedGuestRowIds) {
+        var rows = java.util.Arrays.stream(notifiedGuestRowIds)
+            .mapToObj(guestRowId -> new BaserowEventNotificationResultRow(
+                guestRowId, List.of(), List.of(new BaserowLinkToTable(guestRowId, "g")), null, null, null, null, null))
+            .toArray(BaserowEventNotificationResultRow[]::new);
+        when(resultClient.findByNotificationRaw(RESULTS_TABLE, ANCHOR_ROW_ID)).thenReturn(listOf(rows));
+    }
+
+    private void stubNoneAlreadyNotified() {
+        when(resultClient.findByNotificationRaw(RESULTS_TABLE, ANCHOR_ROW_ID)).thenReturn(listOf());
     }
 
     private void stubNoExistingAnchor() {
@@ -185,9 +193,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubGuest(104, 555104L);
             stubGuest(105, null);
 
-            stubAlreadyNotified(101, false);
-            stubAlreadyNotified(104, true);
-            stubAlreadyNotified(105, false);
+            stubAlreadyNotified(104);
 
             var due = repo.findDue();
 
@@ -226,8 +232,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubGuest(101, 555101L);
             stubGuest(102, 555102L);
 
-            stubAlreadyNotified(101, true);
-            stubAlreadyNotified(102, false);
+            stubAlreadyNotified(101);
 
             var due = repo.findDue();
 
@@ -263,7 +268,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubNoExistingAnchor();
             stubRegistrations(registration(1, 101, EVENT_START.minusDays(4)));
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
 
             pinNow(EVENT_START.minusDays(1).withHour(21).withMinute(0)); // 21:00 sharp -> excluded
             assertThat(repo.findDue(), empty());
@@ -325,7 +330,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubNoExistingAnchor();
             stubRegistrations(registration(1, 101, EVENT_START.minusDays(4)));
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
             // No registrations stub for otherEventRowId — if the far-future event were queried at
             // all, Mockito's default null answer would NPE, so this also proves it's never reached.
 
@@ -373,7 +378,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             );
             stubRegistrations(noCreatedAt);
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 
@@ -393,7 +398,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
                 registration(2, 101, EVENT_START.minusDays(3)) // same guestRowId, different registration row
             );
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 
@@ -487,7 +492,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
                 registration(2, 101, EVENT_START.minusDays(4), false)
             );
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 
@@ -508,7 +513,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
                 registration(2, 101, EVENT_START.minusDays(4), true)
             );
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 
@@ -529,7 +534,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
                 registration(2, 102, EVENT_START.minusDays(4), false) // active
             );
             stubGuest(102, 555102L);
-            stubAlreadyNotified(102, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 
@@ -554,7 +559,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
 
             assertThat(due, empty());
             verifyNoInteractions(guestClient);
-            verify(resultClient, never()).findByNotificationAndGuestRaw(anyInt(), anyInt(), anyInt());
+            verifyNoInteractions(resultClient);
         }
     }
 
@@ -575,8 +580,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             );
             when(guestClient.getByRowId(GUESTS_TABLE, 101)).thenThrow(new RuntimeException("Baserow 500"));
             stubGuest(102, 555102L);
-            stubAlreadyNotified(101, false);
-            stubAlreadyNotified(102, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 
@@ -594,7 +598,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             stubNoExistingAnchor();
             stubRegistrations(registration(1, 101, EVENT_START.minusDays(4)));
             stubGuest(101, 555101L);
-            when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, ANCHOR_ROW_ID, 101))
+            when(resultClient.findByNotificationRaw(RESULTS_TABLE, ANCHOR_ROW_ID))
                 .thenThrow(new RuntimeException("Baserow 500"));
 
             var due = repo.findDue();
@@ -624,7 +628,7 @@ class BaserowEventNotificationRepositoryFindDueTest {
             when(registrationClient.findByEventRowIdRaw(REGISTRATIONS_TABLE, otherEventRowId))
                 .thenReturn(listOf(registration(1, 101, EVENT_START.minusDays(4))));
             stubGuest(101, 555101L);
-            stubAlreadyNotified(101, false);
+            stubNoneAlreadyNotified();
 
             var due = repo.findDue();
 

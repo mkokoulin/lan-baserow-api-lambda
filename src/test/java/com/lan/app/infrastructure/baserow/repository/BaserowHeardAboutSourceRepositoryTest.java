@@ -71,7 +71,7 @@ class BaserowHeardAboutSourceRepositoryTest {
     }
 
     private void stubGuests(BaserowGuestRow... guests) {
-        when(guestClient.listAllRaw(GUESTS_TABLE)).thenReturn(listOf(guests));
+        when(guestClient.listUnsurveyedHeardAboutRaw(GUESTS_TABLE)).thenReturn(listOf(guests));
     }
 
     @Nested

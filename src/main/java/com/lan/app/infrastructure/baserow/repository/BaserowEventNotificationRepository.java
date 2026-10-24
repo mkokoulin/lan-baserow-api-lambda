@@ -35,6 +35,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class BaserowEventNotificationRepository extends RetryingBaserowRepository
@@ -189,10 +192,14 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
         var recipients = new ArrayList<NotificationRecipient>();
         // A guest can have more than one registration row for the same event (nothing prevents
         // re-registering) — without this, two eligible registrations for the same guest would
-        // both pass the alreadyNotified() check (it only reflects past ticks' Baserow writes,
+        // both pass the already-notified check (it only reflects past ticks' Baserow writes,
         // not sends queued earlier in this very pass) and the guest would get double-messaged.
         var seenGuestRowIds = new java.util.HashSet<Integer>();
         Integer anchorRowId = null;
+        // Fetched once per event (not per guest) — the isDue() window stays open for 24h, so
+        // without this every still-eligible registration would cost its own Baserow round trip
+        // on every 5-minute poll tick for the whole window.
+        Set<Integer> notifiedGuestRowIds = null;
 
         List<BaserowRegistrationRow> registrations;
         try {
@@ -216,8 +223,11 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
             if (!seenGuestRowIds.add(guestRowId)) continue;
 
             try {
-                if (anchorRowId == null) anchorRowId = findOrCreateAnchorRow(eventRowId);
-                if (alreadyNotified(anchorRowId, guestRowId)) continue;
+                if (anchorRowId == null) {
+                    anchorRowId = findOrCreateAnchorRow(eventRowId);
+                    notifiedGuestRowIds = fetchNotifiedGuestRowIds(anchorRowId);
+                }
+                if (notifiedGuestRowIds.contains(guestRowId)) continue;
 
                 var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
                 if (guest.telegramChatId() != null) {
@@ -230,6 +240,22 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
         return recipients;
     }
 
+    private Set<Integer> fetchNotifiedGuestRowIds(int anchorRowId) {
+        try {
+            return execute(() -> resultClient.findByNotificationRaw(notificationResultsTableId, anchorRowId))
+                .results().stream()
+                .filter(r -> r.guest() != null && !r.guest().isEmpty())
+                .map(r -> r.guest().getFirst().id())
+                .collect(Collectors.toSet());
+        } catch (Exception e) {
+            // Fails open (same as the old per-guest alreadyNotified() check): if Baserow can't
+            // confirm who's already been notified, treat nobody as notified rather than silently
+            // skipping the whole event for this poll tick.
+            log.warnf("Could not fetch notification results for anchor=%d: %s", anchorRowId, e.getMessage());
+            return Set.of();
+        }
+    }
+
     // Earliest of {waveA, waveB} that lies strictly after the registration timestamp; null if
     // the guest registered after both (no automated reminder — manual follow-up territory).
     private Instant assignedWave(Instant registeredAt, Instant waveA, Instant waveB) {
@@ -237,18 +263,6 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
         if (waveA != null && waveA.isAfter(registeredAt)) assigned = waveA;
         if (waveB != null && waveB.isAfter(registeredAt) && (assigned == null || waveB.isBefore(assigned))) assigned = waveB;
         return assigned;
-    }
-
-    private boolean alreadyNotified(int anchorRowId, int guestRowId) {
-        try {
-            return !execute(() ->
-                resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, anchorRowId, guestRowId)
-            ).results().isEmpty();
-        } catch (Exception e) {
-            log.warnf("Could not check existing notification results for anchor=%d guest=%d: %s",
-                anchorRowId, guestRowId, e.getMessage());
-            return false;
-        }
     }
 
     private int findOrCreateAnchorRow(int eventRowId) {
@@ -355,19 +369,35 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
             return result;
         }
 
+        var eligibleRegistrations = registrations.stream()
+            .filter(reg -> !Boolean.TRUE.equals(reg.isCancelled()))
+            .filter(reg -> reg.guestId() != null && !reg.guestId().isEmpty())
+            .toList();
+        if (eligibleRegistrations.isEmpty()) return result;
+
+        // One Baserow call for every result row on this event's anchor, instead of one per
+        // registration — same reasoning as fetchNotifiedGuestRowIds() in collectEligibleRecipients.
+        // Gated on there being at least one eligible registration so an event with nothing to
+        // survey (e.g. every registration cancelled) doesn't even make this call.
+        Map<Integer, List<BaserowEventNotificationResultRow>> resultRowsByGuest;
+        try {
+            resultRowsByGuest = execute(() -> resultClient.findByNotificationRaw(notificationResultsTableId, anchorRowId))
+                .results().stream()
+                .filter(r -> r.guest() != null && !r.guest().isEmpty())
+                .collect(Collectors.groupingBy(r -> r.guest().getFirst().id()));
+        } catch (Exception e) {
+            log.warnf("Could not fetch notification results for anchor=%d: %s", anchorRowId, e.getMessage());
+            return result;
+        }
+
         var seenGuestRowIds = new java.util.HashSet<Integer>();
 
-        for (var reg : registrations) {
-            if (Boolean.TRUE.equals(reg.isCancelled())) continue;
-            if (reg.guestId() == null || reg.guestId().isEmpty()) continue;
-
+        for (var reg : eligibleRegistrations) {
             int guestRowId = reg.guestId().getFirst().id();
             if (!seenGuestRowIds.add(guestRowId)) continue;
 
             try {
-                var resultRows = execute(() ->
-                    resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, anchorRowId, guestRowId)
-                ).results();
+                var resultRows = resultRowsByGuest.getOrDefault(guestRowId, List.of());
 
                 var confirmedRow = resultRows.stream()
                     .filter(r -> r.action() != null && CONFIRMED_ACTION.equals(r.action().value()))

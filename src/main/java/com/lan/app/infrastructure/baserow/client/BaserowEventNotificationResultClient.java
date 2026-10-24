@@ -39,6 +39,18 @@ public interface BaserowEventNotificationResultClient {
         @QueryParam("filter__guest__link_row_has") int guestRowId
     );
 
+    // All result rows for one event_notification anchor row, in a single call — used to check
+    // every registration's already-notified/already-confirmed status in one shot instead of one
+    // Baserow request per guest per poll tick.
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "size", value = "200")
+    BaserowListResponse<BaserowEventNotificationResultRow> findByNotificationRaw(
+        @PathParam("tableId") int tableId,
+        @QueryParam("filter__event_notification__link_row_has") int eventNotificationRowId
+    );
+
     @PATCH
     @Path("/{tableId}/{rowId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
