@@ -220,7 +220,12 @@ public class BotResource {
                 .entity("{\"error\":\"action is required\"}")
                 .build();
         }
-        notificationService.recordGuestAction(id, req.guestRowId(), req.registrationRowId(), req.action());
+        boolean saved = notificationService.recordGuestAction(id, req.guestRowId(), req.registrationRowId(), req.action());
+        if (!saved) {
+            return Response.status(Response.Status.BAD_GATEWAY)
+                .entity("{\"error\":\"failed to persist action\"}")
+                .build();
+        }
         return Response.ok().build();
     }
 

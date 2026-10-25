@@ -204,6 +204,8 @@ class BotResourceTest {
         @Test
         @DisplayName("валидный action → 200, сервис вызван")
         void validAction_returns200() {
+            when(notificationService.recordGuestAction(42, 1, 2, "CONFIRMED")).thenReturn(true);
+
             given()
                 .contentType(ContentType.JSON)
                 .body("""
@@ -214,6 +216,21 @@ class BotResourceTest {
                 .statusCode(200);
 
             verify(notificationService).recordGuestAction(42, 1, 2, "CONFIRMED");
+        }
+
+        @Test
+        @DisplayName("сервис не смог сохранить ответ → 502, чтобы бот не врал гостю про подтверждение")
+        void serviceFailsToPersist_returns502() {
+            when(notificationService.recordGuestAction(42, 1, 2, "CONFIRMED")).thenReturn(false);
+
+            given()
+                .contentType(ContentType.JSON)
+                .body("""
+                    { "guestRowId": 1, "registrationRowId": 2, "action": "CONFIRMED" }
+                """)
+                .when().post(BASE_PATH + "/event-notifications/42/action")
+                .then()
+                .statusCode(502);
         }
 
         @Test

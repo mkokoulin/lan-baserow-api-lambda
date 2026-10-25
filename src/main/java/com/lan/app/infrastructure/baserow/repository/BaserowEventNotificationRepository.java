@@ -529,8 +529,12 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
         updateStatus(notificationRowId, anyFailed ? "FAILED" : "SENT");
     }
 
+    // Returns whether the guest's answer actually made it into Baserow. The caller (BotResource)
+    // surfaces failure as a non-2xx response so the bot can tell the guest their tap didn't save,
+    // instead of thanking them for an answer that silently vanished — which was indistinguishable
+    // from a real confirmation and left the next poll tick free to re-send the same reminder.
     @Override
-    public void recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
+    public boolean recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
         try {
             var existing = execute(() ->
                 resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, notificationRowId, guestRowId)
@@ -557,14 +561,22 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
                 ).results();
             }
 
+            if (existing.isEmpty()) {
+                log.warnf("recordGuestAction: result row still missing after create for eventNotification=%d guest=%d",
+                    notificationRowId, guestRowId);
+                return false;
+            }
+
             for (BaserowEventNotificationResultRow row : existing) {
                 execute(() -> resultClient.updateAction(
                     notificationResultsTableId, row.id(), new UpdateNotificationResultActionRequest(action)
                 ));
             }
+            return true;
         } catch (Exception e) {
             log.warnf(e, "Failed to record guest action for eventNotification=%d guest=%d: %s",
                 notificationRowId, guestRowId, e.getMessage());
+            return false;
         }
     }
 }

@@ -38,8 +38,8 @@ public class EventNotificationService {
         repo.saveResults(notificationRowId, results);
     }
 
-    public void recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
-        repo.recordGuestAction(notificationRowId, guestRowId, registrationRowId, action);
+    public boolean recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
+        return repo.recordGuestAction(notificationRowId, guestRowId, registrationRowId, action);
     }
 
     public List<EventSurveyDue> findSurveyDue() {

@@ -27,6 +27,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Covers recordGuestAction(), invoked when a guest taps "Всё в силе" / "Не смогу" on a reminder.
@@ -85,8 +87,9 @@ class BaserowEventNotificationRepositoryRecordGuestActionTest {
             when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, NOTIFICATION_ROW_ID, GUEST_ROW_ID))
                 .thenReturn(listOf(row(55)));
 
-            repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
+            boolean saved = repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
 
+            assertTrue(saved);
             verify(resultClient).updateAction(RESULTS_TABLE, 55, new UpdateNotificationResultActionRequest("CONFIRMED"));
             verify(resultClient, never()).create(anyInt(), any());
         }
@@ -97,8 +100,9 @@ class BaserowEventNotificationRepositoryRecordGuestActionTest {
             when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, NOTIFICATION_ROW_ID, GUEST_ROW_ID))
                 .thenReturn(listOf(row(55), row(56)));
 
-            repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "DECLINED");
+            boolean saved = repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "DECLINED");
 
+            assertTrue(saved);
             verify(resultClient).updateAction(RESULTS_TABLE, 55, new UpdateNotificationResultActionRequest("DECLINED"));
             verify(resultClient).updateAction(RESULTS_TABLE, 56, new UpdateNotificationResultActionRequest("DECLINED"));
         }
@@ -115,8 +119,9 @@ class BaserowEventNotificationRepositoryRecordGuestActionTest {
                 .thenReturn(listOf()) // first check: nothing yet
                 .thenReturn(listOf(row(77))); // re-fetch after create: the new row
 
-            repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
+            boolean saved = repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
 
+            assertTrue(saved);
             verify(resultClient).create(eq(RESULTS_TABLE), argThat(req ->
                 req.eventNotification().equals(List.of(NOTIFICATION_ROW_ID))
                     && req.guest().equals(List.of(GUEST_ROW_ID))
@@ -129,13 +134,14 @@ class BaserowEventNotificationRepositoryRecordGuestActionTest {
         }
 
         @Test
-        @DisplayName("no existing row and the re-fetch after create still comes back empty -> no update is attempted, nothing throws")
+        @DisplayName("no existing row and the re-fetch after create still comes back empty -> no update is attempted, reports failure")
         void createSucceedsButRefetchStillEmpty_noUpdateAttempted() {
             when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, NOTIFICATION_ROW_ID, GUEST_ROW_ID))
                 .thenReturn(listOf());
 
-            repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
+            boolean saved = repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
 
+            assertFalse(saved);
             verify(resultClient).create(eq(RESULTS_TABLE), any());
             verify(resultClient, never()).updateAction(anyInt(), anyInt(), any());
         }
@@ -146,26 +152,28 @@ class BaserowEventNotificationRepositoryRecordGuestActionTest {
     class FailureIsolation {
 
         @Test
-        @DisplayName("lookup throws -> swallowed, does not propagate to the Telegram callback handler")
+        @DisplayName("lookup throws -> swallowed, does not propagate to the Telegram callback handler, reports failure")
         void lookupThrows_doesNotPropagate() {
             when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, NOTIFICATION_ROW_ID, GUEST_ROW_ID))
                 .thenThrow(new RuntimeException("Baserow 500"));
 
-            repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
+            boolean saved = repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
 
+            assertFalse(saved);
             verify(resultClient, never()).updateAction(anyInt(), anyInt(), any());
         }
 
         @Test
-        @DisplayName("updateAction throws for the first of two duplicate rows -> the second row is never attempted, and nothing propagates")
+        @DisplayName("updateAction throws for the first of two duplicate rows -> the second row is never attempted, nothing propagates, reports failure")
         void updateActionThrowsOnFirstRow_stopsButDoesNotPropagate() {
             when(resultClient.findByNotificationAndGuestRaw(RESULTS_TABLE, NOTIFICATION_ROW_ID, GUEST_ROW_ID))
                 .thenReturn(listOf(row(55), row(56)));
             doThrow(new RuntimeException("Baserow 500"))
                 .when(resultClient).updateAction(eq(RESULTS_TABLE), eq(55), any());
 
-            repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
+            boolean saved = repo.recordGuestAction(NOTIFICATION_ROW_ID, GUEST_ROW_ID, REGISTRATION_ROW_ID, "CONFIRMED");
 
+            assertFalse(saved);
             verify(resultClient, never()).updateAction(eq(RESULTS_TABLE), eq(56), any());
         }
     }
