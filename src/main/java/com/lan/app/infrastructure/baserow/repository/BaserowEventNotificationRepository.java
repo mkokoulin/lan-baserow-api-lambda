@@ -227,11 +227,20 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
                     anchorRowId = findOrCreateAnchorRow(eventRowId);
                     notifiedGuestRowIds = fetchNotifiedGuestRowIds(anchorRowId);
                 }
-                if (notifiedGuestRowIds.contains(guestRowId)) continue;
+                if (notifiedGuestRowIds.contains(guestRowId)) {
+                    log.infof("collectEligibleRecipients: skipping guestRowId=%d for event=%d anchor=%d — already has a result row",
+                        guestRowId, eventRowId, anchorRowId);
+                    continue;
+                }
 
                 var guest = execute(() -> guestClient.getByRowId(guestsTableId, guestRowId));
                 if (guest.telegramChatId() != null) {
+                    log.infof("collectEligibleRecipients: queuing guestRowId=%d (regId=%d, chatId=%d) for event=%d anchor=%d",
+                        guestRowId, reg.id(), guest.telegramChatId(), eventRowId, anchorRowId);
                     recipients.add(new NotificationRecipient(guest.telegramChatId(), guestRowId, reg.id()));
+                } else {
+                    log.infof("collectEligibleRecipients: guestRowId=%d has no telegramChatId, skipping for event=%d",
+                        guestRowId, eventRowId);
                 }
             } catch (Exception e) {
                 log.warnf("Could not resolve guest rowId=%d for event rowId=%d: %s", guestRowId, eventRowId, e.getMessage());
@@ -242,11 +251,14 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
 
     private Set<Integer> fetchNotifiedGuestRowIds(int anchorRowId) {
         try {
-            return execute(() -> resultClient.findByNotificationRaw(notificationResultsTableId, anchorRowId))
+            Set<Integer> ids = execute(() -> resultClient.findByNotificationRaw(notificationResultsTableId, anchorRowId))
                 .results().stream()
                 .filter(r -> r.guest() != null && !r.guest().isEmpty())
                 .map(r -> r.guest().getFirst().id())
                 .collect(Collectors.toSet());
+            log.infof("fetchNotifiedGuestRowIds: anchor=%d already has result rows for %d guest(s): %s",
+                anchorRowId, ids.size(), ids);
+            return ids;
         } catch (Exception e) {
             // Fails open (same as the old per-guest alreadyNotified() check): if Baserow can't
             // confirm who's already been notified, treat nobody as notified rather than silently
@@ -535,6 +547,8 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
     // from a real confirmation and left the next poll tick free to re-send the same reminder.
     @Override
     public boolean recordGuestAction(int notificationRowId, int guestRowId, int registrationRowId, String action) {
+        log.infof("recordGuestAction: eventNotification=%d guest=%d registration=%d action=%s",
+            notificationRowId, guestRowId, registrationRowId, action);
         try {
             var existing = execute(() ->
                 resultClient.findByNotificationAndGuestRaw(notificationResultsTableId, notificationRowId, guestRowId)
@@ -572,6 +586,8 @@ public class BaserowEventNotificationRepository extends RetryingBaserowRepositor
                     notificationResultsTableId, row.id(), new UpdateNotificationResultActionRequest(action)
                 ));
             }
+            log.infof("recordGuestAction: saved action=%s for eventNotification=%d guest=%d (updated %d result row(s))",
+                action, notificationRowId, guestRowId, existing.size());
             return true;
         } catch (Exception e) {
             log.warnf(e, "Failed to record guest action for eventNotification=%d guest=%d: %s",
