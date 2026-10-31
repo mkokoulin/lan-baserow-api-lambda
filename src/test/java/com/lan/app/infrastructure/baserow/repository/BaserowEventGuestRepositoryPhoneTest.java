@@ -6,11 +6,13 @@ import com.lan.app.infrastructure.baserow.dto.BaserowGuestRow;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.ProcessingException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,6 +91,35 @@ class BaserowEventGuestRepositoryPhoneTest {
             var result = repo.findByPhone(null);
 
             assertFalse(result.isPresent());
+        }
+
+        @Test
+        @DisplayName("таймаут Baserow на первой попытке → повтор и успех со второй")
+        void baserowTimeout_retriesOnceAndSucceeds() {
+            when(client.listAllRaw(TABLE_ID))
+                .thenThrow(new ProcessingException(new SocketTimeoutException("timeout")))
+                .thenReturn(listOf(row(661, "+374 91 083 182")));
+
+            var result = repo.findByPhone("+37491083182");
+
+            assertTrue(result.isPresent());
+        }
+    }
+
+    @Nested
+    @DisplayName("findByTelegramChatId")
+    class FindByTelegramChatId {
+
+        @Test
+        @DisplayName("таймаут Baserow на первой попытке → повтор и успех со второй")
+        void baserowTimeout_retriesOnceAndSucceeds() {
+            when(client.findByChatIdRaw(TABLE_ID, 555L))
+                .thenThrow(new ProcessingException(new SocketTimeoutException("timeout")))
+                .thenReturn(listOf(row(661, "+374 91 083 182")));
+
+            var result = repo.findByTelegramChatId(555L);
+
+            assertTrue(result.isPresent());
         }
     }
 }

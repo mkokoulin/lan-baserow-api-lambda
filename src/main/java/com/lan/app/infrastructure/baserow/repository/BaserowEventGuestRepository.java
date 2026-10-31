@@ -49,7 +49,7 @@ public class BaserowEventGuestRepository extends RetryingBaserowRepository imple
 
     @Override
     public Optional<EventGuest> findByTelegramChatId(Long chatId) {
-        var response = execute(() -> client.findByChatIdRaw(guestsTableId, chatId));
+        var response = executeIdempotent(() -> client.findByChatIdRaw(guestsTableId, chatId));
         if (response.results().isEmpty()) {
             return Optional.empty();
         }
@@ -60,7 +60,7 @@ public class BaserowEventGuestRepository extends RetryingBaserowRepository imple
     public Optional<EventGuest> findByPhone(String phone) {
         String needle = normalizedLocalDigits(phone);
         if (needle.isEmpty()) return Optional.empty();
-        var all = execute(() -> client.listAllRaw(guestsTableId).results());
+        var all = executeIdempotent(() -> client.listAllRaw(guestsTableId).results());
         return all.stream()
             .filter(row -> needle.equals(normalizedLocalDigits(row.phone())))
             .findFirst()
