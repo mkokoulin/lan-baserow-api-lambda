@@ -59,15 +59,6 @@ public interface BaserowGuestClient {
         @QueryParam("filter__telegram_chat_id__equal") Long chatId
     );
 
-    @GET
-    @Path("/{tableId}/")
-    @ClientQueryParam(name = "user_field_names", value = "true")
-    @ClientQueryParam(name = "size", value = "1")
-    BaserowListResponse<BaserowGuestRow> findByPhoneRaw(
-        @PathParam("tableId") int tableId,
-        @Encoded @QueryParam("filter__phone__equal") String phone
-    );
-
     // Unfiltered — used when phone numbers must be matched by normalized digits rather than an
     // exact string (Baserow's equal filter can't tolerate formatting differences like "+374 91
     // 083 182" vs "37491083182"). Same page-size ceiling as other listAllRaw calls in this

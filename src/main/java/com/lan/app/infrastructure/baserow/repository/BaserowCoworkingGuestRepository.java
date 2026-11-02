@@ -12,7 +12,6 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -51,13 +50,13 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
 
     @Override
     public Optional<CoworkingGuest> findByPhone(String phone) {
-        for (String candidate : phoneVariants(phone)) {
-            var resp = client.findByPhoneRaw(guestsTableId, candidate);
-            if (resp.count() > 0 && !resp.results().isEmpty()) {
-                return Optional.of(mapper.toDomain(resp.results().getFirst()));
-            }
-        }
-        return Optional.empty();
+        String needle = normalizedLocalDigits(phone);
+        if (needle.isEmpty()) return Optional.empty();
+        var all = client.listAllRaw(guestsTableId).results();
+        return all.stream()
+            .filter(row -> needle.equals(normalizedLocalDigits(row.phone())))
+            .findFirst()
+            .map(mapper::toDomain);
     }
 
     @Override
@@ -69,33 +68,31 @@ public class BaserowCoworkingGuestRepository implements CoworkingGuestRepository
 
     @Override
     public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
-        for (String candidate : phoneVariants(phone)) {
-            var resp = client.findByPhoneRaw(guestsTableId, candidate);
-            if (resp.count() > 0 && !resp.results().isEmpty()) {
-                var updated = client.patchChatId(guestsTableId, resp.results().getFirst().id(), new LinkChatIdRowRequest(chatId));
-                return Optional.of(mapper.toDomain(updated));
-            }
-        }
-        return Optional.empty();
+        String needle = normalizedLocalDigits(phone);
+        if (needle.isEmpty()) return Optional.empty();
+        var all = client.listAllRaw(guestsTableId).results();
+        var found = all.stream()
+            .filter(row -> needle.equals(normalizedLocalDigits(row.phone())))
+            .findFirst();
+        if (found.isEmpty()) return Optional.empty();
+        var updated = client.patchChatId(guestsTableId, found.get().id(), new LinkChatIdRowRequest(chatId));
+        return Optional.of(mapper.toDomain(updated));
     }
 
     /**
-     * Produces candidate phone strings for Baserow's equal filter.
-     * Uses %2B instead of + because JAX-RS passes + unencoded and Django decodes it as a space.
-     * @Encoded on the client method prevents double-encoding of %2B.
+     * Reduces a phone number to its bare local-number digits, ignoring formatting (spaces,
+     * dashes, "+") and the Armenian country code, so "+374 91 083 182", "37491083182" and
+     * "91083182" all compare equal regardless of how each was typed/stored. Mirrors
+     * BaserowEventGuestRepository#normalizedLocalDigits — Baserow's equal filter can't tolerate
+     * formatting differences, so matching has to happen in memory against the raw stored value.
      */
-    private static List<String> phoneVariants(String phone) {
-        if (phone == null) return List.of();
+    private static String normalizedLocalDigits(String phone) {
+        if (phone == null) return "";
         String digits = phone.replaceAll("[^\\d]", "");
-        if (digits.startsWith("374") && digits.length() == 11) {
-            String local = digits.substring(3);
-            return List.of("%2B" + digits, digits, local);
+        if (digits.startsWith("374") && digits.length() > 8) {
+            return digits.substring(digits.length() - 8);
         }
-        if (digits.length() == 8) {
-            String full = "374" + digits;
-            return List.of("%2B" + full, full, digits);
-        }
-        return List.of(phone.replace("+", "%2B"), phone);
+        return digits;
     }
 
     @Override

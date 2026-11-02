@@ -1,5 +1,6 @@
 package com.lan.app.service;
 
+import com.lan.app.domain.PhoneNumbers;
 import com.lan.app.domain.exception.BusinessConflictException;
 import com.lan.app.domain.model.CoworkingGuest;
 import com.lan.app.repository.CoworkingGuestRepository;
@@ -27,7 +28,7 @@ public class CoworkingGuestService {
     }
 
     public Optional<CoworkingGuest> findByPhone(String phone) {
-        return repo.findByPhone(phone);
+        return repo.findByPhone(PhoneNumbers.normalize(phone));
     }
 
     public CoworkingGuest linkChatIdById(UUID externalId, Long chatId) {
@@ -35,7 +36,7 @@ public class CoworkingGuestService {
     }
 
     public Optional<CoworkingGuest> linkChatIdByPhone(String phone, Long chatId) {
-        return repo.linkChatIdByPhone(phone, chatId);
+        return repo.linkChatIdByPhone(PhoneNumbers.normalize(phone), chatId);
     }
 
     public void unlinkChat(Long chatId) {
@@ -43,10 +44,11 @@ public class CoworkingGuestService {
     }
 
     public CoworkingGuest create(String firstName, String lastName, String phone, String telegram, Long telegramChatId) {
-        if (repo.findByPhone(phone).isPresent()) {
+        String normalizedPhone = PhoneNumbers.normalize(phone);
+        if (repo.findByPhone(normalizedPhone).isPresent()) {
             throw new BusinessConflictException(
-                "Guest with phone " + phone + " already exists.",
-                java.util.Map.of("phone", phone)
+                "Guest with phone " + normalizedPhone + " already exists.",
+                java.util.Map.of("phone", normalizedPhone)
             );
         }
         if (telegramChatId != null && repo.findByChatId(telegramChatId).isPresent()) {
@@ -55,10 +57,13 @@ public class CoworkingGuestService {
                 java.util.Map.of("telegramChatId", telegramChatId)
             );
         }
-        return repo.create(firstName, lastName, phone, telegram, telegramChatId);
+        return repo.create(firstName, lastName, normalizedPhone, telegram, telegramChatId);
     }
 
     public CoworkingGuest update(UUID externalId, UpdateCoworkingGuestCommand cmd) {
+        if (cmd != null && cmd.phone() != null) {
+            cmd = new UpdateCoworkingGuestCommand(cmd.firstName(), cmd.lastName(), PhoneNumbers.normalize(cmd.phone()), cmd.telegram());
+        }
         return repo.update(externalId, cmd);
     }
 }

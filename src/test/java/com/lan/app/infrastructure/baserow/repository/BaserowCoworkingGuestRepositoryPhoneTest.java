@@ -16,23 +16,22 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @DisplayName("BaserowCoworkingGuestRepository — поиск по телефону")
 class BaserowCoworkingGuestRepositoryPhoneTest {
 
-    static final int    TABLE_ID       = 824729;
-    static final Long   CHAT_ID        = 555000111L;
-    static final String PHONE_E164     = "+37491083182";
-    static final String PHONE_ENCODED  = "%2B37491083182";
-    static final String PHONE_DIGITS   = "37491083182";
-    static final String PHONE_LOCAL    = "91083182";
+    static final int  TABLE_ID = 824729;
+    static final Long CHAT_ID  = 555000111L;
 
     @Inject
     BaserowCoworkingGuestRepository repo;
@@ -41,20 +40,15 @@ class BaserowCoworkingGuestRepositoryPhoneTest {
     @RestClient
     BaserowGuestClient client;
 
-    static BaserowGuestRow row(String phone) {
+    static BaserowGuestRow row(int id, String phone) {
         return new BaserowGuestRow(
-            661,
-            UUID.fromString("ca80b87b-b328-422f-8099-723a6ad79ebf"),
+            id, UUID.fromString("ca80b87b-b328-422f-8099-723a6ad79ebf"),
             "Misha", "K", phone, "sprmk", 299019145L, null, null, null, null, null, null
         );
     }
 
-    static <T> BaserowListResponse<T> empty() {
-        return new BaserowListResponse<>(0, null, null, List.of());
-    }
-
-    static <T> BaserowListResponse<T> of(T item) {
-        return new BaserowListResponse<>(1, null, null, List.of(item));
+    static <T> BaserowListResponse<T> listOf(T... items) {
+        return new BaserowListResponse<>(items.length, null, null, List.of(items));
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -66,90 +60,48 @@ class BaserowCoworkingGuestRepositoryPhoneTest {
     class FindByPhone {
 
         @Test
-        @DisplayName("ввод +374... → первый вариант %2B374... находит запись")
-        void withPlusPrefix_foundOnEncodedVariant() {
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_ENCODED)).thenReturn(of(row(PHONE_E164)));
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_DIGITS)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_LOCAL)).thenReturn(empty());
+        @DisplayName("сохранённый номер с пробелами внутри → всё равно находится по нормализованным цифрам")
+        void storedWithInternalSpaces_stillMatches() {
+            when(client.listAllRaw(TABLE_ID)).thenReturn(listOf(row(661, "+374 91 083 182")));
 
-            var result = repo.findByPhone(PHONE_E164);
+            var result = repo.findByPhone("+37491083182");
 
             assertTrue(result.isPresent());
-            assertThat(result.get().phone(), equalTo(PHONE_E164));
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_ENCODED);
-            verify(client, never()).findByPhoneRaw(TABLE_ID, PHONE_DIGITS);
         }
 
         @Test
-        @DisplayName("ввод 374... (без плюса) → те же варианты, находит через %2B")
-        void withoutPlusPrefix_sameVariants() {
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_ENCODED)).thenReturn(of(row(PHONE_E164)));
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_DIGITS)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_LOCAL)).thenReturn(empty());
+        @DisplayName("искомый номер с пробелами, сохранённый — без → тоже находится")
+        void queryWithSpaces_matchesCleanStoredValue() {
+            when(client.listAllRaw(TABLE_ID)).thenReturn(listOf(row(661, "37491083182")));
 
-            var result = repo.findByPhone(PHONE_DIGITS);
+            var result = repo.findByPhone("+374 91 083 182");
 
             assertTrue(result.isPresent());
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_ENCODED);
         }
 
         @Test
-        @DisplayName("ввод 91083182 (локальный) → те же варианты, находит через %2B")
-        void localFormat_sameVariants() {
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_ENCODED)).thenReturn(of(row(PHONE_E164)));
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_DIGITS)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_LOCAL)).thenReturn(empty());
+        @DisplayName("локальный формат без кода страны совпадает с полным международным")
+        void localFormat_matchesFullInternational() {
+            when(client.listAllRaw(TABLE_ID)).thenReturn(listOf(row(661, "+374 91 083 182")));
 
-            var result = repo.findByPhone(PHONE_LOCAL);
+            var result = repo.findByPhone("91083182");
 
             assertTrue(result.isPresent());
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_ENCODED);
         }
 
         @Test
-        @DisplayName("%2B не найден → падает на цифровой вариант 374...")
-        void fallsThrough_toDigitsVariant() {
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_ENCODED)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_DIGITS)).thenReturn(of(row(PHONE_DIGITS)));
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_LOCAL)).thenReturn(empty());
+        @DisplayName("совпадений нет → empty")
+        void noMatch_returnsEmpty() {
+            when(client.listAllRaw(TABLE_ID)).thenReturn(listOf(row(661, "+374 99 111 222")));
 
-            var result = repo.findByPhone(PHONE_E164);
-
-            assertTrue(result.isPresent());
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_ENCODED);
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_DIGITS);
-            verify(client, never()).findByPhoneRaw(TABLE_ID, PHONE_LOCAL);
-        }
-
-        @Test
-        @DisplayName("первые два не найдены → падает на локальный формат 91...")
-        void fallsThrough_toLocalVariant() {
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_ENCODED)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_DIGITS)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_LOCAL)).thenReturn(of(row(PHONE_LOCAL)));
-
-            var result = repo.findByPhone(PHONE_E164);
-
-            assertTrue(result.isPresent());
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_ENCODED);
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_DIGITS);
-            verify(client).findByPhoneRaw(TABLE_ID, PHONE_LOCAL);
-        }
-
-        @Test
-        @DisplayName("все варианты пустые → empty")
-        void allVariantsEmpty_returnsEmpty() {
-            when(client.findByPhoneRaw(eq(TABLE_ID), anyString())).thenReturn(empty());
-
-            var result = repo.findByPhone(PHONE_E164);
+            var result = repo.findByPhone("+374 91 083 182");
 
             assertFalse(result.isPresent());
-            verify(client, times(3)).findByPhoneRaw(eq(TABLE_ID), anyString());
         }
 
         @Test
         @DisplayName("null → empty, клиент не вызывается")
-        void nullPhone_returnsEmpty() {
+        void nullPhone_returnsEmptyWithoutCallingClient() {
             var result = repo.findByPhone(null);
 
             assertFalse(result.isPresent());
@@ -166,18 +118,16 @@ class BaserowCoworkingGuestRepositoryPhoneTest {
     class LinkChatIdByPhone {
 
         @Test
-        @DisplayName("телефон найден через %2B → патч chatId, возвращает гостя")
-        void found_patchesAndReturnsGuest() {
-            var found = row(PHONE_E164);
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_ENCODED)).thenReturn(of(found));
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_DIGITS)).thenReturn(empty());
-            when(client.findByPhoneRaw(TABLE_ID, PHONE_LOCAL)).thenReturn(empty());
+        @DisplayName("телефон хранится с пробелами, ищут цифрами → находит, патчит chatId")
+        void foundDespiteFormatting_patchesAndReturnsGuest() {
+            var found = row(661, "+374 91 083 182");
+            when(client.listAllRaw(TABLE_ID)).thenReturn(listOf(found));
             when(client.patchChatId(TABLE_ID, 661, new LinkChatIdRowRequest(CHAT_ID)))
                 .thenReturn(new BaserowGuestRow(661, found.externalId(),
                     found.firstName(), found.lastName(), found.phone(),
                     found.telegram(), CHAT_ID, null, null, null, null, null, null));
 
-            var result = repo.linkChatIdByPhone(PHONE_E164, CHAT_ID);
+            var result = repo.linkChatIdByPhone("+37491083182", CHAT_ID);
 
             assertTrue(result.isPresent());
             assertThat(result.get().telegramChatId(), is(CHAT_ID));
@@ -185,14 +135,23 @@ class BaserowCoworkingGuestRepositoryPhoneTest {
         }
 
         @Test
-        @DisplayName("телефон не найден ни в одном варианте → empty, патч не вызывается")
+        @DisplayName("телефон не найден → empty, патч не вызывается")
         void notFound_returnsEmpty() {
-            when(client.findByPhoneRaw(eq(TABLE_ID), anyString())).thenReturn(empty());
+            when(client.listAllRaw(TABLE_ID)).thenReturn(listOf(row(661, "+374 99 111 222")));
 
-            var result = repo.linkChatIdByPhone(PHONE_E164, CHAT_ID);
+            var result = repo.linkChatIdByPhone("+37491083182", CHAT_ID);
 
             assertFalse(result.isPresent());
             verify(client, never()).patchChatId(anyInt(), anyInt(), any());
+        }
+
+        @Test
+        @DisplayName("null → empty, клиент не вызывается")
+        void nullPhone_returnsEmpty() {
+            var result = repo.linkChatIdByPhone(null, CHAT_ID);
+
+            assertFalse(result.isPresent());
+            verifyNoInteractions(client);
         }
     }
 }
