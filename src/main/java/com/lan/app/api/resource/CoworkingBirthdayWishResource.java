@@ -5,6 +5,7 @@ import com.lan.app.api.dto.response.BirthdayWishResponse;
 import com.lan.app.api.mapper.ApiBirthdayWishMapper;
 import com.lan.app.service.BirthdayWishService;
 import com.lan.app.service.command.CreateBirthdayWishCommand;
+import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -22,6 +23,7 @@ import org.eclipse.microprofile.openapi.annotations.security.SecurityRequirement
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.net.URI;
+import java.util.List;
 
 @Path("/coworking/v1/birthday-wishes")
 @Consumes(MediaType.APPLICATION_JSON)
@@ -38,6 +40,28 @@ public class CoworkingBirthdayWishResource {
     public CoworkingBirthdayWishResource(BirthdayWishService service, ApiBirthdayWishMapper mapper) {
         this.service = service;
         this.mapper = mapper;
+    }
+
+    @GET
+    @PermitAll
+    @Operation(
+        operationId = "listBirthdayWishes",
+        summary = "List all birthday wishes",
+        description = "Returns all submitted birthday wishes ordered by date descending. Accessible to everyone."
+    )
+    @APIResponses({
+        @APIResponse(
+            responseCode = "200",
+            description = "Birthday wishes retrieved successfully",
+            content = @Content(
+                mediaType = MediaType.APPLICATION_JSON,
+                schema = @Schema(implementation = BirthdayWishResponse.class, type = SchemaType.ARRAY)
+            )
+        ),
+        @APIResponse(responseCode = "500", description = "Internal server error")
+    })
+    public List<BirthdayWishResponse> list() {
+        return service.list().stream().map(mapper::toResponse).toList();
     }
 
     @POST

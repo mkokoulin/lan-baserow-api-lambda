@@ -1,6 +1,7 @@
 package com.lan.app.infrastructure.baserow.client;
 import com.baserow.client.BaserowAuthHeaders;
 
+import com.baserow.dto.BaserowListResponse;
 import com.lan.app.infrastructure.baserow.dto.BaserowBirthdayWishRow;
 import com.lan.app.infrastructure.baserow.dto.CreateBirthdayWishRowRequest;
 import io.quarkus.rest.client.reactive.ClientQueryParam;
@@ -17,6 +18,14 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface BaserowBirthdayWishClient {
+
+    @GET
+    @Path("/{tableId}/")
+    @ClientQueryParam(name = "user_field_names", value = "true")
+    @ClientQueryParam(name = "order_by", value = "-created_at")
+    BaserowListResponse<BaserowBirthdayWishRow> list(
+        @PathParam("tableId") int tableId
+    );
 
     @POST
     @Path("/{tableId}/")

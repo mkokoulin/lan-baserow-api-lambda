@@ -10,6 +10,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import java.util.List;
+
 @ApplicationScoped
 public class BaserowBirthdayWishRepository implements BirthdayWishRepository {
 
@@ -25,6 +27,13 @@ public class BaserowBirthdayWishRepository implements BirthdayWishRepository {
         this.tableId = tableId;
         this.client = client;
         this.mapper = mapper;
+    }
+
+    @Override
+    public List<BirthdayWish> list() {
+        return client.list(tableId).results().stream()
+            .map(mapper::toDomain)
+            .toList();
     }
 
     @Override
