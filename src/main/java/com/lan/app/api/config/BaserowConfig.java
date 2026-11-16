@@ -47,6 +47,7 @@ public interface BaserowConfig {
         int newsTableId();
         int newsItemsTableId();
         int reviewsTableId();
+        int birthdayWishesTableId();
         int siteBookingsTableId();
     }
 
