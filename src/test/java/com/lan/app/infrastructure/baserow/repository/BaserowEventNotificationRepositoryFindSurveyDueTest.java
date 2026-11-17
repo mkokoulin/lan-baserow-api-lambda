@@ -118,7 +118,9 @@ class BaserowEventNotificationRepositoryFindSurveyDueTest {
     }
 
     private void stubEvents(BaserowEventRow... events) {
-        when(eventClient.listAll(EVENTS_TABLE)).thenReturn(listOf(events));
+        // BaserowEventClient.list() is a default method that delegates to listAll() —
+        // stub the latter so the real filtering logic still runs against our mock data.
+        when(eventClient.listAll(eq(EVENTS_TABLE), anyInt())).thenReturn(listOf(events));
     }
 
     private void stubRegistrations(BaserowRegistrationRow... regs) {

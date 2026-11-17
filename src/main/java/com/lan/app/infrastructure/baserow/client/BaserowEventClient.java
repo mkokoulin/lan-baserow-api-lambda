@@ -1,6 +1,8 @@
 package com.lan.app.infrastructure.baserow.client;
 import com.baserow.client.BaserowAuthHeaders;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -28,22 +30,33 @@ import jakarta.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface BaserowEventClient {
 
-    // Same page-size ceiling as other listAllRaw calls in this codebase (Baserow's default page
-    // size is 100, not the full table) — fine at this system's scale.
     @GET
     @Path("/{tableId}/")
     @ClientQueryParam(name = "user_field_names", value = "true")
     @ClientQueryParam(name = "size", value = "200")
     BaserowListResponse<BaserowEventRow> listAll(
-        @PathParam("tableId") int tableId
+        @PathParam("tableId") int tableId,
+        @QueryParam("page") int page
     );
 
+    // Baserow caps a single response at 200 rows. The events table has grown past that, and
+    // since the default order is row id ascending (insertion order), the newest events — the
+    // ones added yesterday or scheduled for next month — fell past page 1 and silently
+    // disappeared from the site. Walk every page via `next` instead of trusting one response.
     default BaserowListResponse<BaserowEventRow> list(int tableId) {
-        var resp = listAll(tableId);
-        var filtered = resp.results().stream()
+        var all = new ArrayList<BaserowEventRow>();
+        int page = 1;
+        BaserowListResponse<BaserowEventRow> resp;
+        do {
+            resp = listAll(tableId, page);
+            all.addAll(resp.results());
+            page++;
+        } while (resp.next() != null);
+
+        List<BaserowEventRow> filtered = all.stream()
             .filter(row -> row.name() != null && !row.name().isBlank())
             .toList();
-        return new BaserowListResponse<>(resp.count(), resp.next(), resp.previous(), filtered);
+        return new BaserowListResponse<>(resp.count(), null, null, filtered);
     }
 
     @GET
